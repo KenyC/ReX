@@ -1,3 +1,6 @@
+# Examples' output
+qc.svg
+
 # Rust build artifacts
 target
 Cargo.lock

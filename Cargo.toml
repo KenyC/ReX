@@ -7,6 +7,10 @@ authors = [
 ]
 edition = "2018"
 
+[features]
+pathfinder-backend = ["dep:pathfinder_renderer"]
+femtovg-backend    = ["dep:femtovg"]
+
 [[example]]
 name = "example"
 path = "examples/qc.rs"
@@ -21,16 +25,22 @@ font = { git = "https://github.com/pdf-rs/font", features=["woff"] }
 pathfinder_geometry = { git = "https://github.com/servo/pathfinder/" }
 pathfinder_color = { git = "https://github.com/servo/pathfinder/" }
 pathfinder_content = { git = "https://github.com/servo/pathfinder/" }
-pathfinder_renderer = { git = "https://github.com/servo/pathfinder/" }
 pathfinder_export = { git = "https://github.com/servo/pathfinder/" }
 unicode-math = { git = "https://github.com/s3bk/unicode-math/" }
-femtovg = "*"
-sdl2 = "*"
-
 serde_derive = "1.0"
 serde = "1.0"
 
+[dependencies.pathfinder_renderer]
+git = "https://github.com/servo/pathfinder/"
+optional = true
+
+[dependencies.femtovg]
+version = "*"
+optional = true
+
+
 [dev-dependencies]
+sdl2 = "*"
 serde_yaml = "0.7"
 bincode = "1.2.1"
 env_logger = "*"
