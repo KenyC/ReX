@@ -193,4 +193,5 @@ impl Renderer {
 }
 
 pub mod scene;
+pub mod femtovg;
 pub use scene::SceneWrapper;
