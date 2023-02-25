@@ -1,4 +1,5 @@
 pub mod kerning;
+pub mod backend;
 mod style;
 //mod unit;
 
@@ -17,6 +18,46 @@ use crate::error::FontError;
 
 pub type MathFont = OpenTypeFont;
 
+// TODO: when "font" dependency is expunged, rename as "MathFont"
+pub trait IsMathFont {
+    type MathHeader : IsMathHeader;
+
+
+}
+
+pub trait IsMathHeader {
+    fn italics(&self, glyph_id : u16) -> i16;
+    fn attachment(&self, glyph_id : u16) -> i16; 
+
+    // TODO : VariantGlyph must be replaced with something generic
+    fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
+    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph;
+}
+
+
+
+impl IsMathHeader for MathHeader {
+
+
+    fn italics(&self,    glyph_id : u16) -> i16 {
+        self.glyph_info.italics_correction_info.get(glyph_id).map(|info| info.value).unwrap_or_default()
+    }
+
+    fn attachment(&self, gid: u16) -> i16 {
+        self.glyph_info.top_accent_attachment.get(gid).map(|info| info.value).unwrap_or_default()
+    }
+
+    fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
+        self.variants.horz_variant(gid as u16, (width / Font) as u32)
+    }
+
+    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph {
+        self.variants.vert_variant(gid as u16, (height / Font) as u32)
+    }
+
+}
+
+
 #[derive(Clone)]
 pub struct FontContext<'f> {
     pub font: &'f MathFont,
@@ -34,8 +75,8 @@ impl<'f> FontContext<'f> {
         use font::{Font};
         let font = self.font;
         let hmetrics = font.glyph_metrics(gid).ok_or(FontError::MissingGlyphGID(gid))?;
-        let italics = self.math.glyph_info.italics_correction_info.get(gid).map(|info| info.value).unwrap_or_default();
-        let attachment = self.math.glyph_info.top_accent_attachment.get(gid).map(|info| info.value).unwrap_or_default();
+        let italics = self.math.italics(gid);
+        let attachment = self.math.attachment(gid);
         let glyph = font.glyph(GlyphId(gid as u32)).ok_or(FontError::MissingGlyphGID(gid))?;
         let bbox = glyph.path.bounds();
         let ll = bbox.lower_left();
@@ -73,14 +114,15 @@ impl<'f> FontContext<'f> {
     pub fn vert_variant(&self, codepoint: char, height: Length<Font>) -> Result<VariantGlyph, FontError> {
         use font::Font;
         let GlyphId(gid) = self.font.gid_for_codepoint(codepoint as u32).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.math.variants.vert_variant(gid as u16, (height / Font) as u32))
+        Ok(self.math.vert_variant(gid, height))
     }
     pub fn horz_variant(&self, codepoint: char, width: Length<Font>) -> Result<VariantGlyph, FontError> {
         use font::Font;
         let GlyphId(gid) = self.font.gid_for_codepoint(codepoint as u32).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.math.variants.horz_variant(gid as u16, (width / Font) as u32))
+        Ok(self.math.horz_variant(gid, width))
     }
 }
+
 
 #[derive(Clone)]
 pub struct Constants {

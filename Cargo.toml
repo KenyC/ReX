@@ -10,6 +10,7 @@ edition = "2018"
 [features]
 pathfinder-backend = ["dep:pathfinder_renderer"]
 femtovg-backend    = ["dep:femtovg"]
+ttfparser-backend  = ["dep:ttf-parser"]
 
 [[example]]
 name = "example"
@@ -35,6 +36,10 @@ git = "https://github.com/servo/pathfinder/"
 optional = true
 
 [dependencies.femtovg]
+version = "*"
+optional = true
+
+[dependencies.ttf-parser]
 version = "*"
 optional = true
 
