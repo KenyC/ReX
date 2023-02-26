@@ -1,10 +1,10 @@
-use super::{Glyph};
+use super::{Glyph, IsMathFont};
 use std::cmp::{max, min};
 
 use crate::{dimensions::{Length, Font}, MathFont};
 
 #[derive(Debug)]
-enum Corner {
+pub enum Corner {
     TopRight,
     TopLeft,
     BottomRight,
@@ -61,18 +61,5 @@ pub fn subscript_kern(base: &Glyph<MathFont>, script: &Glyph<MathFont>, shift: L
 }
 
 fn kern_from(glyph: &Glyph<MathFont>, height: Length<Font>, side: Corner) -> Length<Font> {
-    let math = glyph.font.math.as_ref().unwrap();
-    let record = match math.glyph_info.kern_info.entries.get(&glyph.gid) {
-        Some(record) => record,
-        None => return Length::zero(),
-    };
-
-    let table = match side {
-        Corner::TopRight => &record.top_right,
-        Corner::TopLeft => &record.top_left,
-        Corner::BottomRight => &record.bottom_right,
-        Corner::BottomLeft => &record.bottom_left,
-    };
-
-    Length::new(table.kern_for_height((height / Font) as i16), Font)
+    glyph.font.kern_for(glyph.gid, height, side).unwrap_or_default()
 }

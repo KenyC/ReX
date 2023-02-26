@@ -14,12 +14,15 @@ pub use crate::font::common::{Direction, VariantGlyph};
 use crate::{dimensions::*, font::common::GlyphId};
 use crate::error::FontError;
 
+use self::kerning::Corner;
+
 pub type MathFont = OpenTypeFont;
 
 // TODO: when "font" dependency is expunged, rename as "MathFont"
 pub trait IsMathFont : Sized {
     fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId>;
     fn glyph_from_gid<'f>(&'f self, glyph_id : u16) -> Result<Glyph<'f, Self>, FontError>;
+    fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : Corner) -> Option<Length<Font>>;
 }
 
 impl IsMathFont for MathFont {
@@ -56,6 +59,20 @@ impl IsMathFont for MathFont {
                 Length::new(ll.y(), Font),
             )
         })
+    }
+
+    fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : Corner) -> Option<Length<Font>> {
+        let math = self.math.as_ref().unwrap();
+        let record = math.glyph_info.kern_info.entries.get(&glyph_id)?;
+
+        let table = match side {
+            Corner::TopRight => &record.top_right,
+            Corner::TopLeft => &record.top_left,
+            Corner::BottomRight => &record.bottom_right,
+            Corner::BottomLeft => &record.bottom_left,
+        };
+
+        Some(Length::new(table.kern_for_height((height / Font) as i16), Font))
     }
 }
 
