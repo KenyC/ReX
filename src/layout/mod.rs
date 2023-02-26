@@ -22,7 +22,7 @@ pub mod engine;
 pub mod spacing;
 
 use crate::parser::color::RGBA;
-use crate::font::{FontContext, MathFont};
+use crate::font::FontContext;
 use std::ops::Deref;
 use std::fmt;
 use std::cmp::{max, min};
@@ -343,11 +343,13 @@ impl<'f, F> fmt::Debug for LayoutNode<'f, F> {
     }
 }
 
-impl<'f> LayoutNode<'f, MathFont> {
+
+impl<'f, F> LayoutNode<'f, F> {
+    
     /// Center the vertical about the axis.
     /// For now this ignores offsets if already applied,
     /// and will break if there already are offsets.
-    fn centered(mut self, axis: Length<Px>) -> LayoutNode<'f, MathFont> {
+    fn centered(mut self, axis: Length<Px>) -> LayoutNode<'f, F> {
         let shift = (self.height + self.depth) * 0.5 - axis;
 
         match self.node {
@@ -364,10 +366,6 @@ impl<'f> LayoutNode<'f, MathFont> {
 
         self
     }
-
-}
-
-impl<'f, F> LayoutNode<'f, F> {
 
     fn is_symbol(&self) -> Option<LayoutGlyph<'f, F>> {
         match self.node {

@@ -4,6 +4,7 @@ use super::builders;
 use super::convert::AsLayoutNode;
 use super::{Alignment, Layout, LayoutNode, LayoutSettings, LayoutVariant, Style, ColorChange};
 
+use crate::font::IsMathFont;
 use crate::font::{
     kerning::{superscript_kern, subscript_kern},
     VariantGlyph,
@@ -15,17 +16,17 @@ use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited
 use crate::parser::symbols::Symbol;
 use crate::environments::Array;
 use crate::dimensions::{*};
-use crate::{layout, MathFont};
+use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
 
 /// Entry point to our recursive algorithm
-pub fn layout<'a, 'f: 'a>(nodes: &[ParseNode], config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<Layout<'f, MathFont>> {
+pub fn layout<'a, 'f: 'a, F : IsMathFont>(nodes: &[ParseNode], config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
     layout_recurse(nodes, config, AtomType::Transparent)
 }
 
 /// This method takes the parsing nodes and layouts them to layout nodes.
 #[allow(unconditional_recursion)]
-fn layout_recurse<'a, 'f: 'a>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, MathFont>, parent_next: AtomType) -> LayoutResult<Layout<'f, MathFont>> {
+fn layout_recurse<'a, 'f: 'a, F : IsMathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: AtomType) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
     let mut prev = AtomType::Transparent;
 
@@ -70,14 +71,15 @@ fn layout_recurse<'a, 'f: 'a>(nodes: &[ParseNode], mut config: LayoutSettings<'a
     Ok(layout.finalize())
 }
 
-fn layout_node<'a, 'f: 'a>(node: &ParseNode, config: LayoutSettings<'a, 'f, MathFont>) -> Layout<'f, MathFont> {
+fn layout_node<'a, 'f: 'a, F : IsMathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
     let mut layout = Layout::new();
     layout.dispatch(config, node, AtomType::Transparent);
     layout.finalize()
 }
 
-impl<'f> Layout<'f, MathFont> {
-    fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, MathFont>, node: &ParseNode, next: AtomType) -> LayoutResult<()> {
+impl<'f, F : IsMathFont> Layout<'f, F> {
+
+    fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, F>, node: &ParseNode, next: AtomType) -> LayoutResult<()> {
         match *node {
             ParseNode::Symbol(sym) => self.symbol(sym, config)?,
             ParseNode::Scripts(ref script) => self.scripts(script, config)?,
@@ -103,7 +105,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn symbol<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<()> {
+    fn symbol<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
         // Operators are handled specially.  We may need to find a larger
         // symbol and vertical center it.
         match sym.atom_type {
@@ -113,7 +115,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn largeop<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<()> {
+    fn largeop<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
         let glyph = config.ctx.glyph(sym.codepoint)?;
         if config.style > Style::Text {
             let axis_offset = config.ctx.constants.axis_height.scaled(config);
@@ -126,8 +128,8 @@ impl<'f> Layout<'f, MathFont> {
         }
         Ok(())
     }
-
-    fn accent<'a>(&mut self, acc: &Accent, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<()> {
+    
+    fn accent<'a>(&mut self, acc: &Accent, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
         // [ ] The width of the selfing box is the width of the base.
         // [ ] Bottom accents: vertical placement is directly below nucleus,
         //       no correction takes place.
@@ -183,7 +185,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn delimited<'a>(&mut self, delim: &Delimited, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn delimited<'a>(&mut self, delim: &Delimited, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         let inner = layout(&delim.inner, config)?.as_node();
 
         let min_height = config.ctx.constants.delimited_sub_formula_min_height * config.font_size;
@@ -239,8 +241,7 @@ impl<'f> Layout<'f, MathFont> {
 
         Ok(())
     }
-
-    fn scripts<'a>(&mut self, scripts: &Scripts, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn scripts<'a>(&mut self, scripts: &Scripts, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // See: https://tug.org/TUGboat/tb27-1/tb86jackowski.pdf
         //      https://www.tug.org/tugboat/tb30-1/tb94vieth.pdf
         let base = match scripts.base {
@@ -381,7 +382,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn operator_limits<'a>(&mut self, base: Layout<'f, MathFont>, sup: Layout<'f, MathFont>, sub: Layout<'f, MathFont>, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn operator_limits<'a>(&mut self, base: Layout<'f, F>, sup: Layout<'f, F>, sub: Layout<'f, F>, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // Provided that the operator is a simple symbol, we need to account
         // for the italics correction of the symbol.  This how we "center"
         // the superscript and subscript of the limits.
@@ -430,7 +431,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn frac<'a>(&mut self, frac: &GenFraction, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn frac<'a>(&mut self, frac: &GenFraction, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         let config = match frac.style {
             MathStyle::NoChange => config.clone(),
             MathStyle::Display => config.with_display(),
@@ -521,8 +522,7 @@ impl<'f> Layout<'f, MathFont> {
         
         Ok(())
     }
-
-    fn radical<'a>(&mut self, rad: &Radical, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn radical<'a>(&mut self, rad: &Radical, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // reference rule 11 from pg 443 of TeXBook
         let contents = layout(&rad.inner, config.cramped())?.as_node();
 
@@ -561,14 +561,14 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn substack<'a>(&mut self, stack: &Stack, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn substack<'a>(&mut self, stack: &Stack, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // Don't bother constructing a new node if there is nothing.
         if stack.lines.len() == 0 {
             return Ok(());
         }
 
         // Layout each line in the substack, and track which line is the widest
-        let mut lines: Vec<Layout<MathFont>> = Vec::with_capacity(stack.lines.len());
+        let mut lines: Vec<Layout<F>> = Vec::with_capacity(stack.lines.len());
         let mut widest = Length::zero();
         let mut widest_idx = 0;
         for (n, line) in stack.lines.iter().enumerate() {
@@ -632,7 +632,7 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 
-    fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, MathFont>) -> Result<(), LayoutError> {
+    fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // TODO: let jot = UNITS_PER_EM / 4;
         let strut_height = Length::new(0.7, Em) * config.font_size; // \strutbox height = 0.7\baseline
         let strut_depth = Length::new(0.3, Em) * config.font_size; // \strutbox depth  = 0.3\baseline
@@ -775,3 +775,4 @@ impl<'f> Layout<'f, MathFont> {
         Ok(())
     }
 }
+

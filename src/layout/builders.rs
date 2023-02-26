@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use super::{VerticalBox, HorizontalBox, LayoutNode, LayoutVariant, Alignment, Grid, Layout, ColorChange};
 use std::cmp::{max, min};
-use crate::{dimensions::*, MathFont};
+use crate::dimensions::*;
 use std::collections::BTreeMap;
 use crate::parser::nodes;
 
