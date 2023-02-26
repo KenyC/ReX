@@ -47,9 +47,9 @@ impl Cursor {
     }
 }
 
-pub trait Backend {
+pub trait Backend<F> {
     fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, role: Role) {}
-    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, ctx: &MathFont);
+    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, ctx: &F);
     fn rule(&mut self, pos: Cursor, width: f64, height: f64);
     fn begin_color(&mut self, color: RGBA);
     fn end_color(&mut self);
@@ -75,7 +75,7 @@ impl Renderer {
         Ok(layout(&mut parse, layout_settings)?)
     }
     // (x0, y0, x1, y1)
-    pub fn size(&self, layout: &Layout<MathFont>) -> (f64, f64, f64, f64) {
+    pub fn size<F>(&self, layout: &Layout<F>) -> (f64, f64, f64, f64) {
         (
             0.0,
             layout.depth / Px,
@@ -83,7 +83,7 @@ impl Renderer {
             layout.height / Px
         )
     }
-    pub fn render(&self, layout: &Layout<MathFont>, out: &mut impl Backend) {
+    pub fn render<F>(&self, layout: &Layout<F>, out: &mut impl Backend<F>) {
         let pos = Cursor {
             x: 0.0,
             y: 0.0,
@@ -91,7 +91,7 @@ impl Renderer {
         self.render_hbox(out, pos, &layout.contents, layout.height / Px, layout.width / Px, Alignment::Default);
     }
 
-    fn render_grid(&self, out: &mut impl Backend, pos: Cursor, width: f64, height: f64, grid: &Grid<MathFont>) {
+    fn render_grid<F>(&self, out: &mut impl Backend<F>, pos: Cursor, width: f64, height: f64, grid: &Grid<F>) {
         let x_offsets = grid.x_offsets();
         let y_offsets = grid.y_offsets();
         for (&(row, column), node) in grid.contents.iter() {
@@ -106,7 +106,7 @@ impl Renderer {
         }
     }
 
-    fn render_hbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode<MathFont>], height: f64, nodes_width: f64, alignment: Alignment) {
+    fn render_hbox<F>(&self, out: &mut impl Backend<F>, mut pos: Cursor, nodes: &[LayoutNode<F>], height: f64, nodes_width: f64, alignment: Alignment) {
         if self.debug {
             out.bbox(pos.up(height), nodes_width, height, Role::HBox);
         }
@@ -120,7 +120,7 @@ impl Renderer {
             pos.x += node.width / Px;
         }
     }
-    fn render_vbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode<MathFont>]) {
+    fn render_vbox<F>(&self, out: &mut impl Backend<F>, mut pos: Cursor, nodes: &[LayoutNode<F>]) {
         for node in nodes {
             match node.node {
                 LayoutVariant::Rule => out.rule(pos, node.width / Px, node.height / Px),
@@ -157,7 +157,7 @@ impl Renderer {
         }
     }
 
-    fn render_node<'a>(&self, out: &mut impl Backend, pos: Cursor, node: &LayoutNode<'a, MathFont>) {
+    fn render_node<'a, F>(&self, out: &mut impl Backend<F>, pos: Cursor, node: &LayoutNode<'a, F>) {
         match node.node {
             LayoutVariant::Glyph(ref gly) => {
                 if self.debug {
@@ -194,6 +194,7 @@ impl Renderer {
 
 #[cfg(feature="pathfinder-backend")]
 pub mod scene;
+use font::OpenTypeFont;
 #[cfg(feature="pathfinder-backend")]
 pub use scene::SceneWrapper;
 

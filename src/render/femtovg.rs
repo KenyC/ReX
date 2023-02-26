@@ -1,5 +1,5 @@
 use femtovg::{Renderer, Canvas, Solidity};
-use font::Font;
+use font::{Font, OpenTypeFont};
 use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
@@ -33,7 +33,7 @@ impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
 	}
 }
 
-impl<'a, T : Renderer> Backend for FemtoVGCanvas<'a, T> {
+impl<'a, T : Renderer> Backend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
 	fn symbol(&mut self, pos: crate::Cursor, gid: u16, scale: f64, ctx: &crate::MathFont) {
         let path = ctx.glyph(font::GlyphId(gid as u32)).unwrap().path;
         let tr = Transform2F::from_translation(v_cursor(pos))

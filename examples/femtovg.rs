@@ -87,7 +87,7 @@ fn main() {
     } 
 }
 
-fn draw_simple<B : Backend>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) {
+fn draw_simple<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) {
     // let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(dbg!(tex)).unwrap()).collect();
     // let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(tex).unwrap()).collect();
 
@@ -111,7 +111,7 @@ fn draw_simple<B : Backend>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, Path
     renderer.render(&layout, backend);
 }
 
-fn draw<B : Backend>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) {
+fn draw<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) {
 
     let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(dbg!(tex)).unwrap()).collect();
 

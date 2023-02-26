@@ -1,4 +1,5 @@
 
+use font::OpenTypeFont;
 use pathfinder_renderer::{
     scene::{Scene, DrawPath},
     paint::{Paint, PaintId},
@@ -44,7 +45,7 @@ impl<'a> SceneWrapper<'a> {
     }
 }
 
-impl<'a> Backend for SceneWrapper<'a> {
+impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
         let color = match role {
             Role::Glyph => ColorU::new(0, 200, 0, 255),
