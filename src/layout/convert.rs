@@ -1,7 +1,7 @@
 //! This is a collection of tools used for converting ParseNodes into LayoutNodes.
 
 use crate::MathFont;
-use crate::font::{Glyph, Direction, VariantGlyph};
+use crate::font::{Glyph, Direction, VariantGlyph, IsMathFont};
 use crate::dimensions::{*};
 use crate::layout::LayoutSettings;
 
@@ -12,11 +12,11 @@ use crate::parser::nodes::Rule;
 use crate::error::LayoutResult;
 
 pub trait AsLayoutNode<'f, F> {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, F>>;
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>>;
 }
 
-impl<'f> AsLayoutNode<'f, MathFont> for Glyph<'f, MathFont> {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
+impl<'f, F> AsLayoutNode<'f, F> for Glyph<'f, F> {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         Ok(LayoutNode {
             height: self.height().scaled(config),
             width:  self.advance.scaled(config),
@@ -33,8 +33,8 @@ impl<'f> AsLayoutNode<'f, MathFont> for Glyph<'f, MathFont> {
     }
 }
 
-impl<'f> AsLayoutNode<'f, MathFont> for Rule {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
+impl<'f, F> AsLayoutNode<'f, F> for Rule {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         Ok(LayoutNode {
             node:   LayoutVariant::Rule,
             width:  self.width .scaled(config),
@@ -44,8 +44,8 @@ impl<'f> AsLayoutNode<'f, MathFont> for Rule {
     }
 }
 
-impl<'f> AsLayoutNode<'f, MathFont> for VariantGlyph {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
+impl<'f, F : IsMathFont> AsLayoutNode<'f, F> for VariantGlyph {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         match *self {
             VariantGlyph::Replacement(gid) => {
                 let glyph = config.ctx.glyph_from_gid(gid)?;

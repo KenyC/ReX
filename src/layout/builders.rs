@@ -23,18 +23,18 @@ impl<'a, F> Default for VBox<'a, F> {
     }
 }
 
-impl<'a> VBox<'a, MathFont> {
-    pub fn new() -> VBox<'a, MathFont> {
+impl<'a, F> VBox<'a, F> {
+    pub fn new() -> VBox<'a, F> {
         VBox::default()
     }
 
-    pub fn insert_node(&mut self, idx: usize, node: LayoutNode<'a, MathFont>) {
+    pub fn insert_node(&mut self, idx: usize, node: LayoutNode<'a, F>) {
         self.width = max(self.width, node.width);
         self.height += node.height;
         self.node.contents.insert(idx, node);
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'a, MathFont>) {
+    pub fn add_node(&mut self, node: LayoutNode<'a, F>) {
         self.width = max(self.width, node.width);
         self.height += node.height;
         self.node.contents.push(node);
@@ -44,7 +44,7 @@ impl<'a> VBox<'a, MathFont> {
         self.node.offset = offset;
     }
 
-    pub fn build(mut self) -> LayoutNode<'a, MathFont> {
+    pub fn build(mut self) -> LayoutNode<'a, F> {
         // The depth only depends on the depth
         // of the last element and offset.
         if let Some(node) = self.node.contents.last() {
@@ -102,12 +102,12 @@ impl<'a, F> Default for HBox<'a, F> {
 
 
 
-impl<'a> HBox<'a, MathFont> {
-    pub fn new() -> HBox<'a, MathFont> {
+impl<'a, F> HBox<'a, F> {
+    pub fn new() -> HBox<'a, F> {
         HBox::default()
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'a, MathFont>) {
+    pub fn add_node(&mut self, node: LayoutNode<'a, F>) {
         self.width += node.width;
         self.height = max(self.height, node.height);
         self.depth = min(self.depth, node.depth);
@@ -126,7 +126,7 @@ impl<'a> HBox<'a, MathFont> {
         self.width = width;
     }
 
-    pub fn build(mut self) -> LayoutNode<'a, MathFont> {
+    pub fn build(mut self) -> LayoutNode<'a, F> {
         self.depth -= self.node.offset;
         self.height -= self.node.offset;
 
@@ -139,15 +139,15 @@ impl<'a> HBox<'a, MathFont> {
     }
 }
 
-impl<'a> Grid<'a, MathFont> {
-    pub fn new() -> Grid<'a, MathFont> {
+impl<'a, F> Grid<'a, F> {
+    pub fn new() -> Grid<'a, F> {
         Grid {
             contents: BTreeMap::new(),
             rows: Vec::new(),
             columns: Vec::new(),
         }
     }
-    pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, MathFont>) {
+    pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, F>) {
         if row >= self.rows.len() {
             self.rows.resize(row + 1, (Length::zero(), Length::zero()));
         }
@@ -166,7 +166,7 @@ impl<'a> Grid<'a, MathFont> {
 
         self.contents.insert((row, column), node);
     }
-    pub fn build(self) -> LayoutNode<'a, MathFont> {
+    pub fn build(self) -> LayoutNode<'a, F> {
         LayoutNode {
             width:  self.columns.iter().cloned().sum(),
             height: self.rows.iter().map(|&(height, depth)| height - depth).sum(),
@@ -250,7 +250,7 @@ macro_rules! kern {
     );
 }
 
-pub fn color<'a>(layout: Layout<'a, MathFont>, color: &nodes::Color) -> LayoutNode<'a, MathFont> {
+pub fn color<'a, F>(layout: Layout<'a, F>, color: &nodes::Color) -> LayoutNode<'a, F> {
     LayoutNode {
         width: layout.width,
         height: layout.height,

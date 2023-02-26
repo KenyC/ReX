@@ -53,8 +53,8 @@ impl<'f, F> Default for Layout<'f, F> {
     }
 }
 
-impl<'f> Layout<'f, MathFont> {
-    pub fn as_node(self) -> LayoutNode<'f, MathFont> {
+impl<'f, F> Layout<'f, F> {
+    pub fn as_node(self) -> LayoutNode<'f, F> {
         LayoutNode {
             width: self.width,
             height: self.height,
@@ -67,11 +67,11 @@ impl<'f> Layout<'f, MathFont> {
         }
     }
 
-    pub fn new() -> Layout<'f, MathFont> {
+    pub fn new() -> Layout<'f, F> {
         Layout::default()
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'f, MathFont>) {
+    pub fn add_node(&mut self, node: LayoutNode<'f, F>) {
         self.width += node.width;
         self.height = max(self.height, node.height);
         self.depth = min(self.depth, node.depth);
@@ -82,19 +82,22 @@ impl<'f> Layout<'f, MathFont> {
         self.offset = offset;
     }
 
-    pub fn finalize(mut self) -> Layout<'f, MathFont> {
+    pub fn finalize(mut self) -> Layout<'f, F> {
         self.depth -= self.offset;
         self.height -= self.offset;
         self
     }
 
-    pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f, MathFont> {
+    pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f, F> {
         self.alignment = Alignment::Centered(self.width);
         self.width = new_width;
         self
     }
+}
 
-    fn is_symbol(&self) -> Option<LayoutGlyph<'f, MathFont>> {
+impl<'f, F> Layout<'f, F> {
+
+    fn is_symbol(&self) -> Option<LayoutGlyph<'f, F>> {
         if self.contents.len() != 1 {
             return None;
         }
@@ -293,7 +296,7 @@ impl<'f, F> Deref for VerticalBox<'f, F> {
     }
 }
 
-impl<'f> fmt::Debug for VerticalBox<'f, MathFont> {
+impl<'f, F> fmt::Debug for VerticalBox<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.offset.is_zero() {
             write!(f, "VerticalBox({:?})", self.contents)
@@ -362,7 +365,11 @@ impl<'f> LayoutNode<'f, MathFont> {
         self
     }
 
-    fn is_symbol(&self) -> Option<LayoutGlyph<'f, MathFont>> {
+}
+
+impl<'f, F> LayoutNode<'f, F> {
+
+    fn is_symbol(&self) -> Option<LayoutGlyph<'f, F>> {
         match self.node {
             LayoutVariant::Glyph(gly) => Some(gly),
             LayoutVariant::HorizontalBox(ref hb) => is_symbol(&hb.contents),
@@ -373,7 +380,7 @@ impl<'f> LayoutNode<'f, MathFont> {
     }
 }
 
-pub fn is_symbol<'a, 'b: 'a>(contents: &'a [LayoutNode<'b, MathFont>]) -> Option<LayoutGlyph<'b, MathFont>> {
+pub fn is_symbol<'a, 'b: 'a, F>(contents: &'a [LayoutNode<'b, F>]) -> Option<LayoutGlyph<'b, F>> {
     if contents.len() != 1 {
         return None;
     }
@@ -437,7 +444,7 @@ impl Style {
         }
     }
 
-    fn sup_shift_up(self, config: LayoutSettings<MathFont>) -> Length<Em> {
+    fn sup_shift_up<F>(self, config: LayoutSettings<F>) -> Length<Em> {
         match self {
             Style::Display | Style::Text | Style::Script | Style::ScriptScript => {
                 config.ctx.constants.superscript_shift_up
