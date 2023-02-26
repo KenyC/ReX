@@ -23,6 +23,14 @@ pub trait IsMathFont : Sized {
     fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId>;
     fn glyph_from_gid<'f>(&'f self, glyph_id : u16) -> Result<Glyph<'f, Self>, FontError>;
     fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : Corner) -> Option<Length<Font>>;
+
+    fn italics(&self, glyph_id : u16) -> i16;
+    fn attachment(&self, glyph_id : u16) -> i16; 
+    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants;
+
+
+    fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
+    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph;
 }
 
 impl IsMathFont for MathFont {
@@ -38,8 +46,8 @@ impl IsMathFont for MathFont {
         let font = self;
         let hmetrics = font.glyph_metrics(gid).ok_or(FontError::MissingGlyphGID(gid))?;
         let math_header = self.math.as_ref().ok_or(FontError::NoMATHTable)?;
-        let italics = math_header.italics(gid);
-        let attachment = math_header.attachment(gid);
+        let italics = self.italics(gid);
+        let attachment = self.attachment(gid);
         let glyph = font.glyph(GlyphId(gid as u32).into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let bbox = glyph.path.bounds();
         let ll = bbox.lower_left();
@@ -74,34 +82,42 @@ impl IsMathFont for MathFont {
 
         Some(Length::new(table.kern_for_height((height / Font) as i16), Font))
     }
-}
-
-pub trait IsMathHeader {
-    fn italics(&self, glyph_id : u16) -> i16;
-    fn attachment(&self, glyph_id : u16) -> i16; 
-    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants;
-
-
-    // TODO : VariantGlyph must be replaced with something generic
-    fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
-    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph;
-}
 
 
 
-impl IsMathHeader for MathHeader {
+
     fn italics(&self, glyph_id : u16) -> i16 {
-        self.glyph_info.italics_correction_info.get(glyph_id).map(|info| info.value).unwrap_or_default()
+        self.math
+            .as_ref()
+            .unwrap()
+            .glyph_info
+            .italics_correction_info
+            .get(glyph_id)
+            .map(|info| info.value)
+            .unwrap_or_default()
     }
 
     fn attachment(&self, gid: u16) -> i16 {
-        self.glyph_info.top_accent_attachment.get(gid).map(|info| info.value).unwrap_or_default()
+        self
+            .math
+            .as_ref()
+            .unwrap()
+            .glyph_info
+            .top_accent_attachment
+            .get(gid)
+            .map(|info| info.value)
+            .unwrap_or_default()
     }
 
     fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants {
         let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
 
-        let math_constants = &self.constants;
+        let math_constants = &self
+            .math
+            .as_ref()
+            .unwrap()
+            .constants
+        ;
         Constants {
             subscript_shift_down: em(math_constants.subscript_top_max.value.into()),
             subscript_top_max: em(math_constants.subscript_top_max.value.into()),
@@ -157,11 +173,23 @@ impl IsMathHeader for MathHeader {
     }
 
     fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
-        self.variants.horz_variant(gid as u16, (width / Font) as u32).into()
+        self
+            .math
+            .as_ref()
+            .unwrap()
+            .variants
+            .horz_variant(gid as u16, (width / Font) as u32)
+            .into()
     }
 
     fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph {
-        self.variants.vert_variant(gid as u16, (height / Font) as u32).into()
+        self
+            .math
+            .as_ref()
+            .unwrap()
+            .variants
+            .vert_variant(gid as u16, (height / Font) as u32)
+            .into()
     }
 
 }
@@ -169,7 +197,6 @@ impl IsMathHeader for MathHeader {
 
 pub struct FontContext<'f, F> {
     pub font: &'f F,
-    pub math: &'f MathHeader,
     pub constants: Constants,
     pub units_per_em: Scale<Font, Em>,
 }
@@ -178,7 +205,6 @@ impl<'f, F> Clone for FontContext<'f, F> {
     fn clone(&self) -> Self {
         Self {
             font:         self.font,
-            math:         self.math,
             constants:    self.constants.clone(),
             units_per_em: self.units_per_em,
         }
@@ -188,14 +214,12 @@ impl<'f, F> Clone for FontContext<'f, F> {
 impl<'f> FontContext<'f, MathFont> {
     pub fn new(font: &'f MathFont) -> Result<Self, FontError> {
         use font::Font;
-        let math = font.math.as_ref().ok_or(FontError::NoMATHTable)?;
         let font_units_to_em = Scale::new(font.font_matrix().matrix.m11() as f64, Em, Font);
         let units_per_em = font_units_to_em.inv();
-        let constants = math.constants(font_units_to_em);
+        let constants = font.constants(font_units_to_em);
 
         Ok(FontContext {
             font,
-            math,
             units_per_em,
             constants
         })
@@ -212,11 +236,11 @@ impl<'f, F : IsMathFont> FontContext<'f, F> {
 
     pub fn vert_variant(&self, codepoint: char, height: Length<Font>) -> Result<VariantGlyph, FontError> {
         let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.math.vert_variant(gid, height))
+        Ok(self.font.vert_variant(gid, height))
     }
     pub fn horz_variant(&self, codepoint: char, width: Length<Font>) -> Result<VariantGlyph, FontError> {
         let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.math.horz_variant(gid, width))
+        Ok(self.font.horz_variant(gid, width))
     }
 
     pub fn glyph_from_gid(&self, gid: u16) -> Result<Glyph<'f, F>, FontError> {

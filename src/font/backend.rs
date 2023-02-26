@@ -6,17 +6,28 @@ pub mod ttf_parser {
 
     use ttf_parser::{GlyphId, math::{GlyphConstructions, GlyphPart, Variants}, LazyArray16};
 
-    use crate::{font::{Constants, VariantGlyph, common::GlyphInstruction, Direction}, dimensions::{Scale, Font, Em, Length}};
+    use crate::{font::{Constants, VariantGlyph, common::GlyphInstruction, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
 
-    pub struct MathFont {
+    pub struct MathFont<'a> {
+        math: ttf_parser::math::Table<'a>,
+        font: ttf_parser::Face<'a>
     }
 
-    pub struct MathHeader<'a>(ttf_parser::math::Table<'a>);
+    impl<'a> MathFont<'a> {
+        pub fn new(font: ttf_parser::Face<'a>) -> Result<Self, FontError> { 
+            let math = font.tables().math.ok_or(FontError::NoMATHTable)?;
+            Ok(Self { 
+                math, 
+                font 
+            }) 
+        }
+    }
 
-    impl<'a> MathHeader<'a> {
+
+    impl<'a> MathFont<'a> {
         fn safe_italics(&self, glyph_id : u16) -> Option<i16> {
-            let value = self.0.glyph_info?
+            let value = self.math.glyph_info?
                 .italic_corrections?
                 .get(GlyphId(glyph_id))?
                 .value;
@@ -25,7 +36,7 @@ pub mod ttf_parser {
 
         fn safe_attachment(&self, glyph_id : u16) -> Option<i16> {
             // TODO : cache GlyphInfo table & constants
-            let value = self.0.glyph_info?
+            let value = self.math.glyph_info?
                 .top_accent_attachments?
                 .get(GlyphId(glyph_id))?
                 .value;
@@ -34,7 +45,7 @@ pub mod ttf_parser {
 
         fn safe_constants(&self, font_units_to_em : Scale<Em, Font>) -> Option<Constants> {
             // perhaps cache : GlyphInfo table
-            let math_constants = self.0.constants?;
+            let math_constants = self.math.constants?;
             let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
 
 
@@ -96,7 +107,7 @@ pub mod ttf_parser {
 
 
 
-    impl<'a> crate::font::IsMathHeader for MathHeader<'a> {
+    impl<'a> crate::font::IsMathFont for MathFont<'a> {
         fn italics(&self, glyph_id : u16) -> i16 {
             self.safe_italics(glyph_id).unwrap_or_default()
         }
@@ -113,7 +124,7 @@ pub mod ttf_parser {
             // NOTE: The following is an adaptation of the corresponding code in the crate "font"
             // NOTE: bizarrely, the code for horizontal variant is not isomorphic to the code for vertical variant ; here, I've simply adapted the vertical variant code
             // TODO: figure out why horiz_variant uses 'greatest_lower_bound' and vert_variant uses 'smallest_lowerè_bound'
-            let variants = match self.0.variants {
+            let variants = match self.math.variants {
                 Some(variants) => variants,
                 None => return VariantGlyph::Replacement(gid as u16),
             };
@@ -159,7 +170,7 @@ pub mod ttf_parser {
         fn vert_variant(&self, gid: u32, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
             // NOTE: The following is an adaptation of the corresponding code in the crate "font"
 
-            let variants = match self.0.variants {
+            let variants = match self.math.variants {
                 Some(variants) => variants,
                 None => return VariantGlyph::Replacement(gid as u16),
             };
@@ -194,6 +205,40 @@ pub mod ttf_parser {
             let instructions = construct_glyphs(&variants, assembly.parts, repeats, diff_ratio);
 
             VariantGlyph::Constructable(Direction::Vertical, instructions)
+        }
+
+        fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId> {
+            let glyph_index_ttf_parser = self.font.glyph_index(codepoint)?;
+            Some(crate::font::common::GlyphId(glyph_index_ttf_parser.0.into()))
+        }
+
+        fn glyph_from_gid<'f>(&'f self, gid : u16) -> Result<crate::font::Glyph<'f, Self>, FontError> {
+            let glyph_id = ttf_parser::GlyphId(gid);
+            let bbox     = self.font.glyph_bounding_box(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
+            let advance  = self.font.glyph_hor_advance(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
+            // TODO: is that what "lsb" means
+            let lsb  = self.font.glyph_hor_side_bearing(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
+            let italics = self.italics(gid);
+            let attachment = self.attachment(gid);
+            Ok(Glyph {
+                font: self,
+                gid,
+                bbox: (
+                    Length::new(bbox.x_min, Font), 
+                    Length::new(bbox.y_min, Font), 
+                    Length::new(bbox.x_max, Font), 
+                    Length::new(bbox.y_max, Font),
+                ),
+                advance:    Length::new(advance, Font),
+                lsb:        Length::new(lsb,     Font),
+                italics:    Length::new(italics, Font),
+                attachment: Length::new(attachment, Font),
+
+            })
+        }
+
+        fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : crate::font::kerning::Corner) -> Option<Length<Font>> {
+            todo!()
         }
 
 
