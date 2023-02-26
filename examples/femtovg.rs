@@ -94,7 +94,7 @@ fn draw_simple<B : Backend>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, Path
     let mut grid = rex::layout::Grid::new();
 
     if let Some((font, path)) = fonts.first() {
-        let ctx = rex::font::FontContext::new(&font);
+        let ctx = rex::font::FontContext::new(&font).unwrap();
         let layout_settings = rex::layout::LayoutSettings::new(&ctx, 10.0, rex::layout::Style::Display);
 
         let layout = rex::layout::engine::layout(&parse("ab").unwrap(), layout_settings);
@@ -117,7 +117,7 @@ fn draw<B : Backend>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) 
 
     let mut grid = rex::layout::Grid::new();
     for (row, (font, path)) in fonts.iter().enumerate() {
-        let ctx = rex::font::FontContext::new(&font);
+        let ctx = rex::font::FontContext::new(&font).unwrap();
         let layout_settings = rex::layout::LayoutSettings::new(&ctx, 10.0, rex::layout::Style::Display);
 
         let name = format!("\\mathtt{{{}}}", path.file_name().unwrap().to_str().unwrap());

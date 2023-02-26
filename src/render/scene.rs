@@ -14,9 +14,8 @@ use pathfinder_geometry::{
 };
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
-use crate::font::MathFont;
+use crate::{font::MathFont, error::FontError};
 use crate::parser::{color::RGBA};
-use font;
 
 fn v_cursor(c: Cursor) -> Vector2F {
     Vector2F::new(c.x as f32, c.y as f32)
@@ -95,9 +94,10 @@ use crate::font::FontContext;
 use crate::layout::{LayoutSettings, Style};
 use pathfinder_export::{Export, FileFormat};
 
-pub fn svg(font: &[u8], tex: &str) -> Vec<u8> {
+pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
+    // TODO : remove '.unwrap()' 
     let font = MathFont::parse(font).unwrap();
-    let ctx = FontContext::new(&font);
+    let ctx = FontContext::new(&font)?;
     let mut renderer = Renderer::new();
     renderer.debug = true;
     let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
@@ -110,5 +110,5 @@ pub fn svg(font: &[u8], tex: &str) -> Vec<u8> {
 
     let mut buf = Vec::new();
     scene.export(&mut buf, FileFormat::SVG).unwrap();
-    buf
+    Ok(buf)
 }

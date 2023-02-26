@@ -15,7 +15,9 @@ pub enum LayoutError {
 pub enum FontError {
     MissingGlyphCodepoint(char),
     MissingGlyphGID(u16),
+    NoMATHTable,
 }
+
 impl From<FontError> for LayoutError {
     fn from(e: FontError) -> Self {
         LayoutError::Font(e)
@@ -77,6 +79,8 @@ impl fmt::Display for FontError {
                 write!(f, "missing glyph for codepoint'{}'", cp),
             MissingGlyphGID(gid) =>
                 write!(f, "missing glyph with gid {}", gid),
+            NoMATHTable =>
+                write!(f, "no MATH tables"),
         }
     }
 }
