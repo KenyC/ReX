@@ -1,30 +1,40 @@
 #![allow(dead_code)]
 use super::{VerticalBox, HorizontalBox, LayoutNode, LayoutVariant, Alignment, Grid, Layout, ColorChange};
 use std::cmp::{max, min};
-use crate::dimensions::*;
+use crate::{dimensions::*, MathFont};
 use std::collections::BTreeMap;
 use crate::parser::nodes;
 
-#[derive(Default)]
-pub struct VBox<'a> {
+pub struct VBox<'a, F> {
     pub width: Length<Px>,
     pub height: Length<Px>,
     pub depth: Length<Px>,
-    node: VerticalBox<'a>,
+    node: VerticalBox<'a, F>,
 }
 
-impl<'a> VBox<'a> {
-    pub fn new() -> VBox<'a> {
+impl<'a, F> Default for VBox<'a, F> {
+    fn default() -> Self {
+        Self {
+            width:  Length::default(),
+            height: Length::default(),
+            depth:  Length::default(),
+            node:   VerticalBox::default(),
+        }
+    }
+}
+
+impl<'a> VBox<'a, MathFont> {
+    pub fn new() -> VBox<'a, MathFont> {
         VBox::default()
     }
 
-    pub fn insert_node(&mut self, idx: usize, node: LayoutNode<'a>) {
+    pub fn insert_node(&mut self, idx: usize, node: LayoutNode<'a, MathFont>) {
         self.width = max(self.width, node.width);
         self.height += node.height;
         self.node.contents.insert(idx, node);
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'a>) {
+    pub fn add_node(&mut self, node: LayoutNode<'a, MathFont>) {
         self.width = max(self.width, node.width);
         self.height += node.height;
         self.node.contents.push(node);
@@ -34,7 +44,7 @@ impl<'a> VBox<'a> {
         self.node.offset = offset;
     }
 
-    pub fn build(mut self) -> LayoutNode<'a> {
+    pub fn build(mut self) -> LayoutNode<'a, MathFont> {
         // The depth only depends on the depth
         // of the last element and offset.
         if let Some(node) = self.node.contents.last() {
@@ -68,21 +78,36 @@ macro_rules! vbox {
     });
 }
 
-#[derive(Default)]
-pub struct HBox<'a> {
+pub struct HBox<'a, F> {
     pub width: Length<Px>,
     pub height: Length<Px>,
     pub depth: Length<Px>,
-    pub node: HorizontalBox<'a>,
+    pub node: HorizontalBox<'a, F>,
     pub alignment: Alignment,
 }
 
-impl<'a> HBox<'a> {
-    pub fn new() -> HBox<'a> {
+// NOTE: A limitation on derive(Clone, Default) forces us to implement clone ourselves.
+// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+impl<'a, F> Default for HBox<'a, F> {
+    fn default() -> Self {
+        Self {
+            width:     Length::default(),
+            height:    Length::default(),
+            depth:     Length::default(),
+            alignment: Alignment::default(),
+            node:      HorizontalBox::default(),
+        }
+    }
+}
+
+
+
+impl<'a> HBox<'a, MathFont> {
+    pub fn new() -> HBox<'a, MathFont> {
         HBox::default()
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'a>) {
+    pub fn add_node(&mut self, node: LayoutNode<'a, MathFont>) {
         self.width += node.width;
         self.height = max(self.height, node.height);
         self.depth = min(self.depth, node.depth);
@@ -101,7 +126,7 @@ impl<'a> HBox<'a> {
         self.width = width;
     }
 
-    pub fn build(mut self) -> LayoutNode<'a> {
+    pub fn build(mut self) -> LayoutNode<'a, MathFont> {
         self.depth -= self.node.offset;
         self.height -= self.node.offset;
 
@@ -114,15 +139,15 @@ impl<'a> HBox<'a> {
     }
 }
 
-impl<'a> Grid<'a> {
-    pub fn new() -> Grid<'a> {
+impl<'a> Grid<'a, MathFont> {
+    pub fn new() -> Grid<'a, MathFont> {
         Grid {
             contents: BTreeMap::new(),
             rows: Vec::new(),
             columns: Vec::new(),
         }
     }
-    pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a>) {
+    pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, MathFont>) {
         if row >= self.rows.len() {
             self.rows.resize(row + 1, (Length::zero(), Length::zero()));
         }
@@ -141,7 +166,7 @@ impl<'a> Grid<'a> {
 
         self.contents.insert((row, column), node);
     }
-    pub fn build(self) -> LayoutNode<'a> {
+    pub fn build(self) -> LayoutNode<'a, MathFont> {
         LayoutNode {
             width:  self.columns.iter().cloned().sum(),
             height: self.rows.iter().map(|&(height, depth)| height - depth).sum(),
@@ -225,7 +250,7 @@ macro_rules! kern {
     );
 }
 
-pub fn color<'a>(layout: Layout<'a>, color: &nodes::Color) -> LayoutNode<'a> {
+pub fn color<'a>(layout: Layout<'a, MathFont>, color: &nodes::Color) -> LayoutNode<'a, MathFont> {
     LayoutNode {
         width: layout.width,
         height: layout.height,

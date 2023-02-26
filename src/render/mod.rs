@@ -67,7 +67,7 @@ impl Renderer {
             debug: false,
         }
     }
-    pub fn layout<'s, 'a, 'f>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f>) -> Result<Layout<'f>, Error<'s>> {
+    pub fn layout<'s, 'a, 'f>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, MathFont>) -> Result<Layout<'f, MathFont>, Error<'s>> {
         use crate::parser::parse;
         use crate::layout::engine::layout;
 
@@ -75,7 +75,7 @@ impl Renderer {
         Ok(layout(&mut parse, layout_settings)?)
     }
     // (x0, y0, x1, y1)
-    pub fn size(&self, layout: &Layout) -> (f64, f64, f64, f64) {
+    pub fn size(&self, layout: &Layout<MathFont>) -> (f64, f64, f64, f64) {
         (
             0.0,
             layout.depth / Px,
@@ -83,7 +83,7 @@ impl Renderer {
             layout.height / Px
         )
     }
-    pub fn render(&self, layout: &Layout, out: &mut impl Backend) {
+    pub fn render(&self, layout: &Layout<MathFont>, out: &mut impl Backend) {
         let pos = Cursor {
             x: 0.0,
             y: 0.0,
@@ -91,7 +91,7 @@ impl Renderer {
         self.render_hbox(out, pos, &layout.contents, layout.height / Px, layout.width / Px, Alignment::Default);
     }
 
-    fn render_grid(&self, out: &mut impl Backend, pos: Cursor, width: f64, height: f64, grid: &Grid) {
+    fn render_grid(&self, out: &mut impl Backend, pos: Cursor, width: f64, height: f64, grid: &Grid<MathFont>) {
         let x_offsets = grid.x_offsets();
         let y_offsets = grid.y_offsets();
         for (&(row, column), node) in grid.contents.iter() {
@@ -106,7 +106,7 @@ impl Renderer {
         }
     }
 
-    fn render_hbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode], height: f64, nodes_width: f64, alignment: Alignment) {
+    fn render_hbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode<MathFont>], height: f64, nodes_width: f64, alignment: Alignment) {
         if self.debug {
             out.bbox(pos.up(height), nodes_width, height, Role::HBox);
         }
@@ -120,7 +120,7 @@ impl Renderer {
             pos.x += node.width / Px;
         }
     }
-    fn render_vbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode]) {
+    fn render_vbox(&self, out: &mut impl Backend, mut pos: Cursor, nodes: &[LayoutNode<MathFont>]) {
         for node in nodes {
             match node.node {
                 LayoutVariant::Rule => out.rule(pos, node.width / Px, node.height / Px),
@@ -157,7 +157,7 @@ impl Renderer {
         }
     }
 
-    fn render_node<'a>(&self, out: &mut impl Backend, pos: Cursor, node: &LayoutNode<'a>) {
+    fn render_node<'a>(&self, out: &mut impl Backend, pos: Cursor, node: &LayoutNode<'a, MathFont>) {
         match node.node {
             LayoutVariant::Glyph(ref gly) => {
                 if self.debug {

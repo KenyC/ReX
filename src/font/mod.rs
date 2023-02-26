@@ -7,10 +7,8 @@ mod style;
 pub use unicode_math::AtomType;
 pub use style::style_symbol;
 
-use font::{opentype::{OpenTypeFont, math::MathHeader}};
-pub use font::opentype::math::{
-    MathConstants,
-};
+use font::opentype::{OpenTypeFont, math::MathHeader};
+pub use font::opentype::math::MathConstants;
 pub use crate::font::common::{Direction, VariantGlyph};
 
 use crate::{dimensions::*, font::common::GlyphId};
@@ -152,21 +150,25 @@ impl IsMathHeader for MathHeader {
 }
 
 
-#[derive(Clone)]
-pub struct FontContext<'f> {
-    pub font: &'f MathFont,
+pub struct FontContext<'f, F> {
+    pub font: &'f F,
     pub math: &'f MathHeader,
     pub constants: Constants,
     pub units_per_em: Scale<Font, Em>,
 }
-impl<'f> FontContext<'f> {
-    pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f>, FontError> {
-        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        self.glyph_from_gid(gid.0 as u16)
+
+impl<'f, F> Clone for FontContext<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            font:         self.font,
+            math:         self.math,
+            constants:    self.constants.clone(),
+            units_per_em: self.units_per_em,
+        }
     }
+}
 
-
-
+impl<'f> FontContext<'f, MathFont> {
     pub fn new(font: &'f MathFont) -> Result<Self, FontError> {
         use font::Font;
         let math = font.math.as_ref().ok_or(FontError::NoMATHTable)?;
@@ -181,6 +183,16 @@ impl<'f> FontContext<'f> {
             constants
         })
     }
+}
+
+impl<'f, F : IsMathFont> FontContext<'f, F> {
+    pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f, F>, FontError> {
+        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        self.glyph_from_gid(gid.0 as u16)
+    }
+
+
+
     pub fn vert_variant(&self, codepoint: char, height: Length<Font>) -> Result<VariantGlyph, FontError> {
         let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         Ok(self.math.vert_variant(gid, height))
@@ -190,7 +202,7 @@ impl<'f> FontContext<'f> {
         Ok(self.math.horz_variant(gid, width))
     }
 
-    pub fn glyph_from_gid(&self, gid: u16) -> Result<Glyph<'f>, FontError> {
+    pub fn glyph_from_gid(&self, gid: u16) -> Result<Glyph<'f, F>, FontError> {
         self.font.glyph_from_gid(gid)
     }
 }
@@ -249,7 +261,7 @@ pub struct Constants {
 }
 
 
-pub struct Glyph<'f, F = MathFont> {
+pub struct Glyph<'f, F> {
     pub font: &'f F,
     pub gid: u16,
     // x_min, y_min, x_max, y_max
@@ -259,7 +271,7 @@ pub struct Glyph<'f, F = MathFont> {
     pub italics: Length<Font>,
     pub attachment: Length<Font>,
 }
-impl<'f> Glyph<'f> {
+impl<'f, F> Glyph<'f, F> {
     pub fn height(&self) -> Length<Font> {
         self.bbox.3
     }

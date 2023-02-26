@@ -30,9 +30,9 @@ use std::collections::BTreeMap;
 use crate::dimensions::*;
 
 // By default this will act as a horizontal box
-#[derive(Clone, Debug, Default)]
-pub struct Layout<'f> {
-    pub contents: Vec<LayoutNode<'f>>,
+#[derive(Clone, Debug)]
+pub struct Layout<'f, F> {
+    pub contents: Vec<LayoutNode<'f, F>>,
     pub width: Length<Px>,
     pub height: Length<Px>,
     pub depth: Length<Px>,
@@ -40,8 +40,21 @@ pub struct Layout<'f> {
     pub alignment: Alignment,
 }
 
-impl<'f> Layout<'f> {
-    pub fn as_node(self) -> LayoutNode<'f> {
+impl<'f, F> Default for Layout<'f, F> {
+    fn default() -> Self {
+        Self { 
+            contents:  Vec::default(),
+            width:     Length::default(),
+            height:    Length::default(),
+            depth:     Length::default(),
+            offset:    Length::default(),
+            alignment: Alignment::default(),
+        }
+    }
+}
+
+impl<'f> Layout<'f, MathFont> {
+    pub fn as_node(self) -> LayoutNode<'f, MathFont> {
         LayoutNode {
             width: self.width,
             height: self.height,
@@ -54,11 +67,11 @@ impl<'f> Layout<'f> {
         }
     }
 
-    pub fn new() -> Layout<'f> {
+    pub fn new() -> Layout<'f, MathFont> {
         Layout::default()
     }
 
-    pub fn add_node(&mut self, node: LayoutNode<'f>) {
+    pub fn add_node(&mut self, node: LayoutNode<'f, MathFont>) {
         self.width += node.width;
         self.height = max(self.height, node.height);
         self.depth = min(self.depth, node.depth);
@@ -69,19 +82,19 @@ impl<'f> Layout<'f> {
         self.offset = offset;
     }
 
-    pub fn finalize(mut self) -> Layout<'f> {
+    pub fn finalize(mut self) -> Layout<'f, MathFont> {
         self.depth -= self.offset;
         self.height -= self.offset;
         self
     }
 
-    pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f> {
+    pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f, MathFont> {
         self.alignment = Alignment::Centered(self.width);
         self.width = new_width;
         self
     }
 
-    fn is_symbol(&self) -> Option<LayoutGlyph<'f>> {
+    fn is_symbol(&self) -> Option<LayoutGlyph<'f, MathFont>> {
         if self.contents.len() != 1 {
             return None;
         }
@@ -89,63 +102,166 @@ impl<'f> Layout<'f> {
     }
 }
 
-#[derive(Clone)]
-pub struct LayoutNode<'f> {
-    pub node: LayoutVariant<'f>,
+pub struct LayoutNode<'f, F> {
+    pub node: LayoutVariant<'f, F>,
     pub width: Length<Px>,
     pub height: Length<Px>,
     pub depth: Length<Px>,
 }
 
-#[derive(Clone)]
-pub enum LayoutVariant<'f> {
-    Grid(Grid<'f>),
-    HorizontalBox(HorizontalBox<'f>),
-    VerticalBox(VerticalBox<'f>),
-    Glyph(LayoutGlyph<'f>),
-    Color(ColorChange<'f>),
+impl<'f, F> Clone for LayoutNode<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            node:   self.node.clone(),
+            width:  self.width.clone(),
+            height: self.height.clone(),
+            depth:  self.depth.clone(),
+        }
+    }
+}
+
+pub enum LayoutVariant<'f, F> {
+    Grid(Grid<'f, F>),
+    HorizontalBox(HorizontalBox<'f, F>),
+    VerticalBox(VerticalBox<'f, F>),
+    Glyph(LayoutGlyph<'f, F>),
+    Color(ColorChange<'f, F>),
     Rule,
     Kern,
 }
 
-#[derive(Clone)]
-pub struct ColorChange<'f> {
-    pub color: RGBA,
-    pub inner: Vec<LayoutNode<'f>>,
+impl<'f, F> Clone for LayoutVariant<'f, F> {
+    fn clone(&self) -> Self {
+        match self {
+            LayoutVariant::Grid(grid)             => LayoutVariant::Grid(grid.clone()),
+            LayoutVariant::HorizontalBox(hbox)    => LayoutVariant::HorizontalBox(hbox.clone()),
+            LayoutVariant::VerticalBox(vbox)      => LayoutVariant::VerticalBox(vbox.clone()),
+            LayoutVariant::Glyph(glyph)           => LayoutVariant::Glyph(glyph.clone()),
+            LayoutVariant::Color(color_change)    => LayoutVariant::Color(color_change.clone()),
+            LayoutVariant::Rule                   => LayoutVariant::Rule,
+            LayoutVariant::Kern                   => LayoutVariant::Kern,
+        }
+    }
 }
 
-#[derive(Clone)]
-pub struct Grid<'f> {
-    pub contents: BTreeMap<(usize, usize), LayoutNode<'f>>,
+pub struct ColorChange<'f, F> {
+    pub color: RGBA,
+    pub inner: Vec<LayoutNode<'f, F>>,
+}
+
+impl<'f, F> Clone for ColorChange<'f, F> {
+    fn clone(&self) -> Self {
+        Self { 
+            color: self.color, 
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+pub struct Grid<'f, F> {
+    pub contents: BTreeMap<(usize, usize), LayoutNode<'f, F>>,
     /// max length of each column
     pub columns: Vec<Length<Px>>,
     /// (max height, max depth) of each row
     pub rows: Vec<(Length<Px>, Length<Px>)>,
 }
 
-#[derive(Clone, Default)]
-pub struct HorizontalBox<'f> {
-    pub contents: Vec<LayoutNode<'f>>,
+impl<'f, F> Clone for Grid<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            contents: self.contents.clone(),
+            columns:  self.columns.clone(),
+            rows:     self.rows.clone(),
+        }
+    }
+}
+
+pub struct HorizontalBox<'f, F> {
+    pub contents: Vec<LayoutNode<'f, F>>,
     pub offset: Length<Px>,
     pub alignment: Alignment,
 }
 
-#[derive(Clone, Default)]
-pub struct VerticalBox<'f> {
-    pub contents: Vec<LayoutNode<'f>>,
+impl<'f, F> Clone for HorizontalBox<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            contents:  self.contents.clone(),
+            offset:    self.offset.clone(),
+            alignment: self.alignment.clone(),
+        }
+    }
+}
+
+
+// NOTE: A limitation on derive(Clone, Default) forces us to implement clone ourselves.
+// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+impl<'f, F> Default for HorizontalBox<'f, F> {
+    fn default() -> Self {
+        Self { 
+            contents:  Vec::default(), 
+            offset:    Length::default(), 
+            alignment: Alignment::default(), 
+        }
+    }
+}
+
+pub struct VerticalBox<'f, F> {
+    pub contents: Vec<LayoutNode<'f, F>>,
     pub offset: Length<Px>,
     pub alignment: Alignment,
 }
 
-#[derive(Clone, Copy)]
-pub struct LayoutGlyph<'f> {
+impl<'f, F> Clone for VerticalBox<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            contents:  self.contents.clone(),
+            offset:    self.offset.clone(),
+            alignment: self.alignment.clone(),
+        }
+    }
+}
+
+// NOTE: A limitation on derive(Clone, Default) forces us to implement clone ourselves.
+// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+impl<'f, F> Default for VerticalBox<'f, F> {
+    fn default() -> Self {
+        Self { 
+            contents:  Vec::default(), 
+            offset:    Length::default(), 
+            alignment: Alignment::default(), 
+        }
+    }
+}
+
+
+
+pub struct LayoutGlyph<'f, F> {
     pub gid: u16,
     pub size: Length<Px>,
     pub offset: Length<Px>,
     pub attachment: Length<Px>,
     pub italics: Length<Px>,
-    pub font: &'f MathFont
+    pub font: &'f F,
 }
+
+
+impl<'f, F> Clone for LayoutGlyph<'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            gid:        self.gid,
+            size:       self.size,
+            offset:     self.offset,
+            attachment: self.attachment,
+            italics:    self.italics,
+            font:       self.font,
+        }
+    }
+}
+impl<'f, F> Copy for LayoutGlyph<'f, F> {}
+
+// NOTE: A limitation on derive(Clone) forces us to implement clone ourselves.
+// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -163,21 +279,21 @@ impl Default for Alignment {
     }
 }
 
-impl<'f> Deref for HorizontalBox<'f> {
-    type Target = [LayoutNode<'f>];
+impl<'f, F> Deref for HorizontalBox<'f, F> {
+    type Target = [LayoutNode<'f, F>];
     fn deref(&self) -> &Self::Target {
         &self.contents
     }
 }
 
-impl<'f> Deref for VerticalBox<'f> {
-    type Target = [LayoutNode<'f>];
+impl<'f, F> Deref for VerticalBox<'f, F> {
+    type Target = [LayoutNode<'f, F>];
     fn deref(&self) -> &Self::Target {
         &self.contents
     }
 }
 
-impl<'f> fmt::Debug for VerticalBox<'f> {
+impl<'f> fmt::Debug for VerticalBox<'f, MathFont> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.offset.is_zero() {
             write!(f, "VerticalBox({:?})", self.contents)
@@ -190,19 +306,19 @@ impl<'f> fmt::Debug for VerticalBox<'f> {
     }
 }
 
-impl<'f> fmt::Debug for HorizontalBox<'f> {
+impl<'f, F> fmt::Debug for HorizontalBox<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "HorizontalBox({:?})", self.contents)
     }
 }
 
-impl<'f> fmt::Debug for LayoutGlyph<'f> {
+impl<'f, F> fmt::Debug for LayoutGlyph<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "LayoutGlyph({})", self.gid)
     }
 }
 
-impl<'f> fmt::Debug for LayoutNode<'f> {
+impl<'f, F> fmt::Debug for LayoutNode<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.node {
             LayoutVariant::Grid(ref grid) =>  write!(f, "Grid(..)"),
@@ -224,11 +340,11 @@ impl<'f> fmt::Debug for LayoutNode<'f> {
     }
 }
 
-impl<'f> LayoutNode<'f> {
+impl<'f> LayoutNode<'f, MathFont> {
     /// Center the vertical about the axis.
     /// For now this ignores offsets if already applied,
     /// and will break if there already are offsets.
-    fn centered(mut self, axis: Length<Px>) -> LayoutNode<'f> {
+    fn centered(mut self, axis: Length<Px>) -> LayoutNode<'f, MathFont> {
         let shift = (self.height + self.depth) * 0.5 - axis;
 
         match self.node {
@@ -246,7 +362,7 @@ impl<'f> LayoutNode<'f> {
         self
     }
 
-    fn is_symbol(&self) -> Option<LayoutGlyph<'f>> {
+    fn is_symbol(&self) -> Option<LayoutGlyph<'f, MathFont>> {
         match self.node {
             LayoutVariant::Glyph(gly) => Some(gly),
             LayoutVariant::HorizontalBox(ref hb) => is_symbol(&hb.contents),
@@ -257,7 +373,7 @@ impl<'f> LayoutNode<'f> {
     }
 }
 
-pub fn is_symbol<'a, 'b: 'a>(contents: &'a [LayoutNode<'b>]) -> Option<LayoutGlyph<'b>> {
+pub fn is_symbol<'a, 'b: 'a>(contents: &'a [LayoutNode<'b, MathFont>]) -> Option<LayoutGlyph<'b, MathFont>> {
     if contents.len() != 1 {
         return None;
     }
@@ -321,7 +437,7 @@ impl Style {
         }
     }
 
-    fn sup_shift_up(self, config: LayoutSettings) -> Length<Em> {
+    fn sup_shift_up(self, config: LayoutSettings<MathFont>) -> Length<Em> {
         match self {
             Style::Display | Style::Text | Style::Script | Style::ScriptScript => {
                 config.ctx.constants.superscript_shift_up
@@ -354,15 +470,31 @@ impl Style {
 }
 
 
-#[derive(Copy, Clone)]
-pub struct LayoutSettings<'a, 'f> {
-    pub ctx: &'a FontContext<'f>,
+// NOTE: A limitation on derive(Clone) forces us to implement clone ourselves.
+// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+pub struct LayoutSettings<'a, 'f, F> {
+    pub ctx: &'a FontContext<'f, F>,
     pub font_size: Scale<Px, Em>,
     pub style: Style,
 }
 
-impl<'a, 'f> LayoutSettings<'a, 'f> {
-    pub fn new(ctx: &'a FontContext<'f>, font_size: f64, style: Style) -> Self {
+
+impl<'a, 'f, F> Clone for LayoutSettings<'a, 'f, F> {
+    fn clone(&self) -> Self {
+        Self {
+            ctx :       self.ctx,
+            font_size : self.font_size,
+            style :     self.style.clone(),
+        }
+    }
+}
+impl<'a, 'f, F> Copy for LayoutSettings<'a, 'f, F> {}
+
+
+
+
+impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
+    pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
         LayoutSettings {
             ctx,
             font_size: Scale::new(font_size, Px, Em),

@@ -1,5 +1,6 @@
 //! This is a collection of tools used for converting ParseNodes into LayoutNodes.
 
+use crate::MathFont;
 use crate::font::{Glyph, Direction, VariantGlyph};
 use crate::dimensions::{*};
 use crate::layout::LayoutSettings;
@@ -10,12 +11,12 @@ use super::{LayoutNode, LayoutVariant, LayoutGlyph};
 use crate::parser::nodes::Rule;
 use crate::error::LayoutResult;
 
-pub trait AsLayoutNode<'f> {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f>) -> LayoutResult<LayoutNode<'f>>;
+pub trait AsLayoutNode<'f, F> {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, F>>;
 }
 
-impl<'f> AsLayoutNode<'f> for Glyph<'f> {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f>) -> LayoutResult<LayoutNode<'f>> {
+impl<'f> AsLayoutNode<'f, MathFont> for Glyph<'f, MathFont> {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
         Ok(LayoutNode {
             height: self.height().scaled(config),
             width:  self.advance.scaled(config),
@@ -32,8 +33,8 @@ impl<'f> AsLayoutNode<'f> for Glyph<'f> {
     }
 }
 
-impl<'f> AsLayoutNode<'f> for Rule {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f>) -> LayoutResult<LayoutNode<'f>> {
+impl<'f> AsLayoutNode<'f, MathFont> for Rule {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
         Ok(LayoutNode {
             node:   LayoutVariant::Rule,
             width:  self.width .scaled(config),
@@ -43,8 +44,8 @@ impl<'f> AsLayoutNode<'f> for Rule {
     }
 }
 
-impl<'f> AsLayoutNode<'f> for VariantGlyph {
-    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f>) -> LayoutResult<LayoutNode<'f>> {
+impl<'f> AsLayoutNode<'f, MathFont> for VariantGlyph {
+    fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, MathFont>) -> LayoutResult<LayoutNode<'f, MathFont>> {
         match *self {
             VariantGlyph::Replacement(gid) => {
                 let glyph = config.ctx.glyph_from_gid(gid)?;
@@ -87,7 +88,7 @@ impl<'f> AsLayoutNode<'f> for VariantGlyph {
     }
 }
 
-impl<'a, 'f> LayoutSettings<'a, 'f> {
+impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
     fn scale_factor(&self) -> f64 {
         match self.style {
             Style::Display |
@@ -113,27 +114,27 @@ impl<'a, 'f> LayoutSettings<'a, 'f> {
     }
 }
 pub trait Scaled {
-    fn scaled(self, config: LayoutSettings) -> Length<Px>;
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px>;
 }
 
 impl Scaled for Length<Font> {
-    fn scaled(self, config: LayoutSettings) -> Length<Px> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
         config.scale_font_unit(self) * config.scale_factor()
     }
 }
 
 impl Scaled for Length<Px> {
-    fn scaled(self, config: LayoutSettings) -> Length<Px> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
         self * config.scale_factor()
     }
 }
 impl Scaled for Length<Em> {
-    fn scaled(self, config: LayoutSettings) -> Length<Px> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
         self * config.font_size * config.scale_factor()
     }
 }
 impl Scaled for Unit {
-    fn scaled(self, config: LayoutSettings) -> Length<Px> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
         let length = match self {
             Unit::Em(em) => Length::new(em, Em) * config.font_size,
             Unit::Px(px) => Length::new(px, Px)

@@ -1,7 +1,7 @@
 use super::{Glyph};
 use std::cmp::{max, min};
 
-use crate::dimensions::{Length, Font};
+use crate::{dimensions::{Length, Font}, MathFont};
 
 #[derive(Debug)]
 enum Corner {
@@ -34,7 +34,7 @@ enum Corner {
 // for now, I'm just going to port the algorithm I found in LuaTeX and XeTeX.
 // If nothing else, it will at least be consistent.
 
-pub fn superscript_kern(base: &Glyph, script: &Glyph, shift: Length<Font>) -> Length<Font> {
+pub fn superscript_kern(base: &Glyph<MathFont>, script: &Glyph<MathFont>, shift: Length<Font>) -> Length<Font> {
     let base_height = base.bbox.3;
     let script_depth = script.bbox.1 + shift;
 
@@ -47,7 +47,7 @@ pub fn superscript_kern(base: &Glyph, script: &Glyph, shift: Length<Font>) -> Le
     max(value1, value2)
 }
 
-pub fn subscript_kern(base: &Glyph, script: &Glyph, shift: Length<Font>) -> Length<Font> {
+pub fn subscript_kern(base: &Glyph<MathFont>, script: &Glyph<MathFont>, shift: Length<Font>) -> Length<Font> {
     let base_depth = base.bbox.1;
     let script_height = script.bbox.3 - shift;
 
@@ -60,7 +60,7 @@ pub fn subscript_kern(base: &Glyph, script: &Glyph, shift: Length<Font>) -> Leng
     min(value1, value2)
 }
 
-fn kern_from(glyph: &Glyph, height: Length<Font>, side: Corner) -> Length<Font> {
+fn kern_from(glyph: &Glyph<MathFont>, height: Length<Font>, side: Corner) -> Length<Font> {
     let math = glyph.font.math.as_ref().unwrap();
     let record = match math.glyph_info.kern_info.entries.get(&glyph.gid) {
         Some(record) => record,
