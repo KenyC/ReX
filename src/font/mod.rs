@@ -9,10 +9,9 @@ pub use style::style_symbol;
 
 use font::{opentype::{OpenTypeFont, math::MathHeader}};
 pub use font::opentype::math::{
-    assembly::{Direction},
     MathConstants,
-    assembly::VariantGlyph
 };
+pub use crate::font::common::{Direction, VariantGlyph};
 
 use crate::{dimensions::*, font::common::GlyphId};
 use crate::error::FontError;
@@ -143,11 +142,11 @@ impl IsMathHeader for MathHeader {
     }
 
     fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
-        self.variants.horz_variant(gid as u16, (width / Font) as u32)
+        self.variants.horz_variant(gid as u16, (width / Font) as u32).into()
     }
 
     fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph {
-        self.variants.vert_variant(gid as u16, (height / Font) as u32)
+        self.variants.vert_variant(gid as u16, (height / Font) as u32).into()
     }
 
 }
@@ -249,63 +248,6 @@ pub struct Constants {
     pub script_script_percent_scale_down: f64,
 }
 
-impl Constants {
-    pub fn new(math: &MathConstants, font_units_to_em: Scale<Em, Font>) -> Self {
-        let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
-
-        Constants {
-            subscript_shift_down: em(math.subscript_top_max.value.into()),
-            subscript_top_max: em(math.subscript_top_max.value.into()),
-            subscript_baseline_drop_min: em(math.subscript_baseline_drop_min.value.into()),
-            
-            superscript_baseline_drop_max: em(math.superscript_baseline_drop_max.value.into()),
-            superscript_bottom_min: em(math.superscript_bottom_min.value.into()),
-            superscript_shift_up_cramped: em(math.superscript_shift_up_cramped.value.into()),
-            superscript_shift_up: em(math.superscript_shift_up.value.into()),
-            sub_superscript_gap_min: em(math.sub_superscript_gap_min.value.into()),
-
-            upper_limit_baseline_rise_min: em(math.upper_limit_baseline_rise_min.value.into()),
-            upper_limit_gap_min: em(math.upper_limit_gap_min.value.into()),
-            lower_limit_gap_min: em(math.lower_limit_gap_min.value.into()),
-            lower_limit_baseline_drop_min: em(math.lower_limit_baseline_drop_min.value.into()),
-
-            fraction_rule_thickness: em(math.fraction_rule_thickness.value.into()),
-            fraction_numerator_display_style_shift_up: em(math.fraction_numerator_display_style_shift_up.value.into()),
-            fraction_denominator_display_style_shift_down: em(math.fraction_denominator_display_style_shift_down.value.into()),
-            fraction_num_display_style_gap_min: em(math.fraction_num_display_style_gap_min.value.into()),
-            fraction_denom_display_style_gap_min: em(math.fraction_denom_display_style_gap_min.value.into()),
-            fraction_numerator_shift_up: em(math.fraction_numerator_shift_up.value.into()),
-            fraction_denominator_shift_down: em(math.fraction_denominator_shift_down.value.into()),
-            fraction_numerator_gap_min: em(math.fraction_numerator_gap_min.value.into()),
-            fraction_denominator_gap_min: em(math.fraction_denominator_gap_min.value.into()),
-
-            axis_height: em(math.axis_height.value.into()),
-            accent_base_height: em(math.accent_base_height.value.into()),
-
-            delimited_sub_formula_min_height: em(math.delimited_sub_formula_min_height.into()),
-
-            display_operator_min_height: em(math.display_operator_min_height.into()),
-
-            radical_display_style_vertical_gap: em(math.radical_display_style_vertical_gap.value.into()),
-            radical_vertical_gap: em(math.radical_vertical_gap.value.into()),
-            radical_rule_thickness: em(math.radical_rule_thickness.value.into()),
-            radical_extra_ascender: em(math.radical_extra_ascender.value.into()),
-
-            stack_display_style_gap_min: em(math.stack_display_style_gap_min.value.into()),
-            stack_top_display_style_shift_up: em(math.stack_top_display_style_shift_up.value.into()),
-            stack_top_shift_up: em(math.stack_top_shift_up.value.into()),
-            stack_bottom_shift_down: em(math.stack_bottom_shift_down.value.into()),
-            stack_gap_min: em(math.stack_gap_min.value.into()),
-
-            delimiter_factor: 0.901,
-            delimiter_short_fall: Length::new(0.1, Em),
-            null_delimiter_space: Length::new(0.1, Em),
-
-            script_percent_scale_down: 0.01 * math.script_percent_scale_down as f64,
-            script_script_percent_scale_down: 0.01 * math.script_script_percent_scale_down as f64,
-        }
-    }
-}
 
 pub struct Glyph<'f, F = MathFont> {
     pub font: &'f F,

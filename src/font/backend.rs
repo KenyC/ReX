@@ -109,11 +109,11 @@ pub mod ttf_parser {
             self.safe_constants(font_units_to_em).unwrap()
         }
 
-        fn horz_variant(&self, gid: u32, width: crate::dimensions::Length<Font>) -> font::opentype::math::assembly::VariantGlyph {
+        fn horz_variant(&self, gid: u32, width: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
             todo!()
         }
 
-        fn vert_variant(&self, gid: u32, height: crate::dimensions::Length<Font>) -> font::opentype::math::assembly::VariantGlyph {
+        fn vert_variant(&self, gid: u32, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
             todo!()
         }
 
