@@ -7,14 +7,14 @@ mod style;
 pub use unicode_math::AtomType;
 pub use style::style_symbol;
 
-use font::{opentype::{OpenTypeFont, math::MathHeader}, GlyphId};
+use font::{opentype::{OpenTypeFont, math::MathHeader}};
 pub use font::opentype::math::{
     assembly::{Direction},
     MathConstants,
     assembly::VariantGlyph
 };
 
-use crate::dimensions::{*};
+use crate::{dimensions::*, font::common::GlyphId};
 use crate::error::FontError;
 
 pub type MathFont = OpenTypeFont;
@@ -40,7 +40,7 @@ impl IsMathFont for MathFont {
         let math_header = self.math.as_ref().ok_or(FontError::NoMATHTable)?;
         let italics = math_header.italics(gid);
         let attachment = math_header.attachment(gid);
-        let glyph = font.glyph(GlyphId(gid as u32)).ok_or(FontError::MissingGlyphGID(gid))?;
+        let glyph = font.glyph(GlyphId(gid as u32).into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let bbox = glyph.path.bounds();
         let ll = bbox.lower_left();
         let ur = bbox.upper_right();
@@ -65,6 +65,8 @@ impl IsMathFont for MathFont {
 pub trait IsMathHeader {
     fn italics(&self, glyph_id : u16) -> i16;
     fn attachment(&self, glyph_id : u16) -> i16; 
+    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants;
+
 
     // TODO : VariantGlyph must be replaced with something generic
     fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
@@ -74,14 +76,70 @@ pub trait IsMathHeader {
 
 
 impl IsMathHeader for MathHeader {
-
-
     fn italics(&self, glyph_id : u16) -> i16 {
         self.glyph_info.italics_correction_info.get(glyph_id).map(|info| info.value).unwrap_or_default()
     }
 
     fn attachment(&self, gid: u16) -> i16 {
         self.glyph_info.top_accent_attachment.get(gid).map(|info| info.value).unwrap_or_default()
+    }
+
+    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants {
+        let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
+
+        let math_constants = &self.constants;
+        Constants {
+            subscript_shift_down: em(math_constants.subscript_top_max.value.into()),
+            subscript_top_max: em(math_constants.subscript_top_max.value.into()),
+            subscript_baseline_drop_min: em(math_constants.subscript_baseline_drop_min.value.into()),
+            
+            superscript_baseline_drop_max: em(math_constants.superscript_baseline_drop_max.value.into()),
+            superscript_bottom_min: em(math_constants.superscript_bottom_min.value.into()),
+            superscript_shift_up_cramped: em(math_constants.superscript_shift_up_cramped.value.into()),
+            superscript_shift_up: em(math_constants.superscript_shift_up.value.into()),
+            sub_superscript_gap_min: em(math_constants.sub_superscript_gap_min.value.into()),
+
+            upper_limit_baseline_rise_min: em(math_constants.upper_limit_baseline_rise_min.value.into()),
+            upper_limit_gap_min: em(math_constants.upper_limit_gap_min.value.into()),
+            lower_limit_gap_min: em(math_constants.lower_limit_gap_min.value.into()),
+            lower_limit_baseline_drop_min: em(math_constants.lower_limit_baseline_drop_min.value.into()),
+
+            fraction_rule_thickness: em(math_constants.fraction_rule_thickness.value.into()),
+            fraction_numerator_display_style_shift_up: em(math_constants.fraction_numerator_display_style_shift_up.value.into()),
+            fraction_denominator_display_style_shift_down: em(math_constants.fraction_denominator_display_style_shift_down.value.into()),
+            fraction_num_display_style_gap_min: em(math_constants.fraction_num_display_style_gap_min.value.into()),
+            fraction_denom_display_style_gap_min: em(math_constants.fraction_denom_display_style_gap_min.value.into()),
+            fraction_numerator_shift_up: em(math_constants.fraction_numerator_shift_up.value.into()),
+            fraction_denominator_shift_down: em(math_constants.fraction_denominator_shift_down.value.into()),
+            fraction_numerator_gap_min: em(math_constants.fraction_numerator_gap_min.value.into()),
+            fraction_denominator_gap_min: em(math_constants.fraction_denominator_gap_min.value.into()),
+
+            axis_height: em(math_constants.axis_height.value.into()),
+            accent_base_height: em(math_constants.accent_base_height.value.into()),
+
+            delimited_sub_formula_min_height: em(math_constants.delimited_sub_formula_min_height.into()),
+
+            display_operator_min_height: em(math_constants.display_operator_min_height.into()),
+
+            radical_display_style_vertical_gap: em(math_constants.radical_display_style_vertical_gap.value.into()),
+            radical_vertical_gap: em(math_constants.radical_vertical_gap.value.into()),
+            radical_rule_thickness: em(math_constants.radical_rule_thickness.value.into()),
+            radical_extra_ascender: em(math_constants.radical_extra_ascender.value.into()),
+
+            stack_display_style_gap_min: em(math_constants.stack_display_style_gap_min.value.into()),
+            stack_top_display_style_shift_up: em(math_constants.stack_top_display_style_shift_up.value.into()),
+            stack_top_shift_up: em(math_constants.stack_top_shift_up.value.into()),
+            stack_bottom_shift_down: em(math_constants.stack_bottom_shift_down.value.into()),
+            stack_gap_min: em(math_constants.stack_gap_min.value.into()),
+
+            // TODO: trait implementations should not be allowed to vary on these values
+            delimiter_factor: 0.901,
+            delimiter_short_fall: Length::new(0.1, Em),
+            null_delimiter_space: Length::new(0.1, Em),
+
+            script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down),
+            script_script_percent_scale_down: 0.01 * f64::from(math_constants.script_script_percent_scale_down),
+        }
     }
 
     fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
@@ -115,7 +173,7 @@ impl<'f> FontContext<'f> {
         let math = font.math.as_ref().ok_or(FontError::NoMATHTable)?;
         let font_units_to_em = Scale::new(font.font_matrix().matrix.m11() as f64, Em, Font);
         let units_per_em = font_units_to_em.inv();
-        let constants = Constants::new(&math.constants, font_units_to_em);
+        let constants = math.constants(font_units_to_em);
 
         Ok(FontContext {
             font,
@@ -125,13 +183,11 @@ impl<'f> FontContext<'f> {
         })
     }
     pub fn vert_variant(&self, codepoint: char, height: Length<Font>) -> Result<VariantGlyph, FontError> {
-        use font::Font;
-        let GlyphId(gid) = self.font.gid_for_codepoint(codepoint as u32).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         Ok(self.math.vert_variant(gid, height))
     }
     pub fn horz_variant(&self, codepoint: char, width: Length<Font>) -> Result<VariantGlyph, FontError> {
-        use font::Font;
-        let GlyphId(gid) = self.font.gid_for_codepoint(codepoint as u32).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         Ok(self.math.horz_variant(gid, width))
     }
 
