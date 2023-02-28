@@ -13,12 +13,17 @@ femtovg-backend    = ["dep:femtovg"]
 ttfparser-backend  = ["dep:ttf-parser"]
 
 [[example]]
-name = "example"
-path = "examples/qc.rs"
+name = "font-pathfinder"
+path = "examples/font_pathfinder.rs"
 
 [[example]]
-name = "femtovg"
-path = "examples/femtovg.rs"
+name = "femtovg-pathfinder"
+path = "examples/femtovg_pathfinder.rs"
+
+
+[[example]]
+name = "femtovg-ttf-parder"
+path = "examples/femtovg_ttf_parser.rs"
 
 
 [dependencies]

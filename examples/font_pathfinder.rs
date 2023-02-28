@@ -40,7 +40,7 @@ fn main() {
 
     let mut grid = Grid::new();
     for (row, (font, path)) in fonts.iter().enumerate() {
-        let ctx = FontContext::new(&font).unwrap();
+        let ctx = FontContext::new(font.as_ref()).unwrap();
         let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
 
         let name = format!("\\mathtt{{{}}}", path.file_name().unwrap().to_str().unwrap());

@@ -7,7 +7,8 @@ mod style;
 pub use unicode_math::AtomType;
 pub use style::style_symbol;
 
-use font::opentype::{OpenTypeFont, math::MathHeader};
+
+use font::opentype::OpenTypeFont;
 pub use font::opentype::math::MathConstants;
 pub use crate::font::common::{Direction, VariantGlyph};
 
@@ -27,9 +28,13 @@ pub trait IsMathFont : Sized {
     fn italics(&self, glyph_id : u16) -> i16;
     fn attachment(&self, glyph_id : u16) -> i16; 
     fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants;
+    fn font_units_to_em(&self) -> Scale<Em, Font>;
 
 
     fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
+    // TODO : there seems to be a problem in "qc.rs" 
+    // the } before "wat?" is too short for the last 2 fonts but not the first
+    // maybe this is a problem, maybe this is meant to be
     fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph;
 }
 
@@ -45,7 +50,6 @@ impl IsMathFont for MathFont {
         use font::Font;
         let font = self;
         let hmetrics = font.glyph_metrics(gid).ok_or(FontError::MissingGlyphGID(gid))?;
-        let math_header = self.math.as_ref().ok_or(FontError::NoMATHTable)?;
         let italics = self.italics(gid);
         let attachment = self.attachment(gid);
         let glyph = font.glyph(GlyphId(gid as u32).into()).ok_or(FontError::MissingGlyphGID(gid))?;
@@ -172,6 +176,11 @@ impl IsMathFont for MathFont {
         }
     }
 
+    fn font_units_to_em(&self) -> Scale<Em, Font> {
+        use font::Font;
+        Scale::new(self.font_matrix().matrix.m11() as f64, Em, Font)
+    }
+
     fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
         self
             .math
@@ -211,10 +220,10 @@ impl<'f, F> Clone for FontContext<'f, F> {
     }
 }
 
-impl<'f> FontContext<'f, MathFont> {
-    pub fn new(font: &'f MathFont) -> Result<Self, FontError> {
+impl<'f, F : IsMathFont> FontContext<'f, F> {
+    pub fn new(font: &'f F) -> Result<Self, FontError> {
         use font::Font;
-        let font_units_to_em = Scale::new(font.font_matrix().matrix.m11() as f64, Em, Font);
+        let font_units_to_em = font.font_units_to_em();
         let units_per_em = font_units_to_em.inv();
         let constants = font.constants(font_units_to_em);
 
@@ -224,9 +233,7 @@ impl<'f> FontContext<'f, MathFont> {
             constants
         })
     }
-}
 
-impl<'f, F : IsMathFont> FontContext<'f, F> {
     pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f, F>, FontError> {
         let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         self.glyph_from_gid(gid.0 as u16)

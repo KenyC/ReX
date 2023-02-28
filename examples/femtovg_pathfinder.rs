@@ -94,7 +94,7 @@ fn draw_simple<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenT
     let mut grid = rex::layout::Grid::new();
 
     if let Some((font, path)) = fonts.first() {
-        let ctx = rex::font::FontContext::new(&font).unwrap();
+        let ctx = rex::font::FontContext::new(font.as_ref()).unwrap();
         let layout_settings = rex::layout::LayoutSettings::new(&ctx, 10.0, rex::layout::Style::Display);
 
         let layout = rex::layout::engine::layout(&parse("ab").unwrap(), layout_settings);
@@ -117,7 +117,7 @@ fn draw<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenTypeFont
 
     let mut grid = rex::layout::Grid::new();
     for (row, (font, path)) in fonts.iter().enumerate() {
-        let ctx = rex::font::FontContext::new(&font).unwrap();
+        let ctx = rex::font::FontContext::new(font.as_ref()).unwrap();
         let layout_settings = rex::layout::LayoutSettings::new(&ctx, 10.0, rex::layout::Style::Display);
 
         let name = format!("\\mathtt{{{}}}", path.file_name().unwrap().to_str().unwrap());
@@ -135,16 +135,7 @@ fn draw<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenTypeFont
     layout.add_node(grid.build());
 
     let renderer = Renderer::new();
-    // let (x0, y0, x1, y1) = renderer.size(&layout);
-    // println!("{:?}", (x0, y0, x1, y1));
-
-    // let mut scene = Scene::new();
-    // scene.set_view_box(RectF::from_points(vec2f(x0 as f32, y0 as f32), vec2f(x1 as f32, y1 as f32)));
-    // let mut backend = SceneWrapper::new(&mut scene);
-
     renderer.render(&layout, backend);
-    
-
 }
 
 fn load_fonts() -> Vec<(Box<OpenTypeFont>, PathBuf)> {

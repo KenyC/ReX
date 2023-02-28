@@ -4,25 +4,50 @@
 #[cfg(feature="ttfparser-backend")]
 pub mod ttf_parser {
 
-    use ttf_parser::{GlyphId, math::{GlyphConstructions, GlyphPart, Variants}, LazyArray16};
+    use ttf_parser::{GlyphId, math::{GlyphPart, Variants}, LazyArray16};
 
     use crate::{font::{Constants, VariantGlyph, common::GlyphInstruction, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
 
     pub struct MathFont<'a> {
         math: ttf_parser::math::Table<'a>,
-        font: ttf_parser::Face<'a>
+        font: ttf_parser::Face<'a>,
+        font_matrix: ttf_parser::cff::Matrix,
     }
 
     impl<'a> MathFont<'a> {
         pub fn new(font: ttf_parser::Face<'a>) -> Result<Self, FontError> { 
             let math = font.tables().math.ok_or(FontError::NoMATHTable)?;
+            let font_matrix; 
+            if let Some(cff) = font.tables().cff {
+                font_matrix = cff.matrix();
+            }
+            else {
+                let units_per_em = font.tables().head.units_per_em;
+                font_matrix = ttf_parser::cff::Matrix {
+                    sx: (units_per_em as f32).recip(),
+                    ky: 0.,
+                    kx: 0.,
+                    sy: (units_per_em as f32).recip(),
+                    tx: 0.,
+                    ty: 0.,
+                };
+            };
             Ok(Self { 
                 math, 
-                font 
+                font,
+                font_matrix,
             }) 
         }
-    }
+        
+        pub fn font(&self) -> &ttf_parser::Face<'a> {
+            &self.font
+        }
+    
+        pub fn font_matrix(&self) -> ttf_parser::cff::Matrix {
+            self.font_matrix
+        }
+}
 
 
     impl<'a> MathFont<'a> {
@@ -157,7 +182,7 @@ pub mod ttf_parser {
             let size = (height / Font) as u32;
             if let Some((repeats, diff_ratio)) = greatest_lower_bound(&variants, assembly.parts, size) {
                 let instructions = construct_glyphs(&variants, assembly.parts, repeats, diff_ratio);
-                VariantGlyph::Constructable(Direction::Vertical, instructions)
+                VariantGlyph::Constructable(Direction::Horizontal, instructions)
             }
             else {
                 trace!("constructable glyphs are too large");
@@ -216,7 +241,6 @@ pub mod ttf_parser {
             let glyph_id = ttf_parser::GlyphId(gid);
             let bbox     = self.font.glyph_bounding_box(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
             let advance  = self.font.glyph_hor_advance(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
-            // TODO: is that what "lsb" means
             let lsb  = self.font.glyph_hor_side_bearing(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
             let italics = self.italics(gid);
             let attachment = self.attachment(gid);
@@ -238,7 +262,29 @@ pub mod ttf_parser {
         }
 
         fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : crate::font::kerning::Corner) -> Option<Length<Font>> {
-            todo!()
+            let record = self.math.glyph_info?.kern_infos?.get(ttf_parser::GlyphId(glyph_id))?;
+
+            let table = match side {
+                crate::font::kerning::Corner::TopRight    => record.top_right.as_ref(),
+                crate::font::kerning::Corner::TopLeft     => record.top_left.as_ref(),
+                crate::font::kerning::Corner::BottomRight => record.bottom_right.as_ref(),
+                crate::font::kerning::Corner::BottomLeft  => record.bottom_left.as_ref(),
+            }?;
+
+
+            let mut i = 0;
+            while let Some((h, kern)) = Option::zip(table.height(i), table.kern(i)) {
+                if height < Length::new(h.value, Font) {
+                    return Some(Length::new(kern.value, Font));
+                }
+                i += 1;
+            }
+
+            Some(Length::new(table.kern(i - 1).unwrap().value, Font))
+        }
+
+        fn font_units_to_em(&self) -> Scale<Em, Font> {
+            Scale::new(self.font_matrix.sx as f64, Em, Font)
         }
 
 
