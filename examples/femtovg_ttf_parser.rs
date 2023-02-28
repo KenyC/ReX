@@ -6,7 +6,6 @@ use std::path::PathBuf;
 
 use femtovg::Color;
 use femtovg::renderer::OpenGl;
-use font::OpenTypeFont;
 use rex::femtovg::FemtoVGCanvas;
 use rex::font::{IsMathFont, FontContext};
 use rex::font::backend::ttf_parser::MathFont;

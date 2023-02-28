@@ -1,4 +1,4 @@
-
+#[cfg(feature="fontcrate-backend")]
 use font::OpenTypeFont;
 use pathfinder_renderer::{
     scene::{Scene, DrawPath},
@@ -15,7 +15,7 @@ use pathfinder_geometry::{
 };
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
-use crate::{font::MathFont, error::FontError};
+use crate::{error::FontError};
 use crate::parser::{color::RGBA};
 
 fn v_cursor(c: Cursor) -> Vector2F {
@@ -45,6 +45,7 @@ impl<'a> SceneWrapper<'a> {
     }
 }
 
+#[cfg(feature="fontcrate-backend")]
 impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
         let color = match role {
@@ -64,7 +65,7 @@ impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
         let outline = stroke.into_outline().transformed(&self.transform);
         self.scene.push_draw_path(DrawPath::new(outline, paint));
     }
-    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, font: &MathFont) {
+    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, font: &OpenTypeFont) {
         use font::{Font, GlyphId};
         let path = font.glyph(GlyphId(gid as u32)).unwrap().path;
         let tr = self.transform
@@ -95,9 +96,10 @@ use crate::font::FontContext;
 use crate::layout::{LayoutSettings, Style};
 use pathfinder_export::{Export, FileFormat};
 
+#[cfg(feature="fontcrate-backend")]
 pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
     // TODO : remove '.unwrap()' 
-    let font = MathFont::parse(font).unwrap();
+    let font = OpenTypeFont::parse(font).unwrap();
     let ctx = FontContext::new(&font)?;
     let mut renderer = Renderer::new();
     renderer.debug = true;

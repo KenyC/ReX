@@ -11,6 +11,7 @@ edition = "2018"
 pathfinder-backend = ["dep:pathfinder_renderer"]
 femtovg-backend    = ["dep:femtovg"]
 ttfparser-backend  = ["dep:ttf-parser"]
+fontcrate-backend  = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
 
 [[example]]
 name = "font-pathfinder"
@@ -22,19 +23,23 @@ path = "examples/femtovg_pathfinder.rs"
 
 
 [[example]]
-name = "femtovg-ttf-parder"
+name = "femtovg-ttf-parser"
 path = "examples/femtovg_ttf_parser.rs"
 
 
 [dependencies]
-font = { git = "https://github.com/pdf-rs/font", features=["woff"] }
-pathfinder_geometry = { git = "https://github.com/servo/pathfinder/" }
-pathfinder_color = { git = "https://github.com/servo/pathfinder/" }
-pathfinder_content = { git = "https://github.com/servo/pathfinder/" }
-pathfinder_export = { git = "https://github.com/servo/pathfinder/" }
+pathfinder_geometry = { git = "https://github.com/servo/pathfinder/", optional = true }
+pathfinder_color    = { git = "https://github.com/servo/pathfinder/", optional = true }
+pathfinder_content  = { git = "https://github.com/servo/pathfinder/", optional = true }
+pathfinder_export   = { git = "https://github.com/servo/pathfinder/", optional = true }
 unicode-math = { git = "https://github.com/s3bk/unicode-math/" }
 serde_derive = "1.0"
 serde = "1.0"
+
+[dependencies.font]
+git = "https://github.com/pdf-rs/font"
+features=["woff"]
+optional = true
 
 [dependencies.pathfinder_renderer]
 git = "https://github.com/servo/pathfinder/"

@@ -1,6 +1,6 @@
 use crate::error::{LayoutError, Error};
-pub use crate::font::MathFont;
 use crate::dimensions::*;
+use crate::font::IsMathFont;
 use crate::layout::{LayoutNode, LayoutVariant, Alignment, Style, LayoutSettings, Layout, Grid};
 pub use crate::parser::{color::RGBA};
 
@@ -67,7 +67,7 @@ impl Renderer {
             debug: false,
         }
     }
-    pub fn layout<'s, 'a, 'f>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, MathFont>) -> Result<Layout<'f, MathFont>, Error<'s>> {
+    pub fn layout<'s, 'a, 'f, F : IsMathFont>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error<'s>> {
         use crate::parser::parse;
         use crate::layout::engine::layout;
 
@@ -193,10 +193,9 @@ impl Renderer {
 }
 
 #[cfg(feature="pathfinder-backend")]
-pub mod scene;
-use font::OpenTypeFont;
+pub mod pathfinder;
 #[cfg(feature="pathfinder-backend")]
-pub use scene::SceneWrapper;
+pub use pathfinder::SceneWrapper;
 
 #[cfg(feature="femtovg-backend")]
 pub mod femtovg;

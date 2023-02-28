@@ -1,15 +1,20 @@
 use femtovg::{Renderer, Canvas, Solidity, Path, Paint};
+#[cfg(feature="fontcrate-backend")]
 use font::{Font, OpenTypeFont};
+#[cfg(feature="fontcrate-backend")]
 use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
+#[cfg(feature="fontcrate-backend")]
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
 use crate::Backend;
 
 
 
+#[cfg(feature="fontcrate-backend")]
 fn v_cursor(c: crate::Cursor) -> Vector2F {
     Vector2F::new(c.x as f32, c.y as f32)
 }
+#[cfg(feature="fontcrate-backend")]
 fn v_xy(x: f64, y: f64) -> Vector2F {
     Vector2F::new(x as f32, y as f32)
 }
@@ -37,8 +42,9 @@ impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
     }
 }
 
+#[cfg(feature="fontcrate-backend")]
 impl<'a, T : Renderer> Backend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
-    fn symbol(&mut self, pos: crate::Cursor, gid: u16, scale: f64, ctx: &crate::MathFont) {
+    fn symbol(&mut self, pos: crate::Cursor, gid: u16, scale: f64, ctx: &OpenTypeFont) {
         let path = ctx.glyph(font::GlyphId(gid as u32)).unwrap().path;
         let tr = Transform2F::from_translation(v_cursor(pos))
             * Transform2F::from_scale(v_xy(scale, -scale))

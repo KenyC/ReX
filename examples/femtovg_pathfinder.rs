@@ -8,7 +8,7 @@ use femtovg::Color;
 use femtovg::renderer::OpenGl;
 use font::OpenTypeFont;
 use rex::femtovg::FemtoVGCanvas;
-use rex::{Renderer, MathFont, Backend};
+use rex::{Renderer, Backend};
 use rex::layout::Layout;
 use rex::parser::parse;
 use sdl2::rect::Rect; 

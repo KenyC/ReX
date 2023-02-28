@@ -24,6 +24,7 @@ pub struct GlyphInstruction {
 
 
 
+#[cfg(feature = "fontcrate-backend")]
 impl From<font::GlyphId> for GlyphId {
     #[inline]
     fn from(glyph_id: font::GlyphId) -> Self {
@@ -31,6 +32,7 @@ impl From<font::GlyphId> for GlyphId {
     }
 }
 
+#[cfg(feature = "fontcrate-backend")]
 impl Into<font::GlyphId> for GlyphId {
     fn into(self) -> font::GlyphId {
         font::GlyphId(self.0)
@@ -39,7 +41,7 @@ impl Into<font::GlyphId> for GlyphId {
 
 
 
-
+#[cfg(feature = "fontcrate-backend")]
 impl From<font::opentype::math::assembly::Direction> for Direction {
     #[inline]
     fn from(from: font::opentype::math::assembly::Direction) -> Self {
@@ -50,6 +52,7 @@ impl From<font::opentype::math::assembly::Direction> for Direction {
     }
 }
 
+#[cfg(feature = "fontcrate-backend")]
 impl Into<font::opentype::math::assembly::Direction> for Direction {
     fn into(self) -> font::opentype::math::assembly::Direction {
         match self {
@@ -60,6 +63,7 @@ impl Into<font::opentype::math::assembly::Direction> for Direction {
 }
 
 
+#[cfg(feature = "fontcrate-backend")]
 impl From<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction {
     #[inline]
     fn from(from: font::opentype::math::assembly::GlyphInstruction) -> Self {
@@ -70,6 +74,7 @@ impl From<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction
     }
 }
 
+#[cfg(feature = "fontcrate-backend")]
 impl Into<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction {
     fn into(self) -> font::opentype::math::assembly::GlyphInstruction {
         font::opentype::math::assembly::GlyphInstruction {
@@ -80,6 +85,7 @@ impl Into<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction
 }
 
 
+#[cfg(feature = "fontcrate-backend")]
 impl From<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     #[inline]
     fn from(from: font::opentype::math::assembly::VariantGlyph) -> Self {
@@ -94,6 +100,7 @@ impl From<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     }
 }
 
+#[cfg(feature = "fontcrate-backend")]
 impl Into<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     fn into(self) -> font::opentype::math::assembly::VariantGlyph {
         match self {
