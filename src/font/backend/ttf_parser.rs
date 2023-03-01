@@ -1,6 +1,6 @@
-use ttf_parser::{GlyphId, math::{GlyphPart, Variants}, LazyArray16};
+use ttf_parser::{math::{GlyphPart, Variants}, LazyArray16};
 
-use crate::{font::{Constants, VariantGlyph, common::GlyphInstruction, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
+use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
 
 pub struct MathFont<'a> {
@@ -45,19 +45,19 @@ impl<'a> MathFont<'a> {
 
 
 impl<'a> MathFont<'a> {
-    fn safe_italics(&self, glyph_id : u16) -> Option<i16> {
+    fn safe_italics(&self, glyph_id : GlyphId) -> Option<i16> {
         let value = self.math.glyph_info?
             .italic_corrections?
-            .get(GlyphId(glyph_id))?
+            .get(glyph_id.into())?
             .value;
         Some(value)
     }
 
-    fn safe_attachment(&self, glyph_id : u16) -> Option<i16> {
+    fn safe_attachment(&self, glyph_id : GlyphId) -> Option<i16> {
         // TODO : cache GlyphInfo table & constants
         let value = self.math.glyph_info?
             .top_accent_attachments?
-            .get(GlyphId(glyph_id))?
+            .get(glyph_id.into())?
             .value;
         Some(value)
     }
@@ -126,12 +126,12 @@ impl<'a> MathFont<'a> {
 
 
 
-impl<'a> crate::font::IsMathFont for MathFont<'a> {
-    fn italics(&self, glyph_id : u16) -> i16 {
+impl<'a> crate::font::MathFont for MathFont<'a> {
+    fn italics(&self, glyph_id : GlyphId) -> i16 {
         self.safe_italics(glyph_id).unwrap_or_default()
     }
 
-    fn attachment(&self, glyph_id : u16) -> i16 {
+    fn attachment(&self, glyph_id : GlyphId) -> i16 {
         self.safe_attachment(glyph_id).unwrap_or_default()
     }
 
@@ -139,33 +139,34 @@ impl<'a> crate::font::IsMathFont for MathFont<'a> {
         self.safe_constants(font_units_to_em).unwrap()
     }
 
-    fn horz_variant(&self, gid: u32, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
+    fn horz_variant(&self, gid: GlyphId, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
         // NOTE: The following is an adaptation of the corresponding code in the crate "font"
         // NOTE: bizarrely, the code for horizontal variant is not isomorphic to the code for vertical variant ; here, I've simply adapted the vertical variant code
         // TODO: figure out why horiz_variant uses 'greatest_lower_bound' and vert_variant uses 'smallest_lowerè_bound'
         let variants = match self.math.variants {
             Some(variants) => variants,
-            None => return VariantGlyph::Replacement(gid as u16),
+            None => return VariantGlyph::Replacement(gid),
         };
 
         // If the font does not specify a construction of vertical variant of a glyph, the glyph will be used as is
-        let construction = match variants.horizontal_constructions.get(GlyphId(gid as u16)) {
+        let construction = match variants.horizontal_constructions.get(gid.into()) {
             Some(construction) => construction,
-            None => return VariantGlyph::Replacement(gid as u16),
+            None => return VariantGlyph::Replacement(gid),
         };
 
 
         // Otherwise, check if any replacement glyphs are larger than the demanded size: we use them if they exist.
         for record in construction.variants {
             if record.advance_measurement >= (height / Font) as u16 {
-                return VariantGlyph::Replacement(record.variant_glyph.0);
+                return VariantGlyph::Replacement(GlyphId::from(record.variant_glyph));
             }
         }
 
         // Otherwise, check if there is a generic recipe for building large glyphs
         // If not take, the largest replacement glyph if there is one
         // we are in the generic case ; the glyph must be constructed from glyph parts
-        let replacement = VariantGlyph::Replacement(construction.variants.last().map(|v| v.variant_glyph.0).unwrap_or(gid as u16));
+        let glyph_id = construction.variants.last().map(|v| GlyphId::from(v.variant_glyph)).unwrap_or(gid);
+        let replacement = VariantGlyph::Replacement(glyph_id);
         let assembly = match construction.assembly {
             None => {
                 return replacement;
@@ -186,32 +187,33 @@ impl<'a> crate::font::IsMathFont for MathFont<'a> {
     }
 
 
-    fn vert_variant(&self, gid: u32, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
+    fn vert_variant(&self, gid: GlyphId, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
         // NOTE: The following is an adaptation of the corresponding code in the crate "font"
 
         let variants = match self.math.variants {
             Some(variants) => variants,
-            None => return VariantGlyph::Replacement(gid as u16),
+            None => return VariantGlyph::Replacement(gid),
         };
 
         // If the font does not specify a construction of vertical variant of a glyph, the glyph will be used as is
-        let construction = match variants.vertical_constructions.get(GlyphId(gid as u16)) {
+        let construction = match variants.vertical_constructions.get(gid.into()) {
             Some(construction) => construction,
-            None => return VariantGlyph::Replacement(gid as u16),
+            None => return VariantGlyph::Replacement(gid),
         };
 
 
         // Otherwise, check if any replacement glyphs are larger than the demanded size: we use them if they exist.
         for record in construction.variants {
             if record.advance_measurement >= (height / Font) as u16 {
-                return VariantGlyph::Replacement(record.variant_glyph.0);
+                return VariantGlyph::Replacement(GlyphId::from(record.variant_glyph));
             }
         }
 
         // Otherwise, check if there is a generic recipe for building large glyphs
         // If not take, the largest replacement glyph if there is one
         // we are in the generic case ; the glyph must be constructed from glyph parts
-        let replacement = VariantGlyph::Replacement(construction.variants.last().map(|v| v.variant_glyph.0).unwrap_or(gid as u16));
+        let map = construction.variants.last().map(|v| GlyphId::from(v.variant_glyph)).unwrap_or(gid);
+        let replacement = VariantGlyph::Replacement(map);
         let assembly = match construction.assembly {
             None => {
                 return replacement;
@@ -228,11 +230,11 @@ impl<'a> crate::font::IsMathFont for MathFont<'a> {
 
     fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId> {
         let glyph_index_ttf_parser = self.font.glyph_index(codepoint)?;
-        Some(crate::font::common::GlyphId(glyph_index_ttf_parser.0.into()))
+        Some(crate::font::common::GlyphId::from(glyph_index_ttf_parser))
     }
 
-    fn glyph_from_gid<'f>(&'f self, gid : u16) -> Result<crate::font::Glyph<'f, Self>, FontError> {
-        let glyph_id = ttf_parser::GlyphId(gid);
+    fn glyph_from_gid<'f>(&'f self, gid : GlyphId) -> Result<crate::font::Glyph<'f, Self>, FontError> {
+        let glyph_id : ttf_parser::GlyphId = gid.into();
         let bbox     = self.font.glyph_bounding_box(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
         let advance  = self.font.glyph_hor_advance(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
         let lsb  = self.font.glyph_hor_side_bearing(glyph_id).ok_or(FontError::MissingGlyphGID(gid))?;
@@ -255,8 +257,8 @@ impl<'a> crate::font::IsMathFont for MathFont<'a> {
         })
     }
 
-    fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : crate::font::kerning::Corner) -> Option<Length<Font>> {
-        let record = self.math.glyph_info?.kern_infos?.get(ttf_parser::GlyphId(glyph_id))?;
+    fn kern_for(&self, glyph_id : GlyphId, height : Length<Font>, side : crate::font::kerning::Corner) -> Option<Length<Font>> {
+        let record = self.math.glyph_info?.kern_infos?.get(glyph_id.into())?;
 
         let table = match side {
             crate::font::kerning::Corner::TopRight    => record.top_right.as_ref(),
@@ -319,7 +321,7 @@ fn construct_glyphs(variants : &Variants, parts: LazyArray16<GlyphPart>, repeats
             prev_connector = std::cmp::min(glyph.end_connector_length, glyph.full_advance / 2);
 
             to_return.push(GlyphInstruction {
-                gid: glyph.glyph_id.0,
+                gid: GlyphId::from(glyph.glyph_id),
                 overlap: overlap
             });
         }

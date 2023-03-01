@@ -16,23 +16,22 @@ use crate::error::FontError;
 use self::kerning::Corner;
 
 
-// TODO: when "font" dependency is expunged, rename as "MathFont"
-pub trait IsMathFont : Sized {
+pub trait MathFont : Sized {
     fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId>;
-    fn glyph_from_gid<'f>(&'f self, glyph_id : u16) -> Result<Glyph<'f, Self>, FontError>;
-    fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : Corner) -> Option<Length<Font>>;
+    fn glyph_from_gid<'f>(&'f self, glyph_id : GlyphId) -> Result<Glyph<'f, Self>, FontError>;
+    fn kern_for(&self, glyph_id : GlyphId, height : Length<Font>, side : Corner) -> Option<Length<Font>>;
 
-    fn italics(&self, glyph_id : u16) -> i16;
-    fn attachment(&self, glyph_id : u16) -> i16; 
+    fn italics(&self, glyph_id : GlyphId) -> i16;
+    fn attachment(&self, glyph_id : GlyphId) -> i16; 
     fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants;
     fn font_units_to_em(&self) -> Scale<Em, Font>;
 
 
-    fn horz_variant(&self, gid: u32, width: Length<Font>)  -> VariantGlyph;
+    fn horz_variant(&self, gid: GlyphId, width: Length<Font>)  -> VariantGlyph;
     // TODO : there seems to be a problem in "qc.rs" 
     // the } before "wat?" is too short for the last 2 fonts but not the first
     // maybe this is a problem, maybe this is meant to be
-    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph;
+    fn vert_variant(&self, gid: GlyphId, height: Length<Font>) -> VariantGlyph;
 }
 
 pub struct FontContext<'f, F> {
@@ -51,7 +50,7 @@ impl<'f, F> Clone for FontContext<'f, F> {
     }
 }
 
-impl<'f, F : IsMathFont> FontContext<'f, F> {
+impl<'f, F : MathFont> FontContext<'f, F> {
     pub fn new(font: &'f F) -> Result<Self, FontError> {
         let font_units_to_em = font.font_units_to_em();
         let units_per_em = font_units_to_em.inv();
@@ -66,21 +65,21 @@ impl<'f, F : IsMathFont> FontContext<'f, F> {
 
     pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f, F>, FontError> {
         let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        self.glyph_from_gid(gid.0 as u16)
+        self.glyph_from_gid(gid)
     }
 
 
 
     pub fn vert_variant(&self, codepoint: char, height: Length<Font>) -> Result<VariantGlyph, FontError> {
-        let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         Ok(self.font.vert_variant(gid, height))
     }
     pub fn horz_variant(&self, codepoint: char, width: Length<Font>) -> Result<VariantGlyph, FontError> {
-        let GlyphId(gid) = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         Ok(self.font.horz_variant(gid, width))
     }
 
-    pub fn glyph_from_gid(&self, gid: u16) -> Result<Glyph<'f, F>, FontError> {
+    pub fn glyph_from_gid(&self, gid: GlyphId) -> Result<Glyph<'f, F>, FontError> {
         self.font.glyph_from_gid(gid)
     }
 }
@@ -141,7 +140,7 @@ pub struct Constants {
 
 pub struct Glyph<'f, F> {
     pub font: &'f F,
-    pub gid: u16,
+    pub gid:  GlyphId,
     // x_min, y_min, x_max, y_max
     pub bbox: (Length<Font>, Length<Font>, Length<Font>, Length<Font>),
     pub advance: Length<Font>,

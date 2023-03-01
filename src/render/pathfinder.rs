@@ -15,7 +15,7 @@ use pathfinder_geometry::{
 };
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
-use crate::{error::FontError};
+use crate::{error::FontError, font::common::GlyphId};
 use crate::parser::{color::RGBA};
 
 fn v_cursor(c: Cursor) -> Vector2F {
@@ -65,9 +65,9 @@ impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
         let outline = stroke.into_outline().transformed(&self.transform);
         self.scene.push_draw_path(DrawPath::new(outline, paint));
     }
-    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, font: &OpenTypeFont) {
-        use font::{Font, GlyphId};
-        let path = font.glyph(GlyphId(gid as u32)).unwrap().path;
+    fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, font: &OpenTypeFont) {
+        use font::Font;
+        let path = font.glyph(gid.into()).unwrap().path;
         let tr = self.transform
             * Transform2F::from_translation(v_cursor(pos))
             * Transform2F::from_scale(v_xy(scale, -scale))

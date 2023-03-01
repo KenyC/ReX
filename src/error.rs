@@ -1,3 +1,5 @@
+
+use crate::font::common::GlyphId;
 use crate::lexer::Token;
 use std::fmt;
 use crate::font::{AtomType};
@@ -14,7 +16,7 @@ pub enum LayoutError {
 #[derive(Debug, Clone, PartialEq)]
 pub enum FontError {
     MissingGlyphCodepoint(char),
-    MissingGlyphGID(u16),
+    MissingGlyphGID(GlyphId),
     NoMATHTable,
 }
 
@@ -78,7 +80,7 @@ impl fmt::Display for FontError {
             MissingGlyphCodepoint(cp) =>
                 write!(f, "missing glyph for codepoint'{}'", cp),
             MissingGlyphGID(gid) =>
-                write!(f, "missing glyph with gid {}", gid),
+                write!(f, "missing glyph with gid {}", Into::<u16>::into(gid)),
             NoMATHTable =>
                 write!(f, "no MATH tables"),
         }

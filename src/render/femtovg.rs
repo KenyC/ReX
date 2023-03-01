@@ -6,7 +6,7 @@ use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
 #[cfg(feature="fontcrate-backend")]
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
-use crate::Backend;
+use crate::{Backend, font::common::GlyphId};
 
 
 
@@ -44,8 +44,8 @@ impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
 
 #[cfg(feature="fontcrate-backend")]
 impl<'a, T : Renderer> Backend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
-    fn symbol(&mut self, pos: crate::Cursor, gid: u16, scale: f64, ctx: &OpenTypeFont) {
-        let path = ctx.glyph(font::GlyphId(gid as u32)).unwrap().path;
+    fn symbol(&mut self, pos: crate::Cursor, gid: GlyphId, scale: f64, ctx: &OpenTypeFont) {
+        let path = ctx.glyph(gid.into()).unwrap().path;
         let tr = Transform2F::from_translation(v_cursor(pos))
             * Transform2F::from_scale(v_xy(scale, -scale))
             * ctx.font_matrix();
@@ -126,7 +126,7 @@ impl<'a, T : Renderer> Backend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
 #[cfg(feature = "ttfparser-backend")]
 impl<'a, 'f, T : Renderer> Backend<crate::font::backend::ttf_parser::MathFont<'f>> for FemtoVGCanvas<'a, T> {
 
-    fn symbol(&mut self, pos: crate::Cursor, gid: u16, scale: f64, ctx: &crate::font::backend::ttf_parser::MathFont<'f>) {
+    fn symbol(&mut self, pos: crate::Cursor, gid: GlyphId, scale: f64, ctx: &crate::font::backend::ttf_parser::MathFont<'f>) {
         use ttf_parser::OutlineBuilder;
 
         let scale = scale as f32;
@@ -184,7 +184,7 @@ impl<'a, 'f, T : Renderer> Backend<crate::font::backend::ttf_parser::MathFont<'f
             canvas: canvas,
         };
 
-        ctx.font().outline_glyph(ttf_parser::GlyphId(gid), &mut builder);
+        ctx.font().outline_glyph(gid.into(), &mut builder);
         builder.fill();
         self.canvas.restore();
     }

@@ -4,7 +4,7 @@ use super::builders;
 use super::convert::AsLayoutNode;
 use super::{Alignment, Layout, LayoutNode, LayoutSettings, LayoutVariant, Style, ColorChange};
 
-use crate::font::IsMathFont;
+use crate::font::MathFont;
 use crate::font::{
     kerning::{superscript_kern, subscript_kern},
     VariantGlyph,
@@ -20,13 +20,13 @@ use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
 
 /// Entry point to our recursive algorithm
-pub fn layout<'a, 'f: 'a, F : IsMathFont>(nodes: &[ParseNode], config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
+pub fn layout<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
     layout_recurse(nodes, config, AtomType::Transparent)
 }
 
 /// This method takes the parsing nodes and layouts them to layout nodes.
 #[allow(unconditional_recursion)]
-fn layout_recurse<'a, 'f: 'a, F : IsMathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: AtomType) -> LayoutResult<Layout<'f, F>> {
+fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: AtomType) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
     let mut prev = AtomType::Transparent;
 
@@ -71,13 +71,13 @@ fn layout_recurse<'a, 'f: 'a, F : IsMathFont>(nodes: &[ParseNode], mut config: L
     Ok(layout.finalize())
 }
 
-fn layout_node<'a, 'f: 'a, F : IsMathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
+fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
     let mut layout = Layout::new();
     layout.dispatch(config, node, AtomType::Transparent);
     layout.finalize()
 }
 
-impl<'f, F : IsMathFont> Layout<'f, F> {
+impl<'f, F : MathFont> Layout<'f, F> {
 
     fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, F>, node: &ParseNode, next: AtomType) -> LayoutResult<()> {
         match *node {

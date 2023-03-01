@@ -21,6 +21,7 @@ mod convert;
 pub mod engine;
 pub mod spacing;
 
+use crate::font::common::GlyphId;
 use crate::parser::color::RGBA;
 use crate::font::FontContext;
 use std::ops::Deref;
@@ -239,7 +240,7 @@ impl<'f, F> Default for VerticalBox<'f, F> {
 
 
 pub struct LayoutGlyph<'f, F> {
-    pub gid: u16,
+    pub gid: GlyphId,
     pub size: Length<Px>,
     pub offset: Length<Px>,
     pub attachment: Length<Px>,
@@ -317,7 +318,7 @@ impl<'f, F> fmt::Debug for HorizontalBox<'f, F> {
 
 impl<'f, F> fmt::Debug for LayoutGlyph<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LayoutGlyph({})", self.gid)
+        write!(f, "LayoutGlyph({})", Into::<u16>::into(self.gid))
     }
 }
 

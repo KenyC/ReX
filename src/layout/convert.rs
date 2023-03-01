@@ -1,6 +1,6 @@
 //! This is a collection of tools used for converting ParseNodes into LayoutNodes.
 
-use crate::font::{Glyph, Direction, VariantGlyph, IsMathFont};
+use crate::font::{Glyph, Direction, VariantGlyph, MathFont};
 use crate::dimensions::{*};
 use crate::layout::LayoutSettings;
 
@@ -43,7 +43,7 @@ impl<'f, F> AsLayoutNode<'f, F> for Rule {
     }
 }
 
-impl<'f, F : IsMathFont> AsLayoutNode<'f, F> for VariantGlyph {
+impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
     fn as_layout<'a>(&self, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         match *self {
             VariantGlyph::Replacement(gid) => {

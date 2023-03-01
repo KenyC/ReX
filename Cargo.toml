@@ -8,7 +8,7 @@ authors = [
 edition = "2018"
 
 [features]
-pathfinder-backend = ["dep:pathfinder_renderer"]
+pathfinder-backend = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "dep:pathfinder_color", "dep:pathfinder_content", "dep:pathfinder_export"]
 femtovg-backend    = ["dep:femtovg"]
 ttfparser-backend  = ["dep:ttf-parser"]
 fontcrate-backend  = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]

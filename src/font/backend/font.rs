@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use font::opentype::OpenTypeFont;
 
 use crate::font::{Constants, Glyph};
@@ -7,28 +9,27 @@ use crate::{dimensions::*, font::common::GlyphId};
 use crate::error::FontError;
 
 use crate::font::kerning::Corner;
-use crate::font::IsMathFont;
-
-
-pub type MathFont = OpenTypeFont;
+use crate::font::MathFont;
 
 
 
-impl IsMathFont for MathFont {
 
-    fn glyph_index(&self, codepoint: char) -> Option<crate::font::common::GlyphId> {
+
+impl MathFont for OpenTypeFont {
+
+    fn glyph_index(&self, codepoint: char) -> Option<GlyphId> {
         use font::Font;
         let result = self.gid_for_codepoint(codepoint as u32)?;
-        Some(result.into())
+        Some(GlyphId::try_from(result).ok()?)
     }
 
-    fn glyph_from_gid<'f>(&'f self, gid: u16) -> Result<Glyph<'f, Self>, FontError> {
+    fn glyph_from_gid<'f>(&'f self, gid: GlyphId) -> Result<Glyph<'f, Self>, FontError> {
         use font::Font;
         let font = self;
-        let hmetrics = font.glyph_metrics(gid).ok_or(FontError::MissingGlyphGID(gid))?;
+        let hmetrics = font.glyph_metrics(gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let italics = self.italics(gid);
         let attachment = self.attachment(gid);
-        let glyph = font.glyph(GlyphId(gid as u32).into()).ok_or(FontError::MissingGlyphGID(gid))?;
+        let glyph = font.glyph(gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let bbox = glyph.path.bounds();
         let ll = bbox.lower_left();
         let ur = bbox.upper_right();
@@ -49,9 +50,9 @@ impl IsMathFont for MathFont {
         })
     }
 
-    fn kern_for(&self, glyph_id : u16, height : Length<Font>, side : Corner) -> Option<Length<Font>> {
+    fn kern_for(&self, glyph_id : GlyphId, height : Length<Font>, side : Corner) -> Option<Length<Font>> {
         let math = self.math.as_ref().unwrap();
-        let record = math.glyph_info.kern_info.entries.get(&glyph_id)?;
+        let record = math.glyph_info.kern_info.entries.get(&glyph_id.into())?;
 
         let table = match side {
             Corner::TopRight => &record.top_right,
@@ -66,25 +67,25 @@ impl IsMathFont for MathFont {
 
 
 
-    fn italics(&self, glyph_id : u16) -> i16 {
+    fn italics(&self, glyph_id : GlyphId) -> i16 {
         self.math
             .as_ref()
             .unwrap()
             .glyph_info
             .italics_correction_info
-            .get(glyph_id)
+            .get(glyph_id.into())
             .map(|info| info.value)
             .unwrap_or_default()
     }
 
-    fn attachment(&self, gid: u16) -> i16 {
+    fn attachment(&self, gid: GlyphId) -> i16 {
         self
             .math
             .as_ref()
             .unwrap()
             .glyph_info
             .top_accent_attachment
-            .get(gid)
+            .get(gid.into())
             .map(|info| info.value)
             .unwrap_or_default()
     }
@@ -157,23 +158,23 @@ impl IsMathFont for MathFont {
         Scale::new(self.font_matrix().matrix.m11() as f64, Em, Font)
     }
 
-    fn horz_variant(&self, gid: u32, width: Length<Font>) -> VariantGlyph {
+    fn horz_variant(&self, gid: GlyphId, width: Length<Font>) -> VariantGlyph {
         self
             .math
             .as_ref()
             .unwrap()
             .variants
-            .horz_variant(gid as u16, (width / Font) as u32)
+            .horz_variant(gid.into(), (width / Font) as u32)
             .into()
     }
 
-    fn vert_variant(&self, gid: u32, height: Length<Font>) -> VariantGlyph {
+    fn vert_variant(&self, gid: GlyphId, height: Length<Font>) -> VariantGlyph {
         self
             .math
             .as_ref()
             .unwrap()
             .variants
-            .vert_variant(gid as u16, (height / Font) as u32)
+            .vert_variant(gid.into(), (height / Font) as u32)
             .into()
     }
 

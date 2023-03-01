@@ -1,4 +1,4 @@
-use super::{Glyph, IsMathFont};
+use super::{Glyph, MathFont};
 use std::cmp::{max, min};
 
 use crate::dimensions::{Length, Font};
@@ -34,7 +34,7 @@ pub enum Corner {
 // for now, I'm just going to port the algorithm I found in LuaTeX and XeTeX.
 // If nothing else, it will at least be consistent.
 
-pub fn superscript_kern<F : IsMathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
+pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
     let base_height = base.bbox.3;
     let script_depth = script.bbox.1 + shift;
 
@@ -47,7 +47,7 @@ pub fn superscript_kern<F : IsMathFont>(base: &Glyph<F>, script: &Glyph<F>, shif
     max(value1, value2)
 }
 
-pub fn subscript_kern<F : IsMathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
+pub fn subscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
     let base_depth = base.bbox.1;
     let script_height = script.bbox.3 - shift;
 
@@ -60,6 +60,6 @@ pub fn subscript_kern<F : IsMathFont>(base: &Glyph<F>, script: &Glyph<F>, shift:
     min(value1, value2)
 }
 
-fn kern_from<F : IsMathFont>(glyph: &Glyph<F>, height: Length<Font>, side: Corner) -> Length<Font> {
+fn kern_from<F : MathFont>(glyph: &Glyph<F>, height: Length<Font>, side: Corner) -> Length<Font> {
     glyph.font.kern_for(glyph.gid, height, side).unwrap_or_default()
 }

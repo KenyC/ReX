@@ -1,6 +1,7 @@
 use crate::error::{LayoutError, Error};
 use crate::dimensions::*;
-use crate::font::IsMathFont;
+use crate::font::MathFont;
+use crate::font::common::GlyphId;
 use crate::layout::{LayoutNode, LayoutVariant, Alignment, Style, LayoutSettings, Layout, Grid};
 pub use crate::parser::{color::RGBA};
 
@@ -49,7 +50,7 @@ impl Cursor {
 
 pub trait Backend<F> {
     fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, role: Role) {}
-    fn symbol(&mut self, pos: Cursor, gid: u16, scale: f64, ctx: &F);
+    fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &F);
     fn rule(&mut self, pos: Cursor, width: f64, height: f64);
     fn begin_color(&mut self, color: RGBA);
     fn end_color(&mut self);
@@ -67,7 +68,7 @@ impl Renderer {
             debug: false,
         }
     }
-    pub fn layout<'s, 'a, 'f, F : IsMathFont>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error<'s>> {
+    pub fn layout<'s, 'a, 'f, F : MathFont>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error<'s>> {
         use crate::parser::parse;
         use crate::layout::engine::layout;
 
