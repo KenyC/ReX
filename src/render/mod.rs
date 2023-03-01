@@ -48,12 +48,18 @@ impl Cursor {
     }
 }
 
-pub trait Backend<F> {
-    fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, role: Role) {}
+pub trait FontBackend<F> {
     fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &F);
+}
+
+pub trait GraphicsBackend {
+    fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, role: Role) {}
     fn rule(&mut self, pos: Cursor, width: f64, height: f64);
     fn begin_color(&mut self, color: RGBA);
     fn end_color(&mut self);
+}
+
+pub trait Backend<F> : FontBackend<F> + GraphicsBackend {
 }
 
 pub enum Role {

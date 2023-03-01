@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use femtovg::Color;
 use femtovg::renderer::OpenGl;
 use rex::femtovg::FemtoVGCanvas;
-use rex::font::{MathFont, FontContext};
-use rex::font::backend::ttf_parser::MathFont;
+use rex::font::{FontContext};
+use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::{Renderer, Backend};
 use rex::layout::Layout;
 use rex::parser::parse;
@@ -92,7 +92,7 @@ fn main() {
 }
 
 
-fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &MathFont<'a>) {
+fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &TtfMathFont<'a>) {
     let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(dbg!(tex)).unwrap()).collect();
 
     let mut grid = rex::layout::Grid::new();
@@ -134,7 +134,7 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &MathF
     canvas.restore()
 }
 
-fn load_font<'a>(file : &'a [u8]) -> MathFont<'a> {
+fn load_font<'a>(file : &'a [u8]) -> rex::font::backend::ttf_parser::TtfMathFont<'a> {
     let font = ttf_parser::Face::parse(file, 0).unwrap();
-    MathFont::new(font).unwrap()
+    TtfMathFont::new(font).unwrap()
 }

@@ -3,13 +3,13 @@ use ttf_parser::{math::{GlyphPart, Variants}, LazyArray16};
 use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
 
-pub struct MathFont<'a> {
+pub struct TtfMathFont<'a> {
     math: ttf_parser::math::Table<'a>,
     font: ttf_parser::Face<'a>,
     font_matrix: ttf_parser::cff::Matrix,
 }
 
-impl<'a> MathFont<'a> {
+impl<'a> TtfMathFont<'a> {
     pub fn new(font: ttf_parser::Face<'a>) -> Result<Self, FontError> { 
         let math = font.tables().math.ok_or(FontError::NoMATHTable)?;
         let font_matrix; 
@@ -44,7 +44,7 @@ impl<'a> MathFont<'a> {
 }
 
 
-impl<'a> MathFont<'a> {
+impl<'a> TtfMathFont<'a> {
     fn safe_italics(&self, glyph_id : GlyphId) -> Option<i16> {
         let value = self.math.glyph_info?
             .italic_corrections?
@@ -126,7 +126,7 @@ impl<'a> MathFont<'a> {
 
 
 
-impl<'a> crate::font::MathFont for MathFont<'a> {
+impl<'a> crate::font::MathFont for TtfMathFont<'a> {
     fn italics(&self, glyph_id : GlyphId) -> i16 {
         self.safe_italics(glyph_id).unwrap_or_default()
     }

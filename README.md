@@ -3,6 +3,21 @@
 <p align="center"><img src="rex.png" alt="ReX logo" width="300px"/></p>
 <h3 align="center">Typesetting Mathematics</h3>
 
+# Why the fork?
+
+
+This fork of ReX is designed to allow users to use their preferred rendering engine and font parser, instead of relying on Pathfinder and the font-parsing crate `font` (whose continuing development is not guaranteed). Implementing the trait MathFont allows users to specify their own font parser, and implementing `Backend<F : MathFont>`, where F is the type of the desired font parser, allows users to use their own rendering engine. 
+
+The following features define some implementations of these traits for you:
+
+  - `fontcrate-backend`: uses the `font` crate for font parsing
+  - `ttfparser-backend`: uses the `ttf-parser` crate for font parsing
+  - `pathfinder-backend`: in combination with `fontcrate-backend`, implements `Backend<OpenTypeFont>` the `pathfinder`for rendering 
+  - `femtovg-backend`: uses the `femtovg` for rendering ; in combination with `fontcrate-backend`, implements `Backend<OpenTypeFont>` ; in combination with `ttfparser-backend`, implements `Backend<ttf_parser::Font>`.
+
+
+Perhaps, this fork may ultimately turn into an attempt to take full ownership of the engine.
+
 # Samples
 
 You can try ReX live [here](https://retex.github.io/iReX/editor.html)!  Simply type in a formula in the editor and click the display on the top to update the rendering.

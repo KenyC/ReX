@@ -15,7 +15,7 @@ use pathfinder_geometry::{
 };
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
-use crate::{error::FontError, font::common::GlyphId};
+use crate::{error::FontError, font::common::GlyphId, GraphicsBackend, FontBackend};
 use crate::parser::{color::RGBA};
 
 fn v_cursor(c: Cursor) -> Vector2F {
@@ -46,7 +46,23 @@ impl<'a> SceneWrapper<'a> {
 }
 
 #[cfg(feature="fontcrate-backend")]
-impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
+impl<'a> FontBackend<OpenTypeFont> for SceneWrapper<'a> {
+        fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, font: &OpenTypeFont) {
+        use font::Font;
+        let path = font.glyph(gid.into()).unwrap().path;
+        let tr = self.transform
+            * Transform2F::from_translation(v_cursor(pos))
+            * Transform2F::from_scale(v_xy(scale, -scale))
+            * font.font_matrix();
+        
+        self.scene.push_draw_path(DrawPath::new(path.transformed(&tr), self.paint));
+    }
+}
+
+#[cfg(feature="fontcrate-backend")]
+impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {}
+
+impl<'a> GraphicsBackend for SceneWrapper<'a> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
         let color = match role {
             Role::Glyph => ColorU::new(0, 200, 0, 255),
@@ -64,16 +80,6 @@ impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {
         stroke.offset();
         let outline = stroke.into_outline().transformed(&self.transform);
         self.scene.push_draw_path(DrawPath::new(outline, paint));
-    }
-    fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, font: &OpenTypeFont) {
-        use font::Font;
-        let path = font.glyph(gid.into()).unwrap().path;
-        let tr = self.transform
-            * Transform2F::from_translation(v_cursor(pos))
-            * Transform2F::from_scale(v_xy(scale, -scale))
-            * font.font_matrix();
-        
-        self.scene.push_draw_path(DrawPath::new(path.transformed(&tr), self.paint));
     }
     fn rule(&mut self, pos: Cursor, width: f64, height: f64) {
         let origin = v_cursor(pos);
