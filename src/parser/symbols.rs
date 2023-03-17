@@ -83,6 +83,9 @@ fn others(name: &str) -> Option<Symbol> {
         "varepsilon" => Symbol { codepoint: '\u{3F5}', atom_type: AtomType::Alpha }, // codepoint: '\u{3F5}', greek lunate epsilon symbol
         "to" => Symbol { codepoint: '\u{2192}', atom_type: AtomType::Relation }, // codepoint: '\u{2192}', /rightarrow /to a: rightward arrow
 
+        // Symbols from amsmath & stmaryrd
+        
+
         // Symbol escape shim
         "{" => Symbol { codepoint: '\u{7B}', atom_type: AtomType::Open }, // 123
         "}" => Symbol { codepoint: '\u{7D}', atom_type: AtomType::Close }, // 125
