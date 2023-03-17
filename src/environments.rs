@@ -259,7 +259,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
                 rows.push(current);
                 current = Vec::new();
             }
-            _ => panic!("Unexpected expression end: {:?}", lex.current),
+            _ => return Err(ParseError::UnexpectedEof(lex.current)),
         }
         lex.next();
     }
