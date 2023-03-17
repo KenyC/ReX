@@ -502,4 +502,27 @@ mod tests {
                       r"\left.{1 \right."]);
         display_errors!(errs);
     }
+
+
+    #[test]
+    fn array() {
+        const CORRECT_FORMULAS : &[&str] = &[
+            r"\begin{array}{c}\end{array}",
+            r"\begin{array}{c}1\\2\end{array}",
+            r"\begin{array}{c}1\\\end{array}",
+        ];
+
+        for formula in CORRECT_FORMULAS.iter().cloned() {
+            assert!(parse(formula).is_ok());
+        }
+
+        const INCORRECT_FORMULAS : &[&str] = &[
+            r"\begin{array}{c}",
+            r"\begin{array}1\\2\end{array}",
+        ];
+
+        for formula in INCORRECT_FORMULAS.iter().cloned() {
+            assert!(parse(formula).is_err());
+        }
+    }
 }
