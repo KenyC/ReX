@@ -9,23 +9,23 @@ authors = [
 edition = "2018"
 
 [features]
-pathfinder-backend = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "dep:pathfinder_color", "dep:pathfinder_content", "dep:pathfinder_export"]
-femtovg-backend    = ["dep:femtovg"]
-ttfparser-backend  = ["dep:ttf-parser"]
-fontcrate-backend  = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
+pathfinder-renderer   = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "dep:pathfinder_color", "dep:pathfinder_content", "dep:pathfinder_export"]
+femtovg-renderer      = ["dep:femtovg"]
+ttfparser-fontparser  = ["dep:ttf-parser"]
+fontrs-fontparser     = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
 
 [[example]]
 name = "font-pathfinder"
 path = "examples/font_pathfinder.rs"
 
 [[example]]
-name = "femtovg-pathfinder"
-path = "examples/femtovg_pathfinder.rs"
+name = "font-femtovg"
+path = "examples/font_femtovg.rs"
 
 
 [[example]]
-name = "femtovg-ttf-parser"
-path = "examples/femtovg_ttf_parser.rs"
+name = "ttfparser-femtovg"
+path = "examples/ttfparser_femtovg.rs"
 
 
 [dependencies]

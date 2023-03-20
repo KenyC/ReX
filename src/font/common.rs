@@ -34,7 +34,7 @@ pub struct GlyphInstruction {
 
 
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl TryFrom<font::GlyphId> for GlyphId {
     type Error = <u16 as TryFrom<u32>>::Error;
 
@@ -44,7 +44,7 @@ impl TryFrom<font::GlyphId> for GlyphId {
     }
 }
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl Into<font::GlyphId> for GlyphId {
     fn into(self) -> font::GlyphId {
         font::GlyphId(self.0.into())
@@ -53,7 +53,7 @@ impl Into<font::GlyphId> for GlyphId {
 
 
 
-#[cfg(feature = "ttfparser-backend")]
+#[cfg(feature="ttfparser-fontparser")]
 impl From<ttf_parser::GlyphId> for GlyphId {
 
     #[inline]
@@ -62,7 +62,7 @@ impl From<ttf_parser::GlyphId> for GlyphId {
     }
 }
 
-#[cfg(feature = "ttfparser-backend")]
+#[cfg(feature="ttfparser-fontparser")]
 impl Into<ttf_parser::GlyphId> for GlyphId {
     fn into(self) -> ttf_parser::GlyphId {
         ttf_parser::GlyphId(self.0.into())
@@ -71,7 +71,7 @@ impl Into<ttf_parser::GlyphId> for GlyphId {
 
 
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl From<font::opentype::math::assembly::Direction> for Direction {
     #[inline]
     fn from(from: font::opentype::math::assembly::Direction) -> Self {
@@ -82,7 +82,7 @@ impl From<font::opentype::math::assembly::Direction> for Direction {
     }
 }
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl Into<font::opentype::math::assembly::Direction> for Direction {
     fn into(self) -> font::opentype::math::assembly::Direction {
         match self {
@@ -93,7 +93,7 @@ impl Into<font::opentype::math::assembly::Direction> for Direction {
 }
 
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl From<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction {
     #[inline]
     fn from(from: font::opentype::math::assembly::GlyphInstruction) -> Self {
@@ -104,7 +104,7 @@ impl From<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction
     }
 }
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl Into<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction {
     fn into(self) -> font::opentype::math::assembly::GlyphInstruction {
         font::opentype::math::assembly::GlyphInstruction {
@@ -115,7 +115,7 @@ impl Into<font::opentype::math::assembly::GlyphInstruction> for GlyphInstruction
 }
 
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl From<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     #[inline]
     fn from(from: font::opentype::math::assembly::VariantGlyph) -> Self {
@@ -130,7 +130,7 @@ impl From<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     }
 }
 
-#[cfg(feature = "fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl Into<font::opentype::math::assembly::VariantGlyph> for VariantGlyph {
     fn into(self) -> font::opentype::math::assembly::VariantGlyph {
         match self {

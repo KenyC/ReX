@@ -1,20 +1,20 @@
 use femtovg::{Renderer, Canvas, Solidity, Path, Paint};
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 use font::{Font, OpenTypeFont};
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
 use crate::{Backend, font::common::GlyphId, GraphicsBackend, FontBackend, Role};
 
 
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 fn v_cursor(c: crate::Cursor) -> Vector2F {
     Vector2F::new(c.x as f32, c.y as f32)
 }
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 fn v_xy(x: f64, y: f64) -> Vector2F {
     Vector2F::new(x as f32, y as f32)
 }
@@ -42,10 +42,10 @@ impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
     }
 }
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl<'a, T : Renderer> Backend<OpenTypeFont> for FemtoVGCanvas<'a, T> {}
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl<'a, T : Renderer> FontBackend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
     fn symbol(&mut self, pos: crate::Cursor, gid: GlyphId, scale: f64, ctx: &OpenTypeFont) {
         let path = ctx.glyph(gid.into()).unwrap().path;
@@ -104,9 +104,9 @@ impl<'a, T : Renderer> FontBackend<OpenTypeFont> for FemtoVGCanvas<'a, T> {
 
 }
 
-#[cfg(feature="ttfparser-backend")]
+#[cfg(feature="ttfparser-fontparser")]
 impl<'a, 'f, T : Renderer> Backend<crate::font::backend::ttf_parser::TtfMathFont<'f>> for FemtoVGCanvas<'a, T> {}
-#[cfg(feature = "ttfparser-backend")]
+#[cfg(feature="ttfparser-fontparser")]
 impl<'a, 'f, T : Renderer> FontBackend<crate::font::backend::ttf_parser::TtfMathFont<'f>> for FemtoVGCanvas<'a, T> {
 
     fn symbol(&mut self, pos: crate::Cursor, gid: GlyphId, scale: f64, ctx: &crate::font::backend::ttf_parser::TtfMathFont<'f>) {

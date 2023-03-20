@@ -1,4 +1,4 @@
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 use font::OpenTypeFont;
 use pathfinder_renderer::{
     scene::{Scene, DrawPath},
@@ -45,7 +45,7 @@ impl<'a> SceneWrapper<'a> {
     }
 }
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl<'a> FontBackend<OpenTypeFont> for SceneWrapper<'a> {
         fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, font: &OpenTypeFont) {
         use font::Font;
@@ -59,7 +59,7 @@ impl<'a> FontBackend<OpenTypeFont> for SceneWrapper<'a> {
     }
 }
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 impl<'a> Backend<OpenTypeFont> for SceneWrapper<'a> {}
 
 impl<'a> GraphicsBackend for SceneWrapper<'a> {
@@ -102,7 +102,7 @@ use crate::font::FontContext;
 use crate::layout::{LayoutSettings, Style};
 use pathfinder_export::{Export, FileFormat};
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
     // TODO : remove '.unwrap()' 
     let font = OpenTypeFont::parse(font).unwrap();

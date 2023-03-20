@@ -20,16 +20,7 @@ use sdl2::render::Canvas;
 use sdl2::video::Window; 
 
 const SAMPLES: &[&str] = &[
-    r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
-    r"\Vert f \Vert_2 = \sqrt{\int f^2(x)\,\mathrm{d}x}",
-    r"\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\right\} \mathrm{wat?}",
-    r"\hat A\grave A\bar A\tilde A\hat x \grave x\bar x\tilde x\hat y\grave y\bar y\tilde y",
-    r"\mathop{\overbrace{1+2+3+\unicodecdots+n}}\limits^{\mathrm{Arithmatic}} = \frac{n(n+1)}{2}",
-    r"\sigma = \left(\int f^2(x)\,\mathrm{d}x\right)^{1/2}",
-    r"\left\vert\sum_k a_k b_k\right\vert \leq \left(\sum_k a_k^2\right)^{\frac12}\left(\sum_k b_k^2\right)^{\frac12}",
-    r"f^{(n)}(z) = \frac{n!}{2\pi i} \oint \frac{f(\xi)}{(\xi - z)^{n+1}}\,\mathrm{d}\xi",
-    r"\frac{1}{\left(\sqrt{\phi\sqrt5} - \phi\right) e^{\frac{2}{5}\pi}} = 1 + \frac{e^{-2\pi}}{1 + \frac{e^{-4\pi}}{1 + \frac{e^{-6\pi}}{1 + \frac{e^{-8\pi}}{1 + \unicodecdots}}}}",
-    r"\mathop{\mathrm{lim\,sup}}\limits_{x\rightarrow\infty}\ \mathop{\mathrm{sin}}(x)\mathrel{\mathop{=}\limits^?}1"
+    r"\left\{\begin{array}{c}1\\2\\3\\4\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\end{array}\right\}",
 ];
  
 const WIDTH : u32 = 800; 
@@ -66,7 +57,8 @@ fn main() {
     const WHITE : femtovg::Color = femtovg::Color::white(); 
     const BLACK : femtovg::Color = femtovg::Color::black(); 
     let paint = femtovg::Paint::color(BLACK).with_fill_rule(femtovg::FillRule::EvenOdd).with_anti_alias(true);
-    let font_file = std::fs::read("fonts/rex-xits_old.otf").unwrap();
+    // let font_file = std::fs::read("fonts/rex-xits_old.otf").unwrap();
+    let font_file = std::fs::read("resources/FiraMath_Regular.otf").unwrap();
     let font = load_font(&font_file);
 
  
@@ -107,7 +99,8 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &TtfMa
     let mut layout = Layout::new();
     layout.add_node(grid.build());
 
-    let renderer = Renderer::new();
+    let mut renderer = Renderer::new();
+    renderer.debug = true;
 
     let (x0, y0, x1, y1) = renderer.size(&layout);
     let width  = (x1 - x0) as f32;
@@ -116,7 +109,9 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &TtfMa
     let canvas = backend.canvas();
     canvas.save();
     canvas.translate(x0 as f32, y0 as f32);
-    let min_scale = (WIDTH as f32) / width;
+    let min_width_scale  = (WIDTH  as f32) / width;
+    let min_height_scale = (HEIGHT as f32) / height;
+    let min_scale = f32::min(min_width_scale, min_height_scale) * 0.75;
     canvas.scale(min_scale, min_scale);
     println!("{:?}", min_scale);
     // if min_scale <= 1. {

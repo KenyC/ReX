@@ -199,10 +199,10 @@ impl Renderer {
     }
 }
 
-#[cfg(feature="pathfinder-backend")]
+#[cfg(feature="pathfinder-renderer")]
 pub mod pathfinder;
-#[cfg(feature="pathfinder-backend")]
+#[cfg(feature="pathfinder-renderer")]
 pub use pathfinder::SceneWrapper;
 
-#[cfg(feature="femtovg-backend")]
+#[cfg(feature="femtovg-renderer")]
 pub mod femtovg;

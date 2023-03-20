@@ -1,5 +1,5 @@
-#[cfg(feature="ttfparser-backend")]
+#[cfg(feature="ttfparser-fontparser")]
 pub mod ttf_parser;
 
-#[cfg(feature="fontcrate-backend")]
+#[cfg(feature="fontrs-fontparser")]
 pub mod font;
