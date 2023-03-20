@@ -1,4 +1,7 @@
-use ttf_parser::{math::{GlyphPart, Variants}, LazyArray16};
+
+use std::convert::TryInto;
+
+use ttf_parser::{math::GlyphPart, LazyArray16};
 
 use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
@@ -139,7 +142,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         self.safe_constants(font_units_to_em).unwrap()
     }
 
-    fn horz_variant(&self, gid: GlyphId, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
+    fn horz_variant(&self, gid: GlyphId, width: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
         // NOTE: The following is an adaptation of the corresponding code in the crate "font"
         // NOTE: bizarrely, the code for horizontal variant is not isomorphic to the code for vertical variant ; here, I've simply adapted the vertical variant code
         // TODO: figure out why horiz_variant uses 'greatest_lower_bound' and vert_variant uses 'smallest_lowerè_bound'
@@ -157,7 +160,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
 
         // Otherwise, check if any replacement glyphs are larger than the demanded size: we use them if they exist.
         for record in construction.variants {
-            if record.advance_measurement >= (height / Font) as u16 {
+            if record.advance_measurement >= (width / Font) as u16 {
                 return VariantGlyph::Replacement(GlyphId::from(record.variant_glyph));
             }
         }
@@ -174,16 +177,10 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             Some(ref assembly) => assembly,
         };
 
-        let size = (height / Font) as u32;
-        if let Some((repeats, diff_ratio)) = greatest_lower_bound(&variants, assembly.parts, size) {
-            let instructions = construct_glyphs(&variants, assembly.parts, repeats, diff_ratio);
-            VariantGlyph::Constructable(Direction::Horizontal, instructions)
-        }
-        else {
-            trace!("constructable glyphs are too large");
-            replacement
-        }
+        let size = (width / Font).ceil() as u32;
 
+        let instructions = construct_glyphs(variants.min_connector_overlap.into(), assembly.parts, size);
+        VariantGlyph::Constructable(Direction::Horizontal, instructions)
     }
 
 
@@ -221,9 +218,11 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             Some(ref assembly) => assembly,
         };
 
-        let size = (height / Font) as u32;
-        let (repeats, diff_ratio) = smallest_upper_bound(&variants, assembly.parts, size);
-        let instructions = construct_glyphs(&variants, assembly.parts, repeats, diff_ratio);
+        let size = (height / Font).ceil() as u32;
+
+        // We aim for a construction where overlap between adjacent segment is the same
+        // We take inspiration from [https://frederic-wang.fr/opentype-math-in-harfbuzz.html]
+        let instructions = construct_glyphs(variants.min_connector_overlap.into(), assembly.parts, size);
 
         VariantGlyph::Constructable(Direction::Vertical, instructions)
     }
@@ -288,193 +287,241 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
 
 
 
-fn max_overlap(variants : &Variants, left: u16, right: &GlyphPart) -> u16 {
+fn max_overlap(min_connector_overlap : u32, left: &GlyphPart, right: &GlyphPart) -> u32 {
     // NOTE: The following is an adaptation of the corresponding code in the crate "font"
-    let overlap = std::cmp::min(left, right.start_connector_length);
+    let overlap = std::cmp::min(left.end_connector_length, right.start_connector_length);
     let overlap = std::cmp::min(overlap, right.full_advance / 2);
-    std::cmp::max(overlap, variants.min_connector_overlap)
+    std::cmp::max(overlap.into(), min_connector_overlap)
 }
 
-fn construct_glyphs(variants : &Variants, parts: LazyArray16<GlyphPart>, repeats: u16, diff_ratio: f64) -> Vec<GlyphInstruction> {
-    // NOTE: The following is an adaptation of the corresponding code in the crate "font"
+fn construct_glyphs(min_connector_overlap : u32, parts: LazyArray16<GlyphPart>, size: u32) -> Vec<GlyphInstruction> {
+    let mut n_ext       = 0;
+    let mut n_nonext    = 0;
+    let mut size_ext    : u32 = 0;
+    let mut size_nonext : u32 = 0;
+    for part in parts {
+        if part.part_flags.extender() {
+            n_ext += 1;
+            size_ext += u32::from(part.full_advance);
+        }
+        else {
+            n_nonext += 1;
+            size_nonext += u32::from(part.full_advance);
+        }
+    }
 
-    // Construct the variant glyph
-    let mut prev_connector = 0;
-    let mut first = true;
-    trace!("diff: {:?}, repeats: {}", diff_ratio, repeats);
+    // Determine whether we need extender at all
+    let max_size_no_extender = size_nonext - (n_nonext - 1) * min_connector_overlap;
+    let min_repeats = 
+        if max_size_no_extender >= size 
+        { 0 }
+        else {
+            let quotient = size_ext - n_ext * min_connector_overlap;
+            let numerator = size - max_size_no_extender;
+            // minimum number of repeats such that size of extended glyph can exceed desired size
+            let min_repeats = numerator / quotient;
 
-    let mut to_return = Vec::with_capacity(repeats as usize + 3);
-    for glyph in parts {
-        let repeat = if glyph.part_flags.extender() { repeats } else { 1 };
-        for _ in 0..repeat {
-            let overlap = if first {
-                first = false;
-                0
-            } else {
-                // linear interpolation
-                //  d * max_overlap + (1 - d) * MIN_CONNECTOR_OVERLAP
-                let max = max_overlap(variants, prev_connector, &glyph);
-                let overlap = (1.0 - diff_ratio) * max as f64
-                    + diff_ratio * variants.min_connector_overlap as f64;
-                overlap as u16
-            };
-            prev_connector = std::cmp::min(glyph.end_connector_length, glyph.full_advance / 2);
+            // We need this rounded up:
+            if numerator.rem_euclid(quotient) != 0 
+            { min_repeats + 1 }
+            else 
+            { min_repeats }
+        }
+    ;
 
-            to_return.push(GlyphInstruction {
-                gid: GlyphId::from(glyph.glyph_id),
-                overlap: overlap
+    // compute size without overlap
+    let size_without_overlap = size_nonext + size_ext * min_repeats;
+
+    // compute min_overlap
+    let min_overlap_total = (n_nonext + n_ext * min_repeats - 1) * min_connector_overlap;
+
+    // we must now compute max_overlap
+    let mut max_overlap_total : u32 = 0;
+    let mut prev_glyph = None;
+    for part in parts {
+        if part.part_flags.extender() {
+            // if no extender, we skip this case.
+            if min_repeats == 0 {
+                continue;                
+            }
+            // if more than one repetition of an extender, we must take into account
+            // overlap between the extender and itself.
+            else if min_repeats > 1 {
+                max_overlap_total += (min_repeats - 1) * max_overlap(min_connector_overlap, &part, &part);
+            }
+        }
+
+        if let Some(prev_glyph) = prev_glyph.as_ref() {
+            max_overlap_total += max_overlap(min_connector_overlap, prev_glyph, &part);
+        }
+        prev_glyph = Some(part);
+    }
+
+    let size_with_min_overlap = size_without_overlap - min_overlap_total;
+    let size_with_max_overlap = size_without_overlap - max_overlap_total;
+    // If everything is dandy, the glyph finds itself neatly between the minimum and maximum size
+    // TODO: handle Asana-Math.otf where min_connector_overlap is abnormally big...
+    debug_assert!(size_with_min_overlap >= size);
+    // TODO: in FiraMaths, sizes between 4760 and 5400 can't be built (presumably, vertical variant exist for these)
+    // the reason is that with 0 extendor, the maximal size is 4760
+    // with 1 set of maximally overlapping extendor, it's 5400
+    // so we allow size to be smaller than max_overlap
+    // this means exceeding max overlap between segments.
+    // debug_assert!(size_with_max_overlap <= size);
+
+    // find factor f such that size = (1 - f) * size_with_min_overlap + f * size_with_max_overlap
+    // f (size_with_min_overlap - size_with_max_overlap) = size - size_with_max_overlap
+    // f = (size_with_min_overlap - size) / (size_with_min_overlap - size_with_max_overlap)
+    let factor = dbg!(f64::from(size_with_min_overlap - size) / f64::from(size_with_min_overlap - size_with_max_overlap));
+
+
+    // for every adjacent glyph, the overlap o is an interpolation between min_connector_overlap and max_overlap
+    let mut instructions = Vec::with_capacity((n_nonext + min_repeats * n_ext) as usize);
+    let mut prev_part = None;
+
+    for part in parts {
+        let n_repeats = if part.part_flags.extender() { min_repeats } else { 1 };
+        for _ in 0 .. n_repeats {
+            let overlap;
+            if let Some(prev_part) = prev_part {
+                let max_overlap = max_overlap(min_connector_overlap, &prev_part, &part);
+
+                // we choose to "floor" the float
+                // this leads to under-estimating the amount of overlap needed, 
+                // and thus makes an extended glyph slightly larger than size itself.
+                // this allows us to uphold the guarantee that the extended glyph be at least as large as size.
+                overlap = min_connector_overlap + ((factor * f64::from(max_overlap - min_connector_overlap)).floor() as u32);
+
+                // Even with the rounding, this should hold.
+                debug_assert!(overlap >= min_connector_overlap);
+                // Cf remark above about Fira Maths, we can't guarantee that we won't be over max_overlap
+                // debug_assert!(overlap <= max_overlap);
+            }
+            else {
+                overlap = 0;
+            }
+            instructions.push(GlyphInstruction {
+                gid: part.glyph_id.into(),
+                overlap : overlap.try_into().unwrap(),
             });
+            prev_part = Some(part);
         }
     }
 
-    to_return
+    instructions
 }
 
-/// Construct the smallest variant that is larger than the given size.
-/// With the number of glyphs required to construct the variant is larger
-/// than `ITERATION_LIMIT` we return `None`.
-fn smallest_upper_bound(variants : &Variants, parts: LazyArray16<GlyphPart>, size: u32) -> (u16, f64) {
-    // NOTE: The following is an adaptation of the corresponding code in the crate "font"
 
-    let (small, large) = advance_without_optional(variants, parts);
-    if small < size {
-        trace!("using smallest variant glyph, {} <= smallest <= {}", small, large);
-        return (0, 0.0)
-    }
 
-    // Otherwise, check the next largest variant with optional glyphs included.
-    let (mut small, mut large, opt_small, opt_large) = advance_with_optional(variants,parts);
-    if large >= size {
-        let diff_ratio = f64::from(size - small) / f64::from(large - small);
-        trace!("Optional glyphs: 1, Difference ratio: {:2}", diff_ratio);
-        return (1, diff_ratio);
-    } 
+#[cfg(test)]
+mod tests {
 
-    // We need to find the smallest integer k that satisfies:
-    //     large + k * opt_large >= size
-    // This is solved by:
-    //     (size - large) / opt_large <= k
-    // So take k = ceil[ (size - large) / opt_large ]
-    let k = u32::from( (size - large) / opt_large ) + 1;
-    trace!("k = ({} - {}) / {} = {}", size, large, opt_large, k);
-    small += k * opt_small;
-    large += k * opt_large;
-    trace!("new size: {} <= advance <= {}", small, large);
+    use super::*;
+    const FIRA_MATH_FONT_FILE : & 'static [u8] = include_bytes!("../../../resources/FiraMath_Regular.otf");
 
-    //  A---o---B, percentage: (o - A) / (B - A)
-    // o  A-----B, percentage: 0 (smallest glyph).
-    // Need small + diff_ratio * (opt_large - opt_small) = size
-    if small >= size {
-        return (k as u16 + 1, 0.into());
-    }
+    #[test]
+    fn test_construct_glyphs() {
+        let font = ttf_parser::Face::parse(FIRA_MATH_FONT_FILE, 0).unwrap();
 
-    let difference_ratio = f64::from(size - small) / f64::from(large - small);
-    trace!("Difference ratio: ({:?} - {:?}) / ({:?} - {:?}) = {:?}",
-        size, small, large, small, difference_ratio);
-    trace!("New size: {} + {} * {} * {}", small, k, difference_ratio, opt_large - opt_small);
-    (k as u16 + 1, difference_ratio)
-}
 
-/// Calculate the advance of the smallest variant with exactly one set of optional
-/// connectors. This returns a tuple: the first element states the advance of a
-/// variant with one set of optional connectors, the second element states the
-/// increase in advance for each additional connector.
-fn advance_with_optional(variants : &Variants, parts: LazyArray16<GlyphPart>) -> (u32, u32, u32, u32) {
-    // NOTE: The following is an adaptation of the corresponding code in the crate "font"
+        let math_table = font.tables().math.unwrap();
+        let variants = math_table.variants.unwrap();
+        let glyph_id_rbrace = dbg!(font.glyph_index('}').unwrap());
+        let parts = math_table.variants.unwrap().vertical_constructions.get(glyph_id_rbrace).unwrap().assembly.unwrap().parts;
 
-    let mut advance_small = 0;
-    let mut advance_large = variants.min_connector_overlap as u32;
-    let mut connector_small = 0;
-    let mut connector_large = 0;
-    let mut prev_connector = 0;
 
-    // Calculate the legnth with exactly one connector
-    for glyph in parts {
-        let overlap = max_overlap(variants, prev_connector, &glyph);
-        advance_small += (glyph.full_advance - overlap) as u32;
-        advance_large += (glyph.full_advance - variants.min_connector_overlap) as u32;
-        prev_connector = std::cmp::min(glyph.end_connector_length, glyph.full_advance / 2);
 
-        // Keep record of the advance each additional connector adds
-        if glyph.part_flags.extender() {
-            let overlap = max_overlap(variants, glyph.start_connector_length, &glyph);
-            connector_small += (glyph.full_advance - overlap) as u32;
-            connector_large += (glyph.full_advance - variants.min_connector_overlap) as u32;
+        // let height = 7994.87;
+
+        // From the table of FiraMaths, the minimal height this extended glyph of '}' can be is
+        // 1400 + 2000 + 1400 - 2 * 150 = 4500
+        let min_size = 4500.; // include the limiting case
+        let max_size = 25000.;
+        let n_steps    = 50; 
+        let sizes : Vec<_> = (1 .. n_steps)
+            .into_iter()
+            .map(|i| min_size + (max_size - min_size) * (i as f64) / ((n_steps - 1) as f64))
+            .collect()
+        ;
+
+        
+        for size in sizes {
+            dbg!(size);
+            let instrs = construct_glyphs(variants.min_connector_overlap.into(), parts, size.ceil() as u32);
+            let total_size = size_instrs(instrs, parts);
+            assert!(f64::from(total_size) > size);
+            // the built delimiter should not be too big either
+            assert!(f64::from(total_size) < 1.01 * size);
         }
+
+
+
+        let glyph_id_rbrace = dbg!(font.glyph_index('√').unwrap());
+        let parts = math_table.variants.unwrap().vertical_constructions.get(glyph_id_rbrace).unwrap().assembly.unwrap().parts;
+
+
+        let min_size = 5700.; // include the limiting case
+        let max_size = 25000.;
+        let n_steps    = 50; 
+        let sizes : Vec<_> = (1 .. n_steps)
+            .into_iter()
+            .map(|i| min_size + (max_size - min_size) * (i as f64) / ((n_steps - 1) as f64))
+            .collect()
+        ;
+
+        
+        for size in sizes {
+            dbg!(size);
+            let instrs = construct_glyphs(variants.min_connector_overlap.into(), parts, size.ceil() as u32);
+            let total_size = size_instrs(instrs, parts);
+            assert!(f64::from(total_size) > size);
+            // the built delimiter should not be too big either
+            assert!(f64::from(total_size) < 1.01 * size);
+        }
+
+
+
+        let glyph_id_rbrace = dbg!(font.glyph_index('⎴').unwrap());
+        let parts = math_table.variants.unwrap().horizontal_constructions.get(glyph_id_rbrace).unwrap().assembly.unwrap().parts;
+
+
+        let min_size = 6312.; // include the limiting case
+        let max_size = 25000.;
+        let n_steps    = 50; 
+        let sizes : Vec<_> = (1 .. n_steps)
+            .into_iter()
+            .map(|i| min_size + (max_size - min_size) * (i as f64) / ((n_steps - 1) as f64))
+            .collect()
+        ;
+
+        
+        for size in sizes {
+            dbg!(size);
+            if size > 6693. {
+                eprintln!("BHDT")
+            }
+            let instrs = construct_glyphs(variants.min_connector_overlap.into(), parts, size.ceil() as u32);
+            let total_size = dbg!(size_instrs(instrs, parts));
+            assert!(f64::from(total_size) > size);
+            // the built delimiter should not be too big either
+            assert!(f64::from(total_size) < 1.01 * size);
+        }
+
+
     }
 
-    trace!("variant with optional glyphs: {} <= advance <= {}", advance_small, advance_large);
-    trace!("advance from optional glyphs: {} <= advance <= {}",
-        connector_small, connector_large);
-    (advance_small, advance_large, connector_small, connector_large)
+    fn size_instrs(instrs: Vec<GlyphInstruction>, parts: LazyArray16<GlyphPart>) -> u32 {
+        let mut total_size : u32 = 0;
+        for GlyphInstruction { gid, overlap } in instrs.into_iter() {
+            // NB1: this is a crude way to get to the size of the delimited glyph
+            // the problem is the advance could be different for the same glyph id 
+            // NB2: getting advance instead of glyph's bbox width/height ; it turns out the two can strangely be different
+            // In Fira Maths for instance, the underbracket has 600 width but an advance of 700 in the extended glyph version...
+            let advance : u32 = parts.into_iter().filter(|part| part.glyph_id == gid.into()).next().unwrap().full_advance.into();
+            let overlap : u32 = overlap.into();
+            total_size += dbg!(advance);
+            total_size -= overlap;
+        }
+        total_size
+    }
 }
-
-fn advance_without_optional(variants : &Variants, parts: LazyArray16<GlyphPart>) -> (u32, u32) {
-    // NOTE: The following is an adaptation of the corresponding code in the crate "font"
-
-    let mut advance_small = 0;
-    let mut advance_large = variants.min_connector_overlap as u32;
-    let mut prev_connector = 0;
-
-    for glyph in parts.into_iter().filter(|glyph| glyph.part_flags.extender()) {
-        let overlap = max_overlap(variants, prev_connector, &glyph);
-        advance_small += (glyph.full_advance - overlap) as u32;
-        advance_large += (glyph.full_advance - variants.min_connector_overlap) as u32;
-        prev_connector = std::cmp::min(glyph.end_connector_length, glyph.full_advance / 2);
-    }
-
-    (advance_small, advance_large)
-}
-
-
-/// Measure the _largest_ a glyph construction _smaller_ than the given size. 
-/// If all constructions are larger than the given size, return `None`.
-/// Otherwise return the number of optional glyphs required and the difference
-/// ratio to obtain the desired size.
-fn greatest_lower_bound(
-    variants : &Variants,
-    parts:     LazyArray16<GlyphPart>, 
-    size:      u32
-) 
--> Option<(u16, f64)> 
-{
-    let (small, large) = advance_without_optional(variants, parts);
-    if small >= size {
-        trace!("all constructable glyphs are too large, smallest: {}", small);
-        return None;
-    }
-
-    // Otherwise calculate the size of including one set of optional glyphs.
-    let (mut ssmall, mut llarge, opt_small, opt_large) = advance_with_optional(variants, parts);
-
-    // If the smallest constructable with optional glyphs is too large we
-    // use no optional glyphs.
-    // TODO: Do something better if `large == small`.
-    if ssmall >= size {
-        let diff_ratio = f64::from(size - small) / f64::from(large - small);
-        let diff_ratio = diff_ratio.min(1.0);
-        trace!("optional glyphs make construction too large, using none");
-        trace!("diff_ratio = {:.2}", diff_ratio);
-        return Some((0, diff_ratio));
-    }
-
-    // Determine the number of additional optional glyphs required to achieve size.
-    // We need to find the smallest integer k such that:
-    //     ssmall + k*opt_small >= size
-    // This is solved by:
-    //     (size - ssmall) / opt_small <= k
-    // Which is solved by: k = floor[ (size - smmal) / opt_small ]
-    // Since we round towards zero, floor is not necessary.
-    let k = (size - ssmall) / opt_small;
-    trace!("k = ({} - {})/ {} = {}", size, ssmall, opt_small, k);
-
-    ssmall += k * opt_small;
-    llarge += k * opt_large;
-    let diff_ratio = f64::from(size - ssmall) / f64::from(llarge - ssmall);
-    let diff_ratio = diff_ratio.min(1.0).max(0.0);
-
-    trace!("{} <= advance <= {}", ssmall, llarge);
-    trace!("Difference ratio: {}", diff_ratio);
-    Some((k as u16 + 1, diff_ratio))
-}
-
