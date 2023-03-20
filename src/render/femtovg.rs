@@ -6,7 +6,7 @@ use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
 #[cfg(feature="fontcrate-backend")]
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
-use crate::{Backend, font::common::GlyphId, GraphicsBackend, FontBackend};
+use crate::{Backend, font::common::GlyphId, GraphicsBackend, FontBackend, Role};
 
 
 
@@ -177,6 +177,18 @@ impl<'a, 'f, T : Renderer> FontBackend<crate::font::backend::ttf_parser::TtfMath
 
 
 impl<'a, T : Renderer> GraphicsBackend for FemtoVGCanvas<'a, T> {
+    fn bbox(&mut self, pos: crate::Cursor, width: f64, height: f64, _role: Role) {
+        let color = match _role {
+            Role::Glyph => femtovg::Color::rgba(0, 200, 0, 255),
+            Role::VBox  => femtovg::Color::rgba(200, 0, 0, 255),
+            Role::HBox  => femtovg::Color::rgba(0, 0, 200, 255),
+        };
+        let paint = Paint::color(color);
+        let mut path = Path::new();
+        path.rect(pos.x as f32, pos.y as f32, width as f32, height as f32);
+        self.canvas.stroke_path(&mut path, &paint);
+    }
+
     fn rule(&mut self, pos: crate::Cursor, width: f64, height: f64) {
         let mut path = femtovg::Path::new();
         path.rect(pos.x as f32, pos.y as f32, width as f32, height as f32);
