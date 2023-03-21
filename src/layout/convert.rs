@@ -55,9 +55,9 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                 match dir {
                     Direction::Vertical => {
                         let mut contents = builders::VBox::new();
-                        for instr in parts {
+                        for instr in parts.into_iter().rev() {
                             let glyph = config.ctx.glyph_from_gid(instr.gid)?;
-                            contents.insert_node(0, glyph.as_layout(config)?);
+                            contents.add_node(glyph.as_layout(config)?);
                             if instr.overlap != 0 {
                                 let overlap = Length::new(instr.overlap, Font);
                                 let kern = -(overlap + glyph.depth()).scaled(config);

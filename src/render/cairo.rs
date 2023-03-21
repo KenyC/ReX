@@ -44,6 +44,7 @@ impl GraphicsBackend for CairoBackend {
 
         self.context.rectangle(_pos.x, _pos.y, _width, _height);
         self.context.stroke().unwrap();
+        self.set_current_color();
     }
 
     fn rule(&mut self, pos: crate::Cursor, width: f64, height: f64) {
