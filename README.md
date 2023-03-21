@@ -1,10 +1,11 @@
-# ReX &nbsp; [![](https://tokei.rs/b1/github/cbreeden/rex)](https://github.com/cbreeden/rex)
+# ReX &nbsp; [![](https://tokei.rs/b1/github/cbreeden/rex)](https://github.com/KenyC/ReX)
 
 <p align="center"><img src="rex.png" alt="ReX logo" width="300px"/></p>
 <h3 align="center">Typesetting Mathematics</h3>
 
-# Why the fork?
+This is a fork of [ReX](https://github.com/cbreeden/rex), a Rust mathematical typesetting engine.
 
+# Why the fork?
 
 This fork of ReX is designed to allow users to use their preferred rendering engine and font parser, instead of relying on Pathfinder and the font-parsing crate `font` (whose continuing development is not guaranteed). Implementing the trait MathFont allows users to specify their own font parser, and implementing `Backend<F : MathFont>`, where F is the type of the desired font parser, allows users to use their own rendering engine. 
 
@@ -19,8 +20,6 @@ The following features define some implementations of these traits for you:
 Perhaps, this fork may ultimately turn into an attempt to take full ownership of the engine.
 
 # Samples
-
-You can try ReX live [here](https://retex.github.io/iReX/editor.html)!  Simply type in a formula in the editor and click the display on the top to update the rendering.
 
 Note: ReX rendered all of these examples in SVG, but due to limitations in SVG rendering on GitHub, we need to convert them to PNG.
 See the `samples/` folder for the original SVG source.
@@ -95,23 +94,49 @@ See the `samples/` folder for the original SVG source.
 
 ![Example](samples/Another_fun_identity.png)
 
-# Install
+# Usage
 
-First note that ReX is currently in heavy development and is not intended to be used in any way other than for testing and debugging.
-That being said, you can install ReX using a Rust compiler.  Instructions are found [here](https://www.rustup.rs/).
+## Simple example
 
-You can look at the examples in the `tests/` folder to see ReX in action, or simply run
+You can see a simple example of use in [examples/ttfparser_cairo.rs](examples/ttfparser_cairo.rs). To run this example, run the following in the root of the repository.
 
+```bash
+cargo r --example ttfparser-cairo --features cairo-renderer,ttfparser-fontparser
 ```
-cargo run 'x = \frac{-b \pm \sqrt{b^2 - 4ac}{2a}'
-```
+The program will output `test.svg`.
 
-for a standalone SVG.  The file will be saved as "test.svg".
+## More generally
+
+In a nutshell, rendering a formula requires:
+
+  - Parsing the formula into `ParseNode` (using `rex::parser::engine::parse`).
+  - Creating a `FontContext` struct from a certain font struct provided by the crate.
+  - Creating a `LayoutSettings` struct from this font context, specifying font size and font context.
+  - Creating a `Layout`.
+  - Creating a `LayoutNode` from `ParseNode` using `rex::layout::engine::layout`.
+  - Add the node to the `Layout` using `Layout::add_node`.
+  - Create a `Renderer`;
+  - Create the relevant renderer backend (e.g. `CairoBackend::new` for cairo).
+  - Call `Renderer::render` with the layout and the backend as arguments.
+
+## Intended use: as a library
+
+Add the following to `Cargo.toml`:
+
+```toml
+rex = {git = "https://github.com/KenyC/ReX", features = [<whatever features you deem relevant>]}
+```
 
 # License
 
-ReX is primarily distributed under the terms of both the MIT license and
-the Apache License (Version 2.0), with portions covered by various BSD-like
-licenses.
+## Fork
 
-See LICENSE-APACHE, and LICENSE-MIT for details.
+Any modifications made in this fork fork is distributed under the MIT license. See LICENSE for details.
+
+## Original
+
+The original ReX is primarily distributed under the terms of both the MIT license and
+the Apache License (Version 2.0), with portions covered by various BSD-like
+licenses. 
+
+*Note (Keny C):* The license files were not provided in the original repository. The problem was raised [here](https://github.com/ReTeX/ReX/issues/39)). Given lack of reply, I'm not sure which parts are licensed by what.
