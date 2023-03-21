@@ -267,15 +267,28 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         }?;
 
 
-        let mut i = 0;
-        while let Some((h, kern)) = Option::zip(table.height(i), table.kern(i)) {
-            if height < Length::new(h.value, Font) {
-                return Some(Length::new(kern.value, Font));
+        // From Microsoft SPEC
+        /*
+        The kerning value corresponding to a particular height is determined by finding two consecutive entries 
+        in the correctionHeight array such that the given height is greater than or equal to the first entry 
+        and less than the second entry. The index of the second entry is used to look up a kerning value in the 
+        kernValues array. If the given height is less than the first entry in the correctionHeights array, 
+        the first kerning value (index 0) is used. For a height that is greater than or equal to the last entry 
+        in the correctionHeights array, the last entry is used.
+        */
+        let count = table.count(); // size of height count
+        for i in 0 .. count {
+            // none of the ? should trigger if the font parser is set right
+            // Nevertheless, we don't to create an irrecoverable error
+            let h    = table.height(i)?.value; 
+            let kern = table.kern(i)?.value;   
+
+            if height < Length::new(h, Font) {
+                return Some(Length::new(kern, Font));
             }
-            i += 1;
         }
 
-        Some(Length::new(table.kern(i - 1).unwrap().value, Font))
+        Some(Length::new(table.kern(count)?.value, Font))
     }
 
     fn font_units_to_em(&self) -> Scale<Em, Font> {
