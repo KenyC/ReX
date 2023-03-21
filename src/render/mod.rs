@@ -206,3 +206,5 @@ pub use pathfinder::SceneWrapper;
 
 #[cfg(feature="femtovg-renderer")]
 pub mod femtovg;
+#[cfg(feature="cairo-renderer")]
+pub mod cairo;

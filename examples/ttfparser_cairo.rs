@@ -1,14 +1,9 @@
-use std::fs;
-use pathfinder_export::{Export, FileFormat};
-use pathfinder_renderer::scene::Scene;
-use pathfinder_geometry::{rect::RectF, vector::vec2f};
 use rex::{
-    render::{Renderer, SceneWrapper},
+    render::{Renderer},
     layout::{Grid, Layout, engine, LayoutSettings, Style},
     parser::parse,
-    font::FontContext
+    font::{FontContext, backend::ttf_parser::TtfMathFont}, cairo::CairoBackend
 };
-use font::{Font, OpenTypeFont};
 
 const SAMPLES: &[&str] = &[
     r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
@@ -22,50 +17,42 @@ const SAMPLES: &[&str] = &[
     r"\frac{1}{\left(\sqrt{\phi\sqrt5} - \phi\right) e^{\frac{2}{5}\pi}} = 1 + \frac{e^{-2\pi}}{1 + \frac{e^{-4\pi}}{1 + \frac{e^{-6\pi}}{1 + \frac{e^{-8\pi}}{1 + \unicodecdots}}}}",
     r"\mathop{\mathrm{lim\,sup}}\limits_{x\rightarrow\infty}\ \mathop{\mathrm{sin}}(x)\mathrel{\mathop{=}\limits^?}1"
 ];
+const FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
 
 
 fn main() {
     env_logger::init();
 
     let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(dbg!(tex)).unwrap()).collect();
-    let fonts: Vec<_> = fs::read_dir("fonts").unwrap()
-        .filter_map(|e| e.ok())
-        .filter_map(|entry| {
-            fs::read(entry.path()).ok()
-            .and_then(|data| font::parse(&data).ok().and_then(|f| f.downcast_box::<OpenTypeFont>().ok()))
-            .map(|font| (font, entry.path()))
-        })
-        .filter(|(font, path)| font.math.is_some())
-        .collect();
+    let font_file = std::fs::read(FONT_FILE_PATH).unwrap();
+    let font = load_font(&font_file);
+    let ctx = FontContext::new(&font).unwrap();
 
     let mut grid = Grid::new();
-    for (row, (font, path)) in fonts.iter().enumerate() {
-        let ctx = FontContext::new(font.as_ref()).unwrap();
-        let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+    
+    let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
 
-        let name = format!("\\mathtt{{{}}}", path.file_name().unwrap().to_str().unwrap());
-        if let Ok(node) = engine::layout(&parse(&name).unwrap(), layout_settings).map(|l| l.as_node()) {
-            grid.insert(row, 0, node);
-        }
-        for (column, sample) in samples.iter().enumerate() {
-            if let Ok(node) = engine::layout(sample, layout_settings).map(|l| l.as_node()) {
-                grid.insert(row, column+1, node);
-            }
+    for (column, sample) in samples.iter().enumerate() {
+        if let Ok(node) = engine::layout(sample, layout_settings).map(|l| l.as_node()) {
+            grid.insert(column, 0, node);
         }
     }
 
     let mut layout = Layout::new();
     layout.add_node(grid.build());
 
-    let mut renderer = Renderer::new();
-    let (x0, y0, x1, y1) = renderer.size(&layout);
-    let mut scene = Scene::new();
-    scene.set_view_box(RectF::from_points(vec2f(x0 as f32, y0 as f32), vec2f(x1 as f32, y1 as f32)));
-    let mut backend = SceneWrapper::new(&mut scene);
+    // Create Cairo context
+    let svg_surface = cairo::SvgSurface::new(500., 600., Some("test.svg")).unwrap();
+    let context = cairo::Context::new(&svg_surface).unwrap();
+    let mut backend = CairoBackend::new(context);
+
+    let renderer = Renderer::new();
     renderer.render(&layout, &mut backend);
     
-    let mut buf = Vec::new();
-    scene.export(&mut buf, FileFormat::SVG).unwrap();
 
-    fs::write("qc.svg", &buf).unwrap();
+}
+
+fn load_font<'a>(file : &'a [u8]) -> rex::font::backend::ttf_parser::TtfMathFont<'a> {
+    let font = ttf_parser::Face::parse(file, 0).unwrap();
+    TtfMathFont::new(font).unwrap()
 }

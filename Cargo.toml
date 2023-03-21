@@ -11,6 +11,7 @@ edition = "2018"
 [features]
 pathfinder-renderer   = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "dep:pathfinder_color", "dep:pathfinder_content", "dep:pathfinder_export"]
 femtovg-renderer      = ["dep:femtovg"]
+cairo-renderer        = ["dep:cairo-rs"]
 ttfparser-fontparser  = ["dep:ttf-parser"]
 fontrs-fontparser     = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
 
@@ -28,11 +29,17 @@ name = "ttfparser-femtovg"
 path = "examples/ttfparser_femtovg.rs"
 
 
+[[example]]
+name = "ttfparser-cairo"
+path = "examples/ttfparser_cairo.rs"
+
+
 [dependencies]
 pathfinder_geometry = { git = "https://github.com/servo/pathfinder/", optional = true }
 pathfinder_color    = { git = "https://github.com/servo/pathfinder/", optional = true }
 pathfinder_content  = { git = "https://github.com/servo/pathfinder/", optional = true }
 pathfinder_export   = { git = "https://github.com/servo/pathfinder/", optional = true }
+cairo-rs = {version = "0.17.0", optional = true}
 unicode-math = { path = "deps/unicode-math" }
 serde_derive = "1.0"
 serde = "1.0"
@@ -60,6 +67,7 @@ sdl2 = "*"
 serde_yaml = "0.7"
 bincode = "1.2.1"
 env_logger = "*"
+cairo-rs = {version = "*", features = ["svg"]}
 
 [dependencies.log]
 version="0.4.8"
