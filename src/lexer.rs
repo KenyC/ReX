@@ -89,6 +89,7 @@ impl<'a> Lexer<'a> {
                 Token::WhiteSpace
             }
             Some('\\') => self.control_sequence(),
+            Some('\'') => self.sequence_of_primes(), // just like LateX, we replace apostrophes with primes
             Some(c) => Token::Symbol(c),
             None => Token::EOF,
         };
@@ -222,6 +223,23 @@ impl<'a> Lexer<'a> {
     fn current_char(&mut self) -> Option<char> {
         self.input[self.pos..].chars().next()
     }
+
+
+    fn sequence_of_primes(&mut self) -> Token<'a> {
+        const PRIME_LEN : usize = '\''.len_utf8();
+
+        if !matches!(self.current_char(), Some('\'')) {
+            return Token::Command("prime");
+        }
+        self.pos += PRIME_LEN;
+
+        if !matches!(self.current_char(), Some('\'')) {
+            return Token::Command("dprime");
+        }
+        self.pos += PRIME_LEN;
+
+        Token::Command("trprime")
+    }
 }
 
 
@@ -239,6 +257,33 @@ impl<'a> fmt::Display for Token<'a> {
 #[cfg(test)]
 mod tests {
     use crate::lexer::{Lexer, Token};
+
+    #[test]
+    fn lex_primes() {
+        let mut lexer  = Lexer::new("a'b''c'''d");
+        let mut tokens = Vec::new();
+
+        loop {
+            let token = lexer.current;
+            if token == Token::EOF {break;}
+            tokens.push(token);
+            lexer.next();
+        }
+
+        let expected = [
+            Token::Symbol('a'), 
+            Token::Command("prime"),
+            Token::Symbol('b'), 
+            Token::Command("dprime"),
+            Token::Symbol('c'), 
+            Token::Command("trprime"),
+            Token::Symbol('d'), 
+        ];
+        assert_eq!(
+            tokens,
+            expected.to_vec(),
+        )
+    }
 
     #[test]
     fn lex_tokens() {

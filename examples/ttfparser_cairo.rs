@@ -6,7 +6,7 @@ use rex::{
 };
 
 const SAMPLES: &[&str] = &[
-    r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
+    r"\iint \sqrt{1 + f^2(x',t'',t''')}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
     r"\Vert f \Vert_2 = \sqrt{\int f^2(x)\,\mathrm{d}x}",
     r"\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\right\} \mathrm{wat?}",
     r"\hat A\grave A\bar A\tilde A\hat x \grave x\bar x\tilde x\hat y\grave y\bar y\tilde y",
