@@ -382,7 +382,7 @@ pub fn color<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, RGBA> {
 pub fn environment_name<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Environment> {
     let name = lex.alphanumeric();
     Environment::try_from_str(name)
-        .ok_or(ParseError::Todo)
+        .ok_or(ParseError::UnrecognizedEnvironment(name))
 }
 
 /// This function is the API entry point for parsing tex.

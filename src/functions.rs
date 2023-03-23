@@ -282,7 +282,7 @@ fn substack<'a>(lex: &mut Lexer<'a>, local: Style, atom_type: AtomType) -> Parse
         match lex.current {
             Token::Symbol('}') => break,
             Token::Command(r"\") => lex.next(),
-            _ => return Err(ParseError::Todo),
+            _ => return Err(ParseError::NoClosingBracket),
         };
     }
 

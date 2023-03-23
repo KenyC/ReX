@@ -41,8 +41,14 @@ impl From<FontError> for LayoutError {
 /// Syntax error in the formula provided (mismatching brackets, unknown command)
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParseError<'a> {
-    /// Unknown command.
+    /// Unknown command. \xyz
     UnrecognizedCommand(&'a str),
+    /// Unknown environment \begin{xyz}
+    UnrecognizedEnvironment(&'a str),
+    /// Unknown column specifier \begin{array}{xxx}
+    UnrecognizedColumnFormat(Token<'a>),
+    /// Unknown vertical alignment argument \begin{array}[xxx]{rllc}
+    UnrecognizedVerticalAlignmentArg(Token<'a>),
     /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),
     /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
@@ -90,7 +96,7 @@ pub enum ParseError<'a> {
     /// EOF appeared while some groups were not closed
     UnexpectedEof(Token<'a>),
 
-    /// Our parser does not implement this case yet.
+    /// An unspecific error value for errors we haven't yet included in the list above
     Todo
 }
 
@@ -133,6 +139,12 @@ impl<'a> fmt::Display for ParseError<'a> {
         match *self {
             UnrecognizedCommand(ref cmd) =>
                 write!(f, "unrecognized command: \\{}`", cmd),
+            UnrecognizedEnvironment(name) => 
+                write!(f, "unrecognized environment: \\{}`", name),
+            UnrecognizedColumnFormat(token) => 
+                write!(f, "unrecognized column format: \\{}`", token),
+            UnrecognizedVerticalAlignmentArg(token) => 
+                write!(f, "unrecognized vertical alignment argument: \\{}`", token),
             UnrecognizedSymbol(c) =>
                 write!(f, "unrecognized symbol '{}'", c),
             FailedToParse(ref tok) =>

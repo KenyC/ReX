@@ -193,7 +193,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
                 lex.pos -= 1; // backtrack the lexer
                 break;
             }
-            _ => return Err(ParseError::Todo),
+            token => return Err(ParseError::UnrecognizedColumnFormat(token)),
         }
 
         cols.push(current);
@@ -209,7 +209,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
        })
 }
 
-/// Parse the optional argument in an array enviornment.  This dictates the
+/// Parse the optional argument in an array environment.  This dictates the
 /// vertical positioning of the array.  The recognized values are `t` to
 /// align the top of the array with the baseline, and `b` to aligne the bottom
 /// of the array to the baseline.
@@ -219,7 +219,7 @@ fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayV
     let ret = match lex.current {
         Token::Symbol('t') => Ok(Some(ArrayVerticalAlign::Top)),
         Token::Symbol('b') => Ok(Some(ArrayVerticalAlign::Bottom)),
-        _ => return Err(ParseError::Todo),
+        token => return Err(ParseError::UnrecognizedVerticalAlignmentArg(token)),
     };
 
     lex.next();
