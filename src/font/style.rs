@@ -13,7 +13,7 @@ const DIGIT_0: u32 = 0x30;
 const DIGIT_9: u32 = 0x39;
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-static LATIN_UPPER_LUT: [u32; 28] = [
+const LATIN_UPPER_LUT: [u32; 28] = [
 //  None,              Italic,            Bold,              BoldItalic
     65      - UPPER_A, 0x1D434 - UPPER_A, 0x1D400 - UPPER_A, 0x1D468 - UPPER_A,   // Roman
     0x1D49C - UPPER_A, 0x1D49C - UPPER_A, 0x1D4D0 - UPPER_A, 0x1D4D0 - UPPER_A,   // Script
@@ -25,7 +25,7 @@ static LATIN_UPPER_LUT: [u32; 28] = [
 ];
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-static LATIN_LOWER_LUT: [u32; 28] = [
+const LATIN_LOWER_LUT: [u32; 28] = [
 //  None,              Italic,            Bold,              BoldItalic
     97      - LOWER_A, 0x1D44E - LOWER_A, 0x1D41A - LOWER_A, 0x1D482 - LOWER_A,   // Roman
     0x1D4B6 - LOWER_A, 0x1D4B6 - LOWER_A, 0x1D4EA - LOWER_A, 0x1D4EA - LOWER_A,   // Script
@@ -37,7 +37,7 @@ static LATIN_LOWER_LUT: [u32; 28] = [
 ];
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-static GREEK_UPPER_LUT: [u32; 28] = [
+const GREEK_UPPER_LUT: [u32; 28] = [
 //  None,                  Italic,                Bold,                  BoldItalic
     0x391   - UPPER_ALPHA, 0x1D6E2 - UPPER_ALPHA, 0x1D6A8 - UPPER_ALPHA, 0x1D71C - UPPER_ALPHA,   // Roman
     0x391   - UPPER_ALPHA, 0x1D6E2 - UPPER_ALPHA, 0x1D6A8 - UPPER_ALPHA, 0x1D71C - UPPER_ALPHA,   // Script
@@ -49,7 +49,7 @@ static GREEK_UPPER_LUT: [u32; 28] = [
 ];
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-static GREEK_LOWER_LUT: [u32; 28] = [
+const GREEK_LOWER_LUT: [u32; 28] = [
 //  None,                  Italic,                Bold,                  BoldItalic
     0x3B1   - LOWER_ALPHA, 0x1D6FC - LOWER_ALPHA, 0x1D6C2 - LOWER_ALPHA, 0x1D736 - LOWER_ALPHA,   // Roman
     0x3B1   - LOWER_ALPHA, 0x1D6FC - LOWER_ALPHA, 0x1D6C2 - LOWER_ALPHA, 0x1D736 - LOWER_ALPHA,   // Script
@@ -61,7 +61,7 @@ static GREEK_LOWER_LUT: [u32; 28] = [
 ];
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-static DIGIT_LUT: [u32; 28] = [
+const DIGIT_LUT: [u32; 28] = [
 //  None,              Italic,            Bold,              BoldItalic
     48      - DIGIT_0, 48      - DIGIT_0, 0x1D7CE - DIGIT_0, 0x1D7CE - DIGIT_0,   // Roman
     48      - DIGIT_0, 48      - DIGIT_0, 0x1D7CE - DIGIT_0, 0x1D7CE - DIGIT_0,   // Script
@@ -72,8 +72,8 @@ static DIGIT_LUT: [u32; 28] = [
     48      - DIGIT_0, 48      - DIGIT_0, 0x1D7CE - DIGIT_0, 0x1D7CE - DIGIT_0,   // Normal
 ];
 
-/// Take a codepoint and a stlye (a weight and family pair), and apply the
-/// current font style to the given codepoint.
+/// Take a codepoint and a style (a weight and family pair), and remaps a given codepoint  
+/// to the appropriate mathematical codepoint one in the Unicode table (e.g. in roman italic, maps the "vanilla" 'U+0051 Latin Small Letter A' to 'U+1D44E Mathematical Italic Small A')
 pub fn style_symbol(codepoint: char, style: Style) -> char {
     let codepoint = codepoint as u32;
     let cp = match codepoint {
@@ -90,7 +90,11 @@ pub fn style_symbol(codepoint: char, style: Style) -> char {
 fn style_lookup(lut: &[u32], codepoint: u32, style: Style) -> u32 {
     let y = style.family as usize;
     let x = style.weight as usize;
-    codepoint + lut[4 * y + x]
+    let result = codepoint + lut[4 * y + x];
+    match dbg!(unicode_math::MATH_ALPHANUMERIC_TABLE_RESERVED_REPLACEMENTS).binary_search_by_key(&result, |x| x.0) {
+        Ok(i)  => unicode_math::MATH_ALPHANUMERIC_TABLE_RESERVED_REPLACEMENTS[i].1,
+        Err(_) => result,
+    }
 }
 
 // TODO: Investigate these symbols.

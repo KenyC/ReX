@@ -54,3 +54,53 @@ pub mod font;
 mod functions;
 
 pub use render::*;
+
+#[cfg(test)]
+mod tests {
+    use crate::{parser::parse, font::{FontContext, backend::ttf_parser::TtfMathFont}, layout::{Style, LayoutSettings, engine}};
+
+    const GARAMOND_MATH_FONT : &[u8] = include_bytes!("../resources/Garamond_Math.otf");
+
+
+    /// If the font's coverage of mathematical alphanumeric characters is exhaustive in all styles (as with Garamond-Math.otf, a.o.),
+    /// then the library should not fail parsing and laying out on any of these.
+    /// Test for bugs like [https://github.com/KenyC/ReX/issues/6](https://github.com/KenyC/ReX/issues/6)
+    #[test]
+    fn all_alphanumeric_style_combinations_must_work() {
+        let font = ttf_parser::Face::parse(GARAMOND_MATH_FONT, 0).unwrap();
+        let font = TtfMathFont::new(font).unwrap();
+        let ctx = FontContext::new(&font).unwrap();
+
+        let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+
+        let alphanumeric : Vec<_> =
+            (0 .. 0x7F)
+            .filter_map(|i| std::primitive::char::from_u32(i))
+            .filter(|c| c.is_alphanumeric())
+            .collect();
+
+        let envs = vec![
+            None,
+            Some("mathcal"),
+            Some("mathrm"),
+            Some("mathfrak"),
+            Some("mathbb"),
+        ];
+
+        for env in envs {
+            for character in alphanumeric.iter() {
+                let formula; 
+                if let Some(env) = env {
+                    formula = format!(r"\{}{{{}}}", env, character)
+                }
+                else {
+                    formula = character.to_string();
+                }
+
+                println!("{}", formula);
+                let parse_nodes = parse(&formula).unwrap();
+                engine::layout(&parse_nodes, layout_settings).unwrap();
+            }
+        }
+    }
+}

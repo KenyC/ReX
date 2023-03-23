@@ -423,6 +423,13 @@ mod tests {
     use crate::parser::engine::parse;
 
     #[test]
+    fn planck_h() {
+        let mut errs: Vec<String> = Vec::new();
+        should_pass!(errs, parse, [r"h"]);
+        display_errors!(errs);
+    }
+
+    #[test]
     fn fractions() {
         let mut errs: Vec<String> = Vec::new();
         should_pass!(errs, parse, [r"\frac\alpha\beta", r"\frac\int2"]);

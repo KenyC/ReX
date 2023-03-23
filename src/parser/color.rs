@@ -2,6 +2,8 @@
 //! 
 //! Colors can be changed by such commands as "\color{}".
 
+use crate::macros;
+
 /// A color with alpha values
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -17,13 +19,8 @@ impl RGBA {
     }
 }
 
-macro_rules! map {
-    ($($key:expr => $val:expr,)*) => {
-        &[$(($key, $val)),*]
-    };
-}
 
-static COLOR_MAP: &[(&'static str, RGBA)] = map!{
+const COLOR_MAP: &[(&'static str, RGBA)] = map!{
     "black" => RGBA(0x00,0x00,0x00,0xff),
     "silver" => RGBA(0xc0,0xc0,0xc0,0xff),
     "gray" => RGBA(0x80,0x80,0x80,0xff),

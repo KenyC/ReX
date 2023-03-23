@@ -1,5 +1,15 @@
 #![allow(unused_macros)]
 
+// --------------------
+// Static maps
+// --------------------
+
+macro_rules! map {
+    ($($key:expr => $val:expr,)*) => {
+        &[$(($key, $val)),*]
+    };
+}
+
 // ----------------------
 // Parsing related Macros
 // ----------------------

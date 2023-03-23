@@ -20,6 +20,6 @@ test.svg
 
 # Products from testing
 /*.tex
-*.html
+/*.html
 callgrind*
 *.rustfmt

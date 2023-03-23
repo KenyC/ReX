@@ -96,10 +96,43 @@ fn atom_from_tex(name: &str, kind: &str) -> &'static str {
 }
 
 fn main() {
-    println!("cargo:rerun-if-changed=src/unicode-math-table.tex");
     println!("cargo:rerun-if-changed=build.rs");
+    build_symbol_table();
+    build_alphanumeric_table_reserved_replacements();
+}
 
-    let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("src").join("unicode-math-table.tex");
+fn build_alphanumeric_table_reserved_replacements() {
+    println!("cargo:rerun-if-changed=resources/math_alphanumeric_list.html");
+
+    let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("math_alphanumeric_list.html");
+    let source = String::from_utf8(fs::read(&path).unwrap()).unwrap();
+    let mut out = String::new();
+
+    writeln!(out, "[").unwrap();
+    let re = Regex::new(r#"<tr><td><code><a name="[0-9A-F]+">([0-9A-F]+)</a></code></td><td class="c">&nbsp;█&nbsp;</td><td colspan="2"><span class="name">&lt;Reserved&gt;</span></td></tr>\n<tr><td>&nbsp;</td><td class="char">&nbsp;</td><td class="c">→</td><td><code>([0-9A-F]+)</code>"#).unwrap();
+    // let re = Regex::new(r#"<tr><td><code><a name="[0-9A-F]+">([0-9A-F]+)<\/a><\/code><\/td><td class="c">&nbsp;█&nbsp;<\/td><td colspan="2"><span class="name">&lt;Reserved&gt;<\/span><\/td><\/tr>\n<tr><td>&nbsp;<\/td><td class="char">&nbsp;<\/td><td class="c">→<\/td><td><code>([0-9A-F]+)<\/code>"#).unwrap();
+    let mut n_replacements = 0;
+    for capture in re.captures_iter(&source) {
+        writeln!(out,
+            r"(0x{}, 0x{}),",
+            &capture[1], &capture[2],
+        ).unwrap();
+        n_replacements += 1;
+    }
+
+    // Sanity check: there should be as many replacements as the word "Reserved" appears.
+    let re = Regex::new(r#"Reserved"#).unwrap();
+    assert_eq!(n_replacements, re.captures_iter(&source).count());
+    writeln!(out, "]").unwrap();
+
+    let out_path = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("math_alphanumeric_table_reserved_replacements.rs");
+    fs::write(out_path, out.as_bytes()).unwrap();
+}
+
+fn build_symbol_table() {
+    println!("cargo:rerun-if-changed=resources/unicode-math-table.tex");
+
+    let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("unicode-math-table.tex");
     let source = String::from_utf8(fs::read(&path).unwrap()).unwrap();
     let mut out = String::new();
 
