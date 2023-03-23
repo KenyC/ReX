@@ -1,5 +1,5 @@
 use rex::{
-    render::{Renderer},
+    render::Renderer,
     layout::{Grid, Layout, engine, LayoutSettings, Style},
     parser::parse,
     font::{FontContext, backend::ttf_parser::TtfMathFont}, cairo::CairoBackend

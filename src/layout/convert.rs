@@ -1,10 +1,10 @@
 //! This is a collection of tools used for converting ParseNodes into LayoutNodes.
 
 use crate::font::{Glyph, Direction, VariantGlyph, MathFont};
-use crate::dimensions::{*};
+use crate::dimensions::*;
 use crate::layout::LayoutSettings;
 
-use super::{Style};
+use super::Style;
 use super::builders;
 use super::{LayoutNode, LayoutVariant, LayoutGlyph};
 use crate::parser::nodes::Rule;

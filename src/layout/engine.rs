@@ -2,7 +2,7 @@ use std::cmp::{min, max};
 
 use super::builders;
 use super::convert::AsLayoutNode;
-use super::{Alignment, Layout, LayoutNode, LayoutSettings, LayoutVariant, Style, ColorChange};
+use super::{Alignment, Layout, LayoutNode, LayoutSettings, LayoutVariant, Style};
 
 use crate::font::MathFont;
 use crate::font::{

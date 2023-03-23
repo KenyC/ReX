@@ -4,7 +4,7 @@
 //! A function requiring an input to be in px units use [`Length<Px>`]
 
 
-use std::ops::{Add, Sub, Mul, AddAssign, SubAssign, MulAssign, Div, Neg};
+use std::ops::{Add, Sub, Mul, AddAssign, SubAssign, Div, Neg};
 use std::cmp::{Ord, Eq, PartialEq, PartialOrd, Ordering};
 use std::marker::PhantomData;
 use std::fmt;
@@ -27,7 +27,7 @@ impl<U> Length<U> {
     }
 
     /// Create a new dimension-full quantity from a dimensionless quantity and a unit
-    pub fn new(value: impl Into<f64>, unit: U) -> Self {
+    pub fn new(value: impl Into<f64>, _unit: U) -> Self {
         Length { value: value.into(), _m: PhantomData }
     }
 }
@@ -40,7 +40,7 @@ impl<U> Copy for Length<U> {}
 
 impl<U> Div<U> for Length<U> {
     type Output = f64;
-    fn div(self, rhs: U) -> f64 {
+    fn div(self, _rhs: U) -> f64 {
         self.value
     }
 }

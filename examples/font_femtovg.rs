@@ -4,18 +4,15 @@ extern crate femtovg;
 use std::fs;
 use std::path::PathBuf;
 
-use femtovg::Color;
 use femtovg::renderer::OpenGl;
 use font::OpenTypeFont;
 use rex::femtovg::FemtoVGCanvas;
 use rex::{Renderer, Backend};
 use rex::layout::Layout;
 use rex::parser::parse;
-use sdl2::rect::Rect; 
 use sdl2::event::Event; 
 use sdl2::keyboard::Keycode; 
 // use sdl2::render::Canvas; 
-use sdl2::video::Window; 
 
 const SAMPLES: &[&str] = &[
     r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
@@ -87,6 +84,7 @@ fn main() {
     } 
 }
 
+#[allow(unused)]
 fn draw_simple<B : Backend<OpenTypeFont>>(backend : &mut B, fonts : &[(Box<OpenTypeFont>, PathBuf)]) {
     // let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(dbg!(tex)).unwrap()).collect();
     // let samples: Vec<_> = SAMPLES.iter().cloned().map(|tex| parse(tex).unwrap()).collect();
@@ -146,6 +144,6 @@ fn load_fonts() -> Vec<(Box<OpenTypeFont>, PathBuf)> {
             .and_then(|data| font::parse(&data).ok().and_then(|f| f.downcast_box::<OpenTypeFont>().ok()))
             .map(|font| (font, entry.path()))
         })
-        .filter(|(font, path)| font.math.is_some())
+        .filter(|(font, _)| font.math.is_some())
     .collect()
 }

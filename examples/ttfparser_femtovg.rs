@@ -1,23 +1,19 @@
 extern crate sdl2; 
 extern crate femtovg; 
  
-use std::fs;
-use std::path::PathBuf;
 
-use femtovg::Color;
+
+
+
 use femtovg::renderer::OpenGl;
 use rex::femtovg::FemtoVGCanvas;
-use rex::font::{FontContext};
+use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
-use rex::{Renderer, Backend};
+use rex::Renderer;
 use rex::layout::Layout;
 use rex::parser::parse;
-use sdl2::rect::Rect; 
 use sdl2::event::Event; 
 use sdl2::keyboard::Keycode; 
-use sdl2::render::Canvas;
-// use sdl2::render::Canvas; 
-use sdl2::video::Window; 
 
 const SAMPLES: &[&str] = &[
     r"\left\{\begin{array}{c}1\\2\\3\\4\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\\5\\6\\7\end{array}\right\}",

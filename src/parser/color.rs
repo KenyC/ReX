@@ -2,7 +2,6 @@
 //! 
 //! Colors can be changed by such commands as "\color{}".
 
-use crate::macros;
 
 /// A color with alpha values
 #[derive(Serialize, Deserialize)]
@@ -12,7 +11,7 @@ pub struct RGBA(pub u8, pub u8, pub u8, pub u8);
 impl RGBA {
     /// Given an English name for a color (e.g. black), returns the corresponding [`RGBA`] value (e.g. `RGBA(0, 0, 0, 255,)`)
     pub fn from_name(name: &str) -> Option<RGBA> {
-        match COLOR_MAP.binary_search_by_key(&name, |&(name, color)| name) {
+        match COLOR_MAP.binary_search_by_key(&name, |color_name| color_name.0) {
             Ok(idx) => Some(COLOR_MAP[idx].1),
             _ => None
         }

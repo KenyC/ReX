@@ -1,4 +1,4 @@
-use femtovg::{Renderer, Canvas, Solidity, Path, Paint};
+use femtovg::{Renderer, Canvas, Path, Paint};
 #[cfg(feature="fontrs-fontparser")]
 use font::{Font, OpenTypeFont};
 #[cfg(feature="fontrs-fontparser")]

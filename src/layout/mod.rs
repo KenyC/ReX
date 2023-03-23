@@ -326,7 +326,7 @@ impl<'f, F> fmt::Debug for LayoutGlyph<'f, F> {
 impl<'f, F> fmt::Debug for LayoutNode<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.node {
-            LayoutVariant::Grid(ref grid) =>  write!(f, "Grid(..)"),
+            LayoutVariant::Grid(ref _grid) =>  write!(f, "Grid(..)"),
             LayoutVariant::HorizontalBox(ref hb) => write!(f, "HBox({:?})", hb.contents),
             LayoutVariant::VerticalBox(ref vb) => write!(f, "VBox({:?})", vb.contents),
             LayoutVariant::Glyph(ref gly) => write!(f, "Glyph({:?})", gly),

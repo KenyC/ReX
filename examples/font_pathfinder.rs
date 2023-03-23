@@ -8,7 +8,7 @@ use rex::{
     parser::parse,
     font::FontContext
 };
-use font::{Font, OpenTypeFont};
+use font::OpenTypeFont;
 
 const SAMPLES: &[&str] = &[
     r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)",
@@ -35,7 +35,7 @@ fn main() {
             .and_then(|data| font::parse(&data).ok().and_then(|f| f.downcast_box::<OpenTypeFont>().ok()))
             .map(|font| (font, entry.path()))
         })
-        .filter(|(font, path)| font.math.is_some())
+        .filter(|(font, _)| font.math.is_some())
         .collect();
 
     let mut grid = Grid::new();
@@ -57,7 +57,7 @@ fn main() {
     let mut layout = Layout::new();
     layout.add_node(grid.build());
 
-    let mut renderer = Renderer::new();
+    let renderer = Renderer::new();
     let (x0, y0, x1, y1) = renderer.size(&layout);
     let mut scene = Scene::new();
     scene.set_view_box(RectF::from_points(vec2f(x0 as f32, y0 as f32), vec2f(x1 as f32, y1 as f32)));

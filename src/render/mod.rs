@@ -1,9 +1,9 @@
-use crate::error::{LayoutError, Error};
+use crate::error::Error;
 use crate::dimensions::*;
 use crate::font::MathFont;
 use crate::font::common::GlyphId;
-use crate::layout::{LayoutNode, LayoutVariant, Alignment, Style, LayoutSettings, Layout, Grid};
-pub use crate::parser::{color::RGBA};
+use crate::layout::{LayoutNode, LayoutVariant, Alignment, LayoutSettings, Layout, Grid};
+pub use crate::parser::color::RGBA;
 
 pub struct Renderer {
     pub debug: bool,
@@ -53,7 +53,7 @@ pub trait FontBackend<F> {
 }
 
 pub trait GraphicsBackend {
-    fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, role: Role) {}
+    fn bbox(&mut self, _pos: Cursor, _width: f64, _height: f64, _role: Role) {}
     fn rule(&mut self, pos: Cursor, width: f64, height: f64);
     fn begin_color(&mut self, color: RGBA);
     fn end_color(&mut self);
