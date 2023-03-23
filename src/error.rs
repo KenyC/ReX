@@ -1,3 +1,7 @@
+//! Defines different error types related to various phases of rendering a formula.
+//!   - [`FontError`] : errors that have to do with the font file provided (missing MATH table, no such glyph).
+//!   - [`ParseError`] : syntax error in the formula provided (mismatching brackets, unknown command).
+//!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
 use crate::font::common::GlyphId;
 use crate::lexer::Token;
@@ -5,18 +9,26 @@ use std::fmt;
 use crate::font::{AtomType};
 use crate::parser::symbols::Symbol;
 
+/// Result type for the [`LayoutError`]
 pub type LayoutResult<T> = ::std::result::Result<T, LayoutError>;
+/// Result type for the [`ParseError`]
 pub type ParseResult<'a, T> = ::std::result::Result<T, ParseError<'a>>;
 
+/// Errors during the layout phase ; currently, these can only be font errors.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LayoutError {
+    /// a font error
     Font(FontError)
 }
 
+/// Errors having to do with font file provided
 #[derive(Debug, Clone, PartialEq)]
 pub enum FontError {
+    /// The font does not contain a glyph for the given char.
     MissingGlyphCodepoint(char),
+    /// The font does not contain a glyph with that id.
     MissingGlyphGID(GlyphId),
+    /// The font lacks a MATH table.
     NoMATHTable,
 }
 
@@ -26,39 +38,68 @@ impl From<FontError> for LayoutError {
     }
 }
 
+/// Syntax error in the formula provided (mismatching brackets, unknown command)
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParseError<'a> {
+    /// Unknown command.
     UnrecognizedCommand(&'a str),
+    /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),
+    /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
     UnrecognizedDimension,
+    /// The name of the color used does not appear in `rex::parser::color::COLOR_MAP`
     UnrecognizedColor(&'a str),
 
+    /// unused at present
     ExpectedMathField(Token<'a>),
+    /// The first token represents the expected token and the second the token that was obtained.
     ExpectedTokenFound(Token<'a>, Token<'a>),
+    /// The symbol after '\left' was not in the "open" category.
     ExpectedOpen(Symbol),
+    /// The symbol after '\right' was not in the "close" category.
     ExpectedClose(Symbol),
+    /// The first token represents the expected atom type and the second the atom type that was obtained.
     ExpectedAtomType(AtomType, AtomType),
+    /// Error thrown if after '\left' and '\right', a token that is not a symbol is found
     ExpectedSymbol(Token<'a>),
+    /// Expected an opening '{'
     ExpectedOpenGroup,
 
+    /// unused
     MissingSymbolAfterDelimiter,
+    /// unused
     MissingSymbolAfterAccent,
+    /// The command '\limits' and '\nolimits' can only be used after sums, integrals, limits, ...
     LimitsMustFollowOperator,
+    /// A macro is missing a required argument.
     RequiredMacroArg,
+    /// A '{' does not find a corresponding '}'.
     NoClosingBracket,
+
+    /// Couldn't find a "{...}" after "\substack"
     StackMustFollowGroup,
+    /// unused
     AccentMissingArg(&'a str),
+    /// unused
     FailedToParse(Token<'a>),
+    /// One has used two or more superscripts in a row, e.g. "x^2^2".
     ExcessiveSubscripts,
+    /// One has used two or more subscripts in a row, e.g. "x_2_2".
     ExcessiveSuperscripts,
 
+    /// EOF appeared while some groups were not closed
     UnexpectedEof(Token<'a>),
 
+    /// Our parser does not implement this case yet.
     Todo
 }
+
+/// A generic error type covering any error that may happen during the process.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error<'a> {
+    /// a parse error
     Parse(ParseError<'a>),
+    /// a layout error (including font errors)
     Layout(LayoutError)
 }
 impl<'a> From<ParseError<'a>> for Error<'a> {

@@ -1,4 +1,5 @@
-//! This module is where we convert ParseNodes to Layout boxes which are ready to be rendered.
+//! This module is where we convert [`crate::parser::ParseNode`]s to [`Layout`] boxes which are ready to be rendered.
+//! 
 //! The layout boxes follow a similar model as those found in HTML and TeX in that they both
 //! have horizontal and vertical boxes.  One difference will be how glue is handled.  HTML/CSS
 //! does not have anything similar to how glue is handled in TeX and so aboslute size will be

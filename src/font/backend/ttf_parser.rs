@@ -5,7 +5,8 @@ use ttf_parser::{math::GlyphPart, LazyArray16};
 
 use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
 
-
+/// A wrapper around 'ttf_parser::Face' which caches some of the needed values.
+/// This wrapper implements the 'MathFont' trait needed to do the layout and rendering o
 pub struct TtfMathFont<'a> {
     math: ttf_parser::math::Table<'a>,
     font: ttf_parser::Face<'a>,
@@ -13,6 +14,8 @@ pub struct TtfMathFont<'a> {
 }
 
 impl<'a> TtfMathFont<'a> {
+    /// Creates a new 'TtfMathFont' from a 'ttf_parser::Face'.
+    /// Fails if font has no MATH table.
     pub fn new(font: ttf_parser::Face<'a>) -> Result<Self, FontError> { 
         let math = font.tables().math.ok_or(FontError::NoMATHTable)?;
         let font_matrix; 
@@ -37,10 +40,12 @@ impl<'a> TtfMathFont<'a> {
         }) 
     }
     
+    /// Returns a reference to the wrapped 'ttf_parser::Face'
     pub fn font(&self) -> &ttf_parser::Face<'a> {
         &self.font
     }
 
+    /// Returns the font's tranformation matrix
     pub fn font_matrix(&self) -> ttf_parser::cff::Matrix {
         self.font_matrix
     }

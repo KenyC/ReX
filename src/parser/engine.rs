@@ -10,7 +10,7 @@ use crate::functions::get_command;
 use crate::environments::Environment;
 use crate::dimensions::*;
 
-pub fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token>) -> ParseResult<'a, Vec<ParseNode>> {
+fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token>) -> ParseResult<'a, Vec<ParseNode>> {
     let mut ml: Vec<ParseNode> = Vec::new();
     loop {
         // TODO: Handle INFIX operators here, once we support them.
@@ -360,6 +360,7 @@ pub fn expect_type<'a>(lex: &mut Lexer<'a>, local: Style, expected: AtomType) ->
     }
 }
 
+/// TODO: to be implemented
 pub fn dimension<'a>(_: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Unit> {
     unimplemented!()
 }
@@ -388,12 +389,12 @@ pub fn environment_name<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, En
 pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
     let mut lexer = Lexer::new(input);
     let local = Style::new();
-    let ParseResult = expression(&mut lexer, local)?;
+    let parse_result = expression(&mut lexer, local)?;
     if lexer.current != Token::EOF {
         return Err(ParseError::UnexpectedEof(lexer.current.into()));
     }
 
-    Ok(ParseResult)
+    Ok(parse_result)
 }
 
 /// Helper function for determining an atomtype based on a given codepoint.

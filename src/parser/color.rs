@@ -1,11 +1,14 @@
+//! Struct definitions for colors.
+//! 
+//! Colors can be changed by such commands as "\color{}".
+
+/// A color with alpha values
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct RGBA(pub u8, pub u8, pub u8, pub u8);
 
 impl RGBA {
-    pub fn has_alpha(&self) -> bool {
-        self.3 != 0xff
-    }
+    /// Given an English name for a color (e.g. black), returns the corresponding [`RGBA`] value (e.g. `RGBA(0, 0, 0, 255,)`)
     pub fn from_name(name: &str) -> Option<RGBA> {
         match COLOR_MAP.binary_search_by_key(&name, |&(name, color)| name) {
             Ok(idx) => Some(COLOR_MAP[idx].1),

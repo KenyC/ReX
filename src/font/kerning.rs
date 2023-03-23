@@ -3,11 +3,16 @@ use std::cmp::{max, min};
 
 use crate::dimensions::{Length, Font};
 
+/// Corners of a glyph's bounding box
 #[derive(Debug)]
 pub enum Corner {
+    /// North-East corner
     TopRight,
+    /// North-West corner
     TopLeft,
+    /// South-East corner
     BottomRight,
+    /// South-West corner
     BottomLeft,
 }
 
@@ -34,6 +39,10 @@ pub enum Corner {
 // for now, I'm just going to port the algorithm I found in LuaTeX and XeTeX.
 // If nothing else, it will at least be consistent.
 
+// TODO (KC): I actually don't understand "kerning" well enough to write good documentation for 
+// the following functions. 
+
+/// Computes the amount of kerning between a base glyph and its superscript
 pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
     let base_height = base.bbox.3;
     let script_depth = script.bbox.1 + shift;
@@ -47,6 +56,7 @@ pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift:
     max(value1, value2)
 }
 
+/// Computes the amount of kerning between a base glyph and its subscript
 pub fn subscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
     let base_depth = base.bbox.1;
     let script_height = script.bbox.3 - shift;

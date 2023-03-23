@@ -100,6 +100,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 self.add_node(builders::color(inner, clr))
             }
 
+            // TODO: deal with ignored parse nodes
             _ => warn!("ignored ParseNode: {:?}", node),
         }
         Ok(())

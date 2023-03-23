@@ -1,5 +1,14 @@
+/// Obtain kerning measurements for subscripts and superscripts.
+/// The kerning is the amount of space that one must add between the symbol and its super-/sub-script.
+#[deny(missing_docs)]
 pub mod kerning;
+
+/// Different implementations of the 'MathFont' trait for various font parsing crates, like 'ttf-parser'.
+#[deny(missing_docs)]
 pub mod backend;
+/// Contains types and utilities related to fonts.
+/// In particular, defines utilities related to extended glyphs, i.e. glyphs like '}' and '→', which can be made bigger.
+#[deny(missing_docs)]
 pub mod common;
 mod style;
 //mod unit;

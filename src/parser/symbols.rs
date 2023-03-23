@@ -1,11 +1,17 @@
+//! Mathematical symbols from TeX commands.
+
 use unicode_math::{SYMBOLS, AtomType};
 
+/// A LateX symbol is simply a Unicode symbol and a certain category
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Symbol {
+    /// The Unicode symbol
     pub codepoint: char,
+    /// Category of the symbol (e.g. open delimiters, alphanumeric, etc.)
     pub atom_type: AtomType
 }
 impl Symbol {
+    /// Given a LateX name (e.g. "alpha"), returns the corresponding symbol
     pub fn from_name(name: &str) -> Option<Self> {
         others(name).or_else(|| symbol(name))
     }

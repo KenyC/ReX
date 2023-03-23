@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+/// The id of a glyph (represented as u16)
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct GlyphId(u16);
 
@@ -12,22 +13,34 @@ impl Into<u16> for GlyphId {
 }
 
 
-
+/// Extended glyphs (like large '}'):
+/// These are formed in one of two ways: the font provides bigger versions of '}' (replacement glyphs)
+/// and it also provides a recipe for forming even bigger versions, by assembling some parts together (decomposing '→' into a line and a hook).
 #[derive(Debug, Clone)]
 pub enum VariantGlyph {
+    /// Id for a replacement glyph.
     Replacement(GlyphId),
+    /// Instructions on how to form the bigger glyphs and whether it is a horizontal extended glyph (e.g. a long '→') or a vertical extended glyph (e.g. a tall '}').
     Constructable(Direction, Vec<GlyphInstruction>),
 }
 
+/// Direction of an extended glyph
 #[derive(Debug, Clone, Copy)]
 pub enum Direction {
+    /// horizontal direction (as for '}')
     Horizontal,
+    /// vertical direction (as for '→')
     Vertical
 }
 
+/// One part of the extended glyph construction.
+/// The different parts are assembled together with some overlap.
 #[derive(Debug, Clone, Copy)]
 pub struct GlyphInstruction {
+    /// The id of the part 
     pub gid: GlyphId,
+    /// How much it overlaps with the previous glyph part.\
+    /// For instance, when drawing '}', the first piece will have a certain height `h` and we will strart drawing the second part at `h - overlap`
     pub overlap: u16,
 }
 
