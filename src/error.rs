@@ -140,11 +140,11 @@ impl<'a> fmt::Display for ParseError<'a> {
             UnrecognizedCommand(ref cmd) =>
                 write!(f, "unrecognized command: \\{}`", cmd),
             UnrecognizedEnvironment(name) => 
-                write!(f, "unrecognized environment: \\{}`", name),
+                write!(f, "unrecognized environment: \\begin{{{}}}`", name),
             UnrecognizedColumnFormat(token) => 
-                write!(f, "unrecognized column format: \\{}`", token),
+                write!(f, "unrecognized column format: {}`", token),
             UnrecognizedVerticalAlignmentArg(token) => 
-                write!(f, "unrecognized vertical alignment argument: \\{}`", token),
+                write!(f, "unrecognized vertical alignment argument: {}`", token),
             UnrecognizedSymbol(c) =>
                 write!(f, "unrecognized symbol '{}'", c),
             FailedToParse(ref tok) =>
