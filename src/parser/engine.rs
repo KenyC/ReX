@@ -430,6 +430,13 @@ mod tests {
     }
 
     #[test]
+    fn ldots() {
+        let mut errs: Vec<String> = Vec::new();
+        should_pass!(errs, parse, [r"\ldots",r"\vdots",r"\dots"]);
+        display_errors!(errs);
+    }
+
+    #[test]
     fn fractions() {
         let mut errs: Vec<String> = Vec::new();
         should_pass!(errs, parse, [r"\frac\alpha\beta", r"\frac\int2"]);

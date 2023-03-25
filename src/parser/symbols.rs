@@ -114,7 +114,11 @@ fn others(name: &str) -> Option<Symbol> {
         "diamond" => Symbol { codepoint: '\u{22C4}', atom_type: AtomType::Binary }, // 8900
 
         // dots shim
-        "cdots" => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Alpha }, // 8943
+        // TODO: offer replacement if the font does not support these symbols
+        // TODO: understand what the atome type means and why XeTeX insists that cdots be an "ordinal" (cf unicode-math-table.tex) ; cf <https://github.com/wspr/unicode-math/issues/571>
+        "cdots" => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinal }, // 8943
+        "dots"  => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinal }, // 8943
+        "ldots" => Symbol { codepoint: '\u{2026}', atom_type: AtomType::Ordinal }, // 8230
 
         // Misc symbols shim
         "|" => Symbol { codepoint: '\u{2016}', atom_type: AtomType::Fence }, // 8214
