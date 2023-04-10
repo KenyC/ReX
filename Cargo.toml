@@ -73,7 +73,9 @@ sdl2 = "*"
 serde_yaml = "0.7"
 bincode = "1.2.1"
 env_logger = "*"
-cairo-rs = {version = "*", features = ["svg"]}
+image = "0.24.6"
+cairo-rs = {version = "*", features = ["svg", "png"]}
+base64 = "0.21.0"
 
 [dependencies.log]
 version="0.4.8"

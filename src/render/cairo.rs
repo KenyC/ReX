@@ -1,6 +1,6 @@
 use cairo::Context;
 
-use crate::{Backend, font::backend::ttf_parser::TtfMathFont, GraphicsBackend, FontBackend};
+use crate::{Backend, font::backend::ttf_parser::TtfMathFont, GraphicsBackend, FontBackend, parser::color};
 
 pub struct CairoBackend {
     context : Context,
@@ -60,8 +60,10 @@ impl GraphicsBackend for CairoBackend {
     }
 
     fn end_color(&mut self) {
-        self.current_color = self.color_stack.pop().unwrap();
-        self.set_current_color();
+        if let Some(color) = self.color_stack.pop() {
+            self.current_color = color;
+            self.set_current_color();
+        }
     }
 }
 

@@ -82,7 +82,6 @@ impl<'a, 'dt> FontBackend<TtfMathFont<'a>> for RaqoteBackend<'dt> {
         use ttf_parser::OutlineBuilder;
 
         let font_matrix = ctx.font_matrix();
-        eprintln!("pos: {} {}", pos.x, pos.y,);
         let transform =
             Transform::translation(pos.x as f32, pos.y as f32)
             .pre_scale(scale as f32, - scale as f32)

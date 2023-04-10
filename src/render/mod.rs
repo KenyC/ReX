@@ -9,7 +9,7 @@ pub struct Renderer {
     pub debug: bool,
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct Cursor {
     pub x: f64,
     pub y: f64,
