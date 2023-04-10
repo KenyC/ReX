@@ -201,10 +201,9 @@ impl Renderer {
 
 #[cfg(feature="pathfinder-renderer")]
 pub mod pathfinder;
-#[cfg(feature="pathfinder-renderer")]
-pub use pathfinder::SceneWrapper;
-
 #[cfg(feature="femtovg-renderer")]
 pub mod femtovg;
 #[cfg(feature="cairo-renderer")]
 pub mod cairo;
+#[cfg(feature="raqote-renderer")]
+pub mod raqote;

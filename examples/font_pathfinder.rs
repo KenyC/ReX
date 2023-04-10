@@ -3,10 +3,10 @@ use pathfinder_export::{Export, FileFormat};
 use pathfinder_renderer::scene::Scene;
 use pathfinder_geometry::{rect::RectF, vector::vec2f};
 use rex::{
-    render::{Renderer, SceneWrapper},
+    render::Renderer,
     layout::{Grid, Layout, engine, LayoutSettings, Style},
     parser::parse,
-    font::FontContext
+    font::FontContext, pathfinder::SceneWrapper
 };
 use font::OpenTypeFont;
 
