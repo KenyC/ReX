@@ -390,7 +390,7 @@ fn construct_glyphs(min_connector_overlap : u32, parts: LazyArray16<GlyphPart>, 
     // find factor f such that size = (1 - f) * size_with_min_overlap + f * size_with_max_overlap
     // f (size_with_min_overlap - size_with_max_overlap) = size - size_with_max_overlap
     // f = (size_with_min_overlap - size) / (size_with_min_overlap - size_with_max_overlap)
-    let factor = dbg!(f64::from(size_with_min_overlap - size) / f64::from(size_with_min_overlap - size_with_max_overlap));
+    let factor = f64::from(size_with_min_overlap - size) / f64::from(size_with_min_overlap - size_with_max_overlap);
 
 
     // for every adjacent glyph, the overlap o is an interpolation between min_connector_overlap and max_overlap

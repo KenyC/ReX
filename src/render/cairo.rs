@@ -41,7 +41,7 @@ impl GraphicsBackend for CairoBackend {
             crate::Role::VBox  => self.context.set_source_rgb(0.785, 0., 0.),
             crate::Role::HBox  => self.context.set_source_rgb(0., 0., 0.785),
         }
-
+        self.context.set_line_width(1.0);
         self.context.rectangle(_pos.x, _pos.y, _width, _height);
         self.context.stroke().unwrap();
         self.set_current_color();

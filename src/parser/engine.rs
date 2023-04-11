@@ -246,7 +246,11 @@ pub fn symbol<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<P
                         Ok(Some(accent!(sym, nucleus)))
                     }
                     _ => {
-                        Ok(Some(symbol!(style_symbol(sym.codepoint, local), sym.atom_type)))
+                        let symbol_node = ParseNode::Symbol(Symbol { 
+                            codepoint: style_symbol(sym.codepoint, local),
+                            atom_type: sym.atom_type,
+                        });
+                        Ok(Some(symbol_node))
                     }
                 }
             } else {
@@ -256,9 +260,13 @@ pub fn symbol<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<P
         Token::Symbol(c) => {
             match codepoint_atom_type(c) {
                 None => Ok(None),
-                Some(sym) => {
+                Some(atom_type) => {
                     lex.next();
-                    Ok(Some(symbol!(style_symbol(c, local), sym)))
+                    let symbol_node = ParseNode::Symbol(Symbol { 
+                        codepoint: style_symbol(c, local),
+                        atom_type,
+                    });
+                    Ok(Some(symbol_node))
                 }
             }
         }

@@ -25,10 +25,10 @@ pub fn layout<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], config: LayoutSetti
 }
 
 /// This method takes the parsing nodes and layouts them to layout nodes.
-#[allow(unconditional_recursion)]
 fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: AtomType) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
     let mut prev = AtomType::Transparent;
+    let mut italic_correction = None;
 
     for idx in 0..nodes.len() {
         let node = &nodes[idx];
@@ -56,21 +56,51 @@ fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: Lay
         }
 
         let sp = atom_space(prev, current, config.style);
+        let italic_correction_to_apply = italic_correction.take();
         if sp != Spacing::None {
             let kern = sp.to_length().scaled(config);
             layout.add_node(kern!(horz: kern));
         }
+        // if there is already no space between consecutive nodes
+        // we check whether one should apply italic correction
+        else if let Some(italic_correction) = italic_correction_to_apply {
+            // Discharge italic correction
+            if must_apply_italic_correction_before(node) {
+                layout.add_node(kern!(horz : italic_correction));
+            }
+        }
 
-        prev = current;
+
+
         match *node {
             ParseNode::Style(sty) => config.style = sty,
+            ParseNode::Symbol(symbol) => {
+                let node = layout.symbol(symbol, config)?;
+                italic_correction = node.is_symbol().map(|s| s.italics);
+                if !unicode_math::is_italic(symbol.codepoint) {
+                    italic_correction = None;
+                }
+
+                layout.add_node(node);
+            },
             _ => layout.dispatch(config.clone(), node, next)?,
         }
+        prev = current;
     }
 
     Ok(layout.finalize())
 }
 
+fn must_apply_italic_correction_before(node: &ParseNode) -> bool {
+    if let Some(symbol) = node.is_symbol() {
+        if unicode_math::is_italic(symbol.codepoint) {
+            return false;
+        }
+    }
+    true
+}
+
+// TODO: this should return layout result
 fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
     let mut layout = Layout::new();
     layout.dispatch(config, node, AtomType::Transparent);
@@ -81,7 +111,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
     fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, F>, node: &ParseNode, next: AtomType) -> LayoutResult<()> {
         match *node {
-            ParseNode::Symbol(sym) => self.symbol(sym, config)?,
+            ParseNode::Symbol(symbol) => self.add_node(self.symbol(symbol, config)?),
             ParseNode::Scripts(ref script) => self.scripts(script, config)?,
             ParseNode::Radical(ref rad) => self.radical(rad, config)?,
             ParseNode::Delimited(ref delim) => self.delimited(delim, config)?,
@@ -106,28 +136,26 @@ impl<'f, F : MathFont> Layout<'f, F> {
         Ok(())
     }
 
-    fn symbol<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
+    fn symbol<'a>(&self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         // Operators are handled specially.  We may need to find a larger
         // symbol and vertical center it.
         match sym.atom_type {
-            AtomType::Operator(_) => self.largeop(sym, config)?,
-            _ => self.add_node(config.ctx.glyph(sym.codepoint)?.as_layout(config)?)
+            AtomType::Operator(_) => self.largeop(sym, config),
+            _ => config.ctx.glyph(sym.codepoint)?.as_layout(config)
         }
-        Ok(())
     }
 
-    fn largeop<'a>(&mut self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
+    fn largeop<'a>(&self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         let glyph = config.ctx.glyph(sym.codepoint)?;
         if config.style > Style::Text {
             let axis_offset = config.ctx.constants.axis_height.scaled(config);
             let largeop = config.ctx.vert_variant(sym.codepoint, config.ctx.constants.display_operator_min_height * config.ctx.units_per_em)?
                 .as_layout(config)?;
             let shift = (largeop.height + largeop.depth) * 0.5 - axis_offset;
-            self.add_node(vbox!(offset: shift; largeop));
+            Ok(vbox!(offset: shift; largeop))
         } else {
-            self.add_node(glyph.as_layout(config)?);
+            glyph.as_layout(config)
         }
-        Ok(())
     }
     
     fn accent<'a>(&mut self, acc: &Accent, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
@@ -379,7 +407,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         self.add_node(base.as_node());
         self.add_node(contents.build());
-        
+
         Ok(())
     }
 

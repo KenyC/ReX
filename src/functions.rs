@@ -245,7 +245,7 @@ fn atom_change<'a>(lex: &mut Lexer<'a>, local: Style, at: AtomType) -> ParseResu
     Ok(ParseNode::AtomChange(AtomChange { at, inner }))
 }
 
-fn text_operator<'a>(_: &mut Lexer<'a>, _: Style, text: &str, limits: bool) -> ParseResult<'a, ParseNode> {
+fn text_operator<'a>(_: &mut Lexer<'a>, style: Style, text: &str, limits: bool) -> ParseResult<'a, ParseNode> {
     const SMALL_SKIP: Unit = Unit::Em(3f64 / 18f64);
     let at = AtomType::Operator(limits);
     let mut inner = Vec::with_capacity(text.len());
@@ -254,14 +254,11 @@ fn text_operator<'a>(_: &mut Lexer<'a>, _: Style, text: &str, limits: bool) -> P
         if c == ',' {
             inner.push(ParseNode::Kerning(SMALL_SKIP));
         } else {
-            inner.push(ParseNode::Symbol(Symbol {
-                                             codepoint:
-                                                 style_symbol(c,
-                                                              Style::default()
-                                                                  .with_family(Family::Roman)
-                                                                  .with_weight(Weight::None)),
-                                             atom_type: AtomType::Ordinal,
-                                         }));
+            let style = Style::default()
+                    .with_family(Family::Roman)
+                    .with_weight(Weight::None);
+            let codepoint = style_symbol(c, style);
+            inner.push(ParseNode::Symbol(Symbol { codepoint, atom_type: AtomType::Ordinal }));
         }
     }
 
