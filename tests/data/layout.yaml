@@ -169,6 +169,11 @@ Spacing:
     - a\mathord{+}a\ a{+}a\ aaa
     - a\mathrel{a}a\ aaa
     - a\mathord{a}a\ aaa
+  - Description: sequence of letters should look properly spaced
+    Snippets:
+    - abcdefghijklmnopqrstuvwxyz
+    - azertyuiopqsdfghjklmwxcvbn
+    - arupdhlxbztiqfjmcneyosgkwv
 
 Arrays:
   - Description: substack

@@ -1,3 +1,6 @@
+# Test output
+tests/out/*
+
 # Examples' output
 qc.svg
 
