@@ -1,11 +1,8 @@
 use base64::Engine;
-use image::{GenericImageView, Rgba, ImageOutputFormat};
-use rex::font::FontContext;
-use rex::font::backend::ttf_parser::TtfMathFont;
+use image::{Rgba, ImageOutputFormat};
 
 use super::debug_render::Equation;
 
-use std::cmp::max;
 use std::io::{Write, Cursor};
 use std::path::Path;
 
@@ -38,7 +35,7 @@ r##"<!DOCTYPE html>
 
 const END: &'static str = r"</body></html>";
 
-fn write_equations<W: Write>(f: &mut W, font_context : &FontContext<TtfMathFont>, old: Equation, new: Equation) {
+fn write_equations<W: Write>(f: &mut W, old: Equation, new: Equation) {
     writeln!(f, "<h2>{}</h2>", old.description).unwrap();
     writeln!(f,
              r#"<pre><code class="language-latex">{}</code></pre>"#,
@@ -74,12 +71,6 @@ fn write_equations<W: Write>(f: &mut W, font_context : &FontContext<TtfMathFont>
         engine.encode(&render_new),
         engine.encode(&diff_img(&render_old, &render_new)),
     ).unwrap();
-
-    let width  = f64::max(old.width, new.width);
-    let height = f64::max(old.height, new.height);
-
-    let px_width  = width  / 1000.0 * 48.0;
-    let px_height = height / 1000.0 * 48.0;
 
 }
 
@@ -157,7 +148,7 @@ fn diff_img(bytes_before_img : &[u8], bytes_after_img : &[u8]) -> Vec<u8> {
     to_return.into_inner()
 }
 
-pub fn write_diff<P: AsRef<Path>>(path: P, font_context : &FontContext<TtfMathFont>, diff: Vec<(Equation, Equation)>) {
+pub fn write_diff<P: AsRef<Path>>(path: P, diff: Vec<(Equation, Equation)>) {
     use std::fs::File;
     use std::io::BufWriter;
 
@@ -166,7 +157,7 @@ pub fn write_diff<P: AsRef<Path>>(path: P, font_context : &FontContext<TtfMathFo
 
     writer.write(HEADER.as_bytes()).unwrap();
     for (old, new) in diff {
-        write_equations(&mut writer, font_context, old, new);
+        write_equations(&mut writer, old, new);
     }
     writer.write(END.as_bytes()).unwrap();
 }

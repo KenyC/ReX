@@ -1,4 +1,4 @@
-//! Converting [`ParseNode`](crate::parser::ParseNode)s to [`Layout`] boxes which are ready to be rendered.
+//! Converts [`ParseNode`](crate::parser::ParseNode)s to [`Layout`] boxes which are ready to be rendered.
 //! 
 //! The layout boxes follow a similar model as those found in HTML and TeX in that they both
 //! have horizontal and vertical boxes.  One difference will be how glue is handled.  HTML/CSS
@@ -113,6 +113,16 @@ impl<'f, F> Layout<'f, F> {
         self.width = new_width;
         self
     }
+
+    /// Returns [`LayoutDimensions`] dimensions for the given layout. 
+    pub fn size(&self) -> LayoutDimensions {
+        LayoutDimensions {
+            width  : self.width  / Px,
+            height : self.height / Px,
+            depth  : self.depth  / Px,
+        }
+    }
+
 }
 
 impl<'f, F> Layout<'f, F> {
@@ -123,6 +133,17 @@ impl<'f, F> Layout<'f, F> {
         }
         self.contents[0].is_symbol()
     }
+}
+
+/// A struct containing various measures for a Layout in pixel units.
+// Should not be used internally, the unitless types are "unsafe"
+pub struct LayoutDimensions {
+    /// distance from baseline to top of the formula (positive if top of formula above baseline, typically positive)
+    pub width  : f64,
+    /// distance from baseline to bottom of the formula (negative if bottom of formula below baseline, typically negative)
+    pub height : f64,
+    /// width of formula
+    pub depth  : f64,
 }
 
 /// A sub-part of the layout hierarchy: can contain other nodes and may be contained in other nodes.

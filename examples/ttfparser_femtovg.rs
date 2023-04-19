@@ -5,6 +5,7 @@ extern crate femtovg;
 
 
 
+
 use femtovg::renderer::OpenGl;
 use rex::femtovg::FemtoVGCanvas;
 use rex::font::FontContext;
@@ -95,25 +96,19 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, fonts : &TtfMa
     let mut layout = Layout::new();
     layout.add_node(grid.build());
 
-    let mut renderer = Renderer::new();
-    renderer.debug = true;
+    let renderer = Renderer::new();
 
-    let (x0, y0, x1, y1) = renderer.size(&layout);
-    let width  = (x1 - x0) as f32;
-    let height = (y1 - y0) as f32;
+    let dims = layout.size();
+    let width  = dims.width as f32;
+    let height = (dims.height - dims.depth) as f32;
     // {
     let canvas = backend.canvas();
     canvas.save();
-    canvas.translate(x0 as f32, y0 as f32);
+    canvas.translate(0_f32, dims.depth as f32);
     let min_width_scale  = (WIDTH  as f32) / width;
     let min_height_scale = (HEIGHT as f32) / height;
-    let min_scale = f32::min(min_width_scale, min_height_scale) * 0.75;
+    let min_scale = f32::min(min_width_scale, min_height_scale) * 1.00;
     canvas.scale(min_scale, min_scale);
-    println!("{:?}", min_scale);
-    // if min_scale <= 1. {
-    // }
-    // canvas.scale(4.2, 4.2);
-    // }
 
 
     // let glyph_id = fonts.glyph_index('a').unwrap();

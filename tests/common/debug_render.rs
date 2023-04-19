@@ -3,8 +3,7 @@
 // #[macro_use]
 // extern crate serde_derive;
 
-use raqote::DrawTarget;
-use rex::{GraphicsBackend, FontBackend, font::{common::GlyphId, backend::ttf_parser::TtfMathFont, FontContext}, Backend, layout::{LayoutSettings, Style, Grid, Layout}, Renderer, raqote::RaqoteBackend};
+use rex::{GraphicsBackend, FontBackend, Backend};
 
 
 
@@ -74,7 +73,7 @@ impl GraphicsBackend for DebugRender {
         })
     }
 
-    fn begin_color(&mut self, color: rex::RGBA) {
+    fn begin_color(&mut self, _color: rex::RGBA) {
     }
 
     fn end_color(&mut self) {
@@ -82,7 +81,7 @@ impl GraphicsBackend for DebugRender {
 }
 
 impl<A> FontBackend<A> for DebugRender {
-    fn symbol(&mut self, pos: rex::Cursor, gid: rex::font::common::GlyphId, scale: f64, ctx: &A) {
+    fn symbol(&mut self, pos: rex::Cursor, gid: rex::font::common::GlyphId, scale: f64, _ctx: &A) {
         self.commands.push(DrawCmd::Symbol { 
             pos: (pos.x, pos.y), 
             glyph_id: gid.into(), 

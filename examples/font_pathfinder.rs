@@ -4,7 +4,7 @@ use pathfinder_renderer::scene::Scene;
 use pathfinder_geometry::{rect::RectF, vector::vec2f};
 use rex::{
     render::Renderer,
-    layout::{Grid, Layout, engine, LayoutSettings, Style},
+    layout::{Grid, Layout, engine, LayoutSettings, Style, LayoutDimensions},
     parser::parse,
     font::FontContext, pathfinder::SceneWrapper
 };
@@ -58,9 +58,9 @@ fn main() {
     layout.add_node(grid.build());
 
     let renderer = Renderer::new();
-    let (x0, y0, x1, y1) = renderer.size(&layout);
+    let LayoutDimensions { width, height, depth } = layout.size();
     let mut scene = Scene::new();
-    scene.set_view_box(RectF::from_points(vec2f(x0 as f32, y0 as f32), vec2f(x1 as f32, y1 as f32)));
+    scene.set_view_box(RectF::from_points(vec2f(0_f32, depth as f32), vec2f(width as f32, height as f32)));
     let mut backend = SceneWrapper::new(&mut scene);
     renderer.render(&layout, &mut backend);
     

@@ -146,17 +146,6 @@ impl Renderer {
         let mut parse = parse(tex)?;
         Ok(layout(&mut parse, layout_settings)?)
     }
-    /// Bounding box for the given layout. Returns (x_min, y_min, x_max, y_max) the minimal and maximal for both coordinates.
-    pub fn size<F>(&self, layout: &Layout<F>) -> (f64, f64, f64, f64) {
-        // TODO: why the dependency on renderer
-        // TODO: is there truly nothing before 0?
-        (
-            0.0,
-            layout.depth / Px,
-            layout.width / Px,
-            layout.height / Px
-        )
-    }
 
     /// Renders the given layout onto `out` the provided backend.
     pub fn render<F>(&self, layout: &Layout<F>, out: &mut impl Backend<F>) {
@@ -167,12 +156,12 @@ impl Renderer {
         self.render_hbox(out, pos, &layout.contents, layout.height / Px, layout.width / Px, Alignment::Default);
     }
 
-    fn render_grid<F>(&self, out: &mut impl Backend<F>, pos: Cursor, width: f64, height: f64, grid: &Grid<F>) {
+    fn render_grid<F>(&self, out: &mut impl Backend<F>, pos: Cursor, _width: f64, _height: f64, grid: &Grid<F>) {
         let x_offsets = grid.x_offsets();
         let y_offsets = grid.y_offsets();
         for (&(row, column), node) in grid.contents.iter() {
-            let width = grid.columns[column];
-            let (height, depth) = grid.rows[row];
+            let _width = grid.columns[column];
+            let (height, _depth) = grid.rows[row];
 
             self.render_node(
                 out,

@@ -5,7 +5,6 @@ extern crate serde_yaml;
 
 use std::fs::File;
 use std::io::BufReader;
-use std::path::PathBuf;
 
 use rex::Renderer;
 use rex::cairo::CairoBackend;
@@ -86,14 +85,14 @@ fn render<'a, 'f, 'b>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str)
 
     // Sizing
     let renderer = Renderer::new();
-    let formula_bbox = renderer.size(&layout);
+    let formula_bbox = layout.size();
 
 
     // Rendering
     let mut svg_bytes : Vec<u8> = Vec::new();
     let svg_surface = unsafe { cairo::SvgSurface::for_raw_stream(
-        formula_bbox.2, 
-        formula_bbox.3, 
+        formula_bbox.width, 
+        formula_bbox.height - formula_bbox.depth, 
         &mut svg_bytes,
     )}.unwrap();
     let context = cairo::Context::new(&svg_surface).unwrap();

@@ -116,6 +116,8 @@ use pathfinder_export::{Export, FileFormat};
 /// Returns the SVG for the given formula, given a font file and a TeX formula.
 #[cfg(feature="fontrs-fontparser")]
 pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
+    use crate::layout::LayoutDimensions;
+
     // TODO : remove '.unwrap()' 
     let font = OpenTypeFont::parse(font).unwrap();
     let ctx = FontContext::new(&font)?;
@@ -123,9 +125,10 @@ pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
     renderer.debug = true;
     let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
     let layout = renderer.layout(tex, layout_settings).unwrap();
-    let (x0, y0, x1, y1) = renderer.size(&layout);
+    let LayoutDimensions { width, height, depth } = layout.size();
+
     let mut scene = Scene::new();
-    scene.set_view_box(RectF::from_points(v_xy(x0, y0), v_xy(x1, y1)));
+    scene.set_view_box(RectF::from_points(v_xy(0., depth), v_xy(width, height)));
     let mut backend = SceneWrapper::new(&mut scene);
     renderer.render(&layout, &mut backend);
 

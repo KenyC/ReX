@@ -17,7 +17,6 @@ use rex::Renderer;
 mod common;
 use common::debug_render::{Equation, DebugRender};
 use common::svg_diff;
-use rex::cairo::CairoBackend;
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::layout::{LayoutSettings, Style, Grid, Layout};
@@ -83,9 +82,9 @@ fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontCo
 
 
     let renderer = Renderer::new();
-    let (xmin, ymin, xmax, ymax) = renderer.size(&layout);
-    let width  = xmax - xmin;
-    let height = ymax - ymin;
+    let dims = layout.size();
+    let width  = dims.width;
+    let height = dims.height - dims.depth;
 
 
     // debug rendering: gather drawing command issued
@@ -161,7 +160,7 @@ fn layout() {
 
     if diff.len() != 0 {
         let count = diff.len();
-        svg_diff::write_diff(LAYOUT_HTML, &font_context, diff);
+        svg_diff::write_diff(LAYOUT_HTML, diff);
         panic!("Detected {} formula changes. \
                 Please review the changes in `{}`",
                count,

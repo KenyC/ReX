@@ -3,7 +3,7 @@ pub mod debug_render;
 pub mod svg_diff;
 pub mod svg;
 
-use std::{path::Path, io::Write, convert::TryInto};
+use std::path::Path;
 use self::debug_render::Equation;
 use bincode;
 use rex::{font::{FontContext, backend::ttf_parser::TtfMathFont}, parser::parse, layout::{LayoutSettings, Style, Grid}, Renderer, cairo::CairoBackend};
@@ -50,14 +50,14 @@ pub fn render<'a, 'f, 'b,>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b
 
     // Sizing
     let renderer = Renderer::new();
-    let formula_bbox = renderer.size(&layout);
+    let formula_bbox = layout.size();
 
 
     // Rendering
     let svg_surface = cairo::ImageSurface::create(
         cairo::Format::ARgb32, 
-        formula_bbox.2.ceil() as i32, 
-        formula_bbox.3.ceil() as i32,
+        formula_bbox.width.ceil() as i32, 
+        (formula_bbox.height - formula_bbox.depth).ceil() as i32,
     ).unwrap();
     let context = cairo::Context::new(&svg_surface).unwrap();
     let mut backend = CairoBackend::new(context);

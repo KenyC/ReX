@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 extern crate rex;
 
-use std::io::Write;
-use std::path::Path;
-use super::debug_render::Equation;
 
 
 const HEADER: &'static str =

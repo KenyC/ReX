@@ -23,17 +23,6 @@ impl<'a> RaqoteBackend<'a> {
             color_stack:   Vec::new(),
         }
     }
-
-    fn push_color(&mut self, r : u8, g : u8, b: u8, a : u8) {
-        self.color_stack.push(self.current_color);
-        self.current_color = SolidSource {r, g, b, a,};
-    }
-
-    fn pop_color(&mut self) {
-        if let Some(color) = self.color_stack.pop() {
-            self.current_color = color;
-        }
-    }
 }
 
 
