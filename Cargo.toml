@@ -17,26 +17,19 @@ ttfparser-fontparser  = ["dep:ttf-parser"]
 fontrs-fontparser     = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
 
 [[example]]
-name = "font-pathfinder"
-path = "examples/font_pathfinder.rs"
+name = "gui-basic"
+path = "examples/gui_basic.rs"
+required-features = ["femtovg-renderer", "ttfparser-fontparser"]
 
 [[example]]
-name = "font-femtovg"
-path = "examples/font_femtovg.rs"
-
-
-[[example]]
-name = "ttfparser-femtovg"
-path = "examples/ttfparser_femtovg.rs"
-
+name = "svg-basic"
+path = "examples/svg_basic.rs"
+required-features = ["cairo-renderer", "ttfparser-fontparser"]
 
 [[example]]
-name = "ttfparser-cairo"
-path = "examples/ttfparser_cairo.rs"
-
-[[example]]
-name = "ttfparser-raqote"
-path = "examples/ttfparser_raqote.rs"
+name = "grid-sample"
+path = "examples/grid_sample.rs"
+required-features = ["femtovg-renderer", "ttfparser-fontparser"]
 
 
 [dependencies]

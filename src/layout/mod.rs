@@ -137,6 +137,7 @@ impl<'f, F> Layout<'f, F> {
 
 /// A struct containing various measures for a Layout in pixel units.
 // Should not be used internally, the unitless types are "unsafe"
+#[derive(Debug)]
 pub struct LayoutDimensions {
     /// distance from baseline to top of the formula (positive if top of formula above baseline, typically positive)
     pub width  : f64,

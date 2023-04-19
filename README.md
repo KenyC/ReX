@@ -98,12 +98,19 @@ See the `samples/` folder for the original SVG source.
 
 ## Simple example
 
-You can see a simple example of use in [examples/ttfparser_cairo.rs](examples/ttfparser_cairo.rs). To run this example, run the following in the root of the repository.
+You can see a simple example of use in [examples/gui_basic.rs](examples/svg_basic.rs). To run this example, run the following in the root of the repository.
 
 ```bash
-cargo r --example ttfparser-cairo --features cairo-renderer,ttfparser-fontparser
+cargo r --example svg-basic --features="cairo-renderer ttfparser-fontparser" -- "\oint \mathbf{E}\cdot \mathrm{d}\mathbf{A} = \frac{Q_{enc}}{\epsilon_0}"
 ```
-The program will output `test.svg`.
+
+The program will render the formula and output to `test.svg`.
+
+You can see the same result in a GUI with:
+
+```bash
+cargo r --example gui-basic --features="femtovg-renderer ttfparser-fontparser" -- "\oint \mathbf{E}\cdot \mathrm{d}\mathbf{A} = \frac{Q_{enc}}{\epsilon_0}"
+```
 
 ## More generally
 
@@ -112,9 +119,7 @@ In a nutshell, rendering a formula requires:
   - Parsing the formula into `ParseNode` (using `rex::parser::engine::parse`).
   - Creating a `FontContext` struct from a certain font struct provided by the crate.
   - Creating a `LayoutSettings` struct from this font context, specifying font size and font context.
-  - Creating a `Layout`.
-  - Creating a `LayoutNode` from `ParseNode` using `rex::layout::engine::layout`.
-  - Add the node to the `Layout` using `Layout::add_node`.
+  - Creating a `Layout` from `ParseNode` using `rex::layout::engine::layout`.
   - Create a `Renderer`;
   - Create the relevant renderer backend (e.g. `CairoBackend::new` for cairo).
   - Call `Renderer::render` with the layout and the backend as arguments.
@@ -131,7 +136,7 @@ rex = {git = "https://github.com/KenyC/ReX", features = [<whatever features you 
 
 ## Fork
 
-Any modifications made in this fork fork is distributed under the MIT license. See LICENSE for details.
+Any modifications made in this fork is distributed under the MIT license. See LICENSE for details.
 
 ## Original
 
