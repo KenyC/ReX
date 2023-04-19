@@ -17,7 +17,8 @@ impl<'a> Token<'a> {
         match self {
             Token::EOF
             | Token::Symbol('}')
-            | Token::Command("right")
+            | Token::Command("right")  // middle ends the group that started with a previous 'left' or 'middle'
+            | Token::Command("middle")
             | Token::Command(r"\")
             | Token::Command(r"end")
             | Token::Command(r"cr") => true,

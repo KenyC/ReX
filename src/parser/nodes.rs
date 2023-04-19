@@ -59,12 +59,24 @@ pub struct Stack {
 /// Cf [`ParseNode::Delimited`]
 #[derive(Debug, PartialEq, Clone)]
 pub struct Delimited {
-    /// Symbol after \left
-    pub left: Symbol,
-    /// Symbol after \right
-    pub right: Symbol,
-    /// Nodes delimited by left and right
-    pub inner: Vec<ParseNode>,
+    /// Symbols after \left, \middle and \right in the order that they appear
+    delimiters : Vec<Symbol>,
+    /// Nodes delimited by left, middle and right in the order that they appear
+    inners:      Vec<Vec<ParseNode>>,
+}
+
+impl Delimited {
+    /// Creates new [`Delimited`] from the given symbols and the given delimited group.
+    pub fn new(delimiters: Vec<Symbol>, inners: Vec<Vec<ParseNode>>) -> Self 
+    { Self { delimiters, inners } }
+
+    /// Symbols after \left, \middle and \right in the order that they appear.
+    pub fn delimiters(&self) -> &[Symbol] 
+    { self.delimiters.as_ref() }
+
+    /// Nodes delimited by left, middle and right in the order that they appear.
+    pub fn inners(&self) -> &[Vec<ParseNode>] 
+    { self.inners.as_ref() }
 }
 
 /// Cf [`ParseNode::Scripts`]
@@ -185,6 +197,20 @@ impl ParseNode {
                 return Ok(sym);
             } else {
                 return Err(ParseError::ExpectedClose(sym));
+            }
+        } else {
+            unreachable!()
+        }
+    }
+
+    /// expected a middle delimiter
+    pub fn expect_middle(self) -> ParseResult<'static, Symbol> {
+        if let ParseNode::Symbol(sym) = self {
+            if sym.atom_type == AtomType::Fence ||
+               sym.codepoint == '.' {
+                return Ok(sym);
+            } else {
+                return Err(ParseError::ExpectedMiddle(sym));
             }
         } else {
             unreachable!()

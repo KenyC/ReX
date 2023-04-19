@@ -60,10 +60,12 @@ pub enum ParseError<'a> {
     ExpectedMathField(Token<'a>),
     /// The first token represents the expected token and the second the token that was obtained.
     ExpectedTokenFound(Token<'a>, Token<'a>),
-    /// The symbol after '\left' was not in the "open" category.
+    /// The symbol after '\left' was not in the "open" or "fence" category.
     ExpectedOpen(Symbol),
-    /// The symbol after '\right' was not in the "close" category.
+    /// The symbol after '\right' was not in the "close" or "fence" category.
     ExpectedClose(Symbol),
+    /// The symbol after '\middle' was not in the "fence" category.
+    ExpectedMiddle(Symbol),
     /// The first token represents the expected atom type and the second the atom type that was obtained.
     ExpectedAtomType(AtomType, AtomType),
     /// Error thrown if after '\left' and '\right', a token that is not a symbol is found
@@ -97,7 +99,7 @@ pub enum ParseError<'a> {
     UnexpectedEof(Token<'a>),
 
     /// An unspecific error value for errors we haven't yet included in the list above
-    Todo
+    Todo,
 }
 
 /// A generic error type covering any error that may happen during the process.
@@ -172,7 +174,9 @@ impl<'a> fmt::Display for ParseError<'a> {
             ExpectedOpen(sym) =>
                 write!(f, "expected Open, Fence, or period after '\\left', found `{:?}`", sym),
             ExpectedClose(sym) =>
-                write!(f, "expected Open, Fence, or period after '\\right', found `{:?}`", sym),
+                write!(f, "expected Close, Fence, or period after '\\right', found `{:?}`", sym),
+            ExpectedMiddle(sym) =>
+                write!(f, "expected Fence, or period after '\\middle', found `{:?}`", sym),
             ExpectedOpenGroup =>
                 write!(f, "expected an open group symbol"),
             NoClosingBracket =>

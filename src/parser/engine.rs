@@ -180,19 +180,39 @@ pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, 
     let token = lex.current;
 
     if token == Token::Command("left") {
+        let mut delimiters = Vec::with_capacity(2);
+        let mut inners     = Vec::with_capacity(1);
+
         lex.next();
         let left = symbol(lex, local)?
             .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
             .expect_left()?;
+        delimiters.push(left);
 
-        let inner = expression(lex, local)?;
-        lex.current.expect_command("right")?;
-        lex.next();
-        let right = symbol(lex, local)?
-            .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
-            .expect_right()?;
+        loop {
+            let inner = expression(lex, local)?;
+            inners.push(inner);
 
-        Ok(Some(delimited!(left, right, inner)))
+            if lex.current.expect_command("middle").is_ok() {
+                lex.next();
+                let middle = symbol(lex, local)?
+                    .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
+                    .expect_middle()?;
+                delimiters.push(middle);
+            }
+            else {
+                lex.current.expect_command("right")?;
+                lex.next();
+                let right = symbol(lex, local)?
+                    .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
+                    .expect_right()?;
+                delimiters.push(right);
+                break;
+            }
+        }
+
+        let delimited = Delimited::new(delimiters, inners);
+        Ok(Some(ParseNode::Delimited(delimited)))
     } else if token == Token::Command("begin") {
         lex.next();
         let env = required_group_with(lex, local, environment_name)?;

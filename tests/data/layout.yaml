@@ -21,6 +21,22 @@ Scripts:
     Snippets:
     - R_\mathfrak{E}X\ R^\mathfrak{E}X
 
+Delimiters:
+  - Description: should properly scale
+    Snippets:
+      - \left(\frac 12\right)
+      - \left(\begin{array}{c}1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\\1\\1\\1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\\1\\1\\1\\1\\1\\1\\1\end{array}\right)
+
+  - Description: middle renders correctly
+    Snippets:
+      - \left\{ x \in \mathbb{R}\,\middle|\, x \geq 0\right\}
+      - \left( \frac{a}{b} \middle| c \right)^{\frac{d}{e}}
+      - \left( c \middle| \frac{a}{b} \right)^{\frac{d}{e}}
+      - \left( c \middle| \frac{a}{b} \middle\| e \right)^{\frac{d}{e}}
+
 Fractions:
   - Description: should properly scale
     Snippets:

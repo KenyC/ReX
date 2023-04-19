@@ -221,58 +221,77 @@ impl<'f, F : MathFont> Layout<'f, F> {
     }
 
     fn delimited<'a>(&mut self, delim: &Delimited, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
-        let inner = layout(&delim.inner, config)?.as_node();
+        // let inner = layout(&delim.inner, config)?.as_node();
+        let mut inners = Vec::with_capacity(delim.inners().len());
+        let mut max_height = Length::zero();
+        let mut min_depth  = Length::zero();
+        for inner_parse_nodes in delim.inners() {
+            let inner = layout(inner_parse_nodes.as_slice(), config)?.as_node();
+            max_height = max(max_height, inner.height);
+            min_depth  = min(min_depth,  inner.depth);
+            inners.push(inner);
+        }
+
 
         let min_height = config.ctx.constants.delimited_sub_formula_min_height * config.font_size;
         let null_delimiter_space = config.ctx.constants.null_delimiter_space * config.font_size;
 
+
+
+        #[derive(Debug, Clone, Copy)]
+        struct ExtensionMetrics {
+            axis:      Length<Px>,
+            clearance: Length<Font>,
+        }
+
+        let mut extension_metrics = None;
+
         // Only extend if we meet a certain size
         // TODO: This quick height check doesn't seem to be strong enough,
         // reference: http://tug.org/pipermail/luatex/2010-July/001745.html
-        if max(inner.height, -inner.depth) > min_height * 0.5 {
+        if max(max_height, -min_depth) > min_height * 0.5 {
             let axis = config.ctx.constants.axis_height * config.font_size;
 
-            let clearance = max(inner.height - axis, axis - inner.depth) * 2.0;
-            let clearance = max(clearance * config.ctx.constants.delimiter_factor,
-                            inner.height - inner.depth - config.ctx.constants.delimiter_short_fall * config.font_size);
-            let clearance = config.to_font(clearance);
+            let inner_size = max(max_height - axis, axis - min_depth) * 2.0;
+            let clearance_px  = max(
+                inner_size * config.ctx.constants.delimiter_factor,
+                max_height - min_depth - config.ctx.constants.delimiter_short_fall * config.font_size
+            );
+            let clearance = config.to_font(clearance_px);
 
-            let left = match delim.left.codepoint {
-                '.' => kern!(horz: null_delimiter_space),
-                _ => {
-                    config.ctx.vert_variant(delim.left.codepoint, clearance)?
-                        .as_layout(config)?
-                        .centered(axis)
-                }
-            };
+            extension_metrics = Some(ExtensionMetrics {axis, clearance,})
+        };
 
-            let right = match delim.right.codepoint {
-                '.' => kern!(horz: null_delimiter_space),
-                _ => {
-                    config.ctx.vert_variant(delim.right.codepoint, clearance)?
-                        .as_layout(config)?
-                        .centered(axis)
-                }
-            };
-
-            self.add_node(left);
-            self.add_node(inner);
-            self.add_node(right);
-        } else {
-            let left = match delim.left.codepoint {
-                '.' => kern!(horz: null_delimiter_space),
-                _ => config.ctx.glyph(delim.left.codepoint)?.as_layout(config)?,
-            };
-
-            let right = match delim.right.codepoint {
-                '.' => kern!(horz: null_delimiter_space),
-                _ => config.ctx.glyph(delim.right.codepoint)?.as_layout(config)?,
-            };
-
-            self.add_node(left);
-            self.add_node(inner);
-            self.add_node(right);
+        #[inline]
+        fn make_delimiter<'a, 'f, F : MathFont>(
+            symbol : Symbol, 
+            extension_metrics: &Option<ExtensionMetrics>, 
+            null_delimiter_space: Length<Px>,
+            config: LayoutSettings<'a, 'f, F>
+        ) -> Result<LayoutNode<'f, F>, LayoutError> {
+            if symbol.codepoint == '.' {
+                Ok(kern!(horz: null_delimiter_space))
+            }
+            else if let Some(metrics) = extension_metrics {
+                Ok(config.ctx
+                    .vert_variant(symbol.codepoint, metrics.clearance)?
+                    .as_layout(config)?
+                    .centered(metrics.axis))
+            }
+            else {
+                config.ctx
+                    .glyph(symbol.codepoint)?
+                    .as_layout(config)
+            }
         }
+
+        let delimiters = delim.delimiters();
+        for (symbol, inner) in Iterator::zip(delimiters.iter(), inners)  {
+            self.add_node(make_delimiter(*symbol, &extension_metrics, null_delimiter_space, config)?);
+            self.add_node(inner);
+        }
+        let right_symbol = delimiters.last().unwrap();
+        self.add_node(make_delimiter(*right_symbol, &extension_metrics, null_delimiter_space, config)?);
 
         Ok(())
     }
