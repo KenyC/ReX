@@ -92,25 +92,35 @@ impl Default for ArrayColumnAlign {
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ArraySingleColumnFormatting {
     /// The alignment of the column.  Defaults to Centered.
-    alignment: ArrayColumnAlign,
+    pub alignment: ArrayColumnAlign,
 
     /// The number of vertical marks before column.
-    left_vert: u8,
+    pub left_vert: u8,
 }
 
 /// The collection of column formatting for an array.  This includes the vertical
 /// alignment for each column in an array along with optional vertical bars
 /// positioned to the right of the last column.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArrayColumnsFormatting {
     /// The formatting specifications for each column
-    columns: Vec<ArraySingleColumnFormatting>,
+    pub columns: Vec<ArraySingleColumnFormatting>,
 
     /// The number of vertical marks after the last column.
-    right_vert: u8,
+    pub right_vert: u8,
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+impl ArrayColumnsFormatting {
+    /// Returns center formatting for all columns and no marks
+    pub fn default_for(n_cols : usize) -> Self {
+        Self { 
+            columns:    vec![ArraySingleColumnFormatting::default(); n_cols], 
+            right_vert: 0, 
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Array {
     /// The formatting arguments (clr) for each row.  Default: center.
     pub col_format: ArrayColumnsFormatting,
@@ -159,12 +169,16 @@ fn matrix_common<'a>(lex: &mut Lexer<'a>,
                                                   }
                                               });
 
-    Ok(ParseNode::Array(Array {
-                            col_format: ArrayColumnsFormatting::default(),
-                            rows: body,
-                            left_delimiter,
-                            right_delimiter,
-                        }))
+
+    let n_cols = body.get(0).map_or(0, |v| v.len());
+    Ok(ParseNode::Array(
+        Array {
+            col_format: ArrayColumnsFormatting::default_for(n_cols),
+            rows: body,
+            left_delimiter,
+            right_delimiter,
+        }
+    ))
 }
 
 /// Parse the column alignments for arrays.  The currently supported formats are:

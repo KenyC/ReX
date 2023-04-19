@@ -178,6 +178,9 @@ impl Renderer {
         if let Alignment::Centered(w) = alignment {
             pos.x += (nodes_width - w / Px) * 0.5;
         }
+        else if let Alignment::Right(w) = alignment {
+            pos.x += nodes_width - w / Px;
+        }
 
         for node in nodes {
             self.render_node(out, pos, node);

@@ -20,7 +20,7 @@ use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
 use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
-use crate::environments::Array;
+use crate::environments::{Array, ArrayColumnAlign};
 use crate::dimensions::{*};
 use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
@@ -727,12 +727,22 @@ impl<'f, F : MathFont> Layout<'f, F> {
         }
 
         // layout the body of the matrix
-        for (col_idx, col) in columns.into_iter().enumerate() {
+        let column_iter = 
+            Iterator
+            ::zip(columns.into_iter(), array.col_format.columns.iter())
+            .enumerate()
+        ;
+        for (col_idx, (col, col_format)) in column_iter {
+            let alignment = col_format.alignment;
             let mut vbox = builders::VBox::new();
             for (row_idx, mut row) in col.into_iter().enumerate() {
                 // Center columns as necessary
                 if row.width < col_widths[col_idx] {
-                    row.alignment = Alignment::Centered(row.width);
+                    row.alignment = match alignment {
+                        ArrayColumnAlign::Centered => Alignment::Centered(row.width),
+                        ArrayColumnAlign::Left     => Alignment::Left,
+                        ArrayColumnAlign::Right    => Alignment::Right(row.width),
+                    };
                     row.width = col_widths[col_idx];
                 }
 

@@ -191,6 +191,12 @@ Arrays:
     - \begin{vmatrix}1\\ 1\\ 1\\ 1\\ 1\end{vmatrix}
     - \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
     - \begin{bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{bmatrix}
+  - Description: array column alignment should be honored
+    Snippets:
+    - \begin{array}{l}a\\ aa\\ aaa\end{array}
+    - \begin{array}{c}a\\ aa\\ aaa\end{array}
+    - \begin{array}{r}a\\ aa\\ aaa\end{array}
+    - \begin{array}{lcr}lorem & ipsum & sit \\ amet & consectetur & adipscing \\ elit & set & do\end{array}
   - Description: should render
     Snippets:
     - |
