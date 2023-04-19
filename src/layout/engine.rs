@@ -1,3 +1,9 @@
+//! This module defines the main layout functions that will place the parse nodes in space, given the geometrical information provided in the font. 
+//! The most important function here is [`layout`](crate::layout::engine::layout). 
+//! Given a slice of [`ParseNode`s](crate::parser::nodes::ParseNode) and some [`LayoutSettings`](crate::layout::LayoutSettings), 
+//! this function returns a layout. The layout can then be sent to the renderer (cf [`render`](crate::render)) to create a graphical output.
+
+
 use std::cmp::{min, max};
 
 use super::builders;

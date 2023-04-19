@@ -45,9 +45,11 @@ pub mod environments;
 pub mod error;
 #[deny(missing_docs)]
 pub mod dimensions;
+#[deny(missing_docs)]
 pub mod layout;
 pub mod lexer;
 pub mod parser;
+#[deny(missing_docs)]
 pub mod render;
 
 pub mod font;

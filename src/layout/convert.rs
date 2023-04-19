@@ -108,6 +108,8 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
     fn scale_font_unit(&self, length: Length<Font>) -> Length<Px> {
         length / self.ctx.units_per_em * self.font_size
     }
+
+    /// Convert a length given in pixels to a length in font units. The resulting value depends on the selected font size.
     pub fn to_font(&self, length: Length<Px>) -> Length<Font> {
         length / self.font_size * self.ctx.units_per_em
     }

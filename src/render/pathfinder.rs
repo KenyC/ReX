@@ -1,3 +1,9 @@
+//! Provides a [`Backend`] for [pathfinder](https://crates.io/crates/pathfinder)
+//!
+//! The type [`SceneWrapper`] is a wrapper around a pathfinder [`Scene`] that implements [`Backend`].
+//! With this, you can render a given formula to a `pathfinder` scene..
+
+
 #[cfg(feature="fontrs-fontparser")]
 use font::OpenTypeFont;
 use pathfinder_renderer::{
@@ -25,6 +31,7 @@ fn v_xy(x: f64, y: f64) -> Vector2F {
     Vector2F::new(x as f32, y as f32)
 }
 
+/// Wrapper around a pathfinder [`Scene`] that implements [`Backend`].
 pub struct SceneWrapper<'a> {
     scene: &'a mut Scene,
     color_stack: Vec<PaintId>,
@@ -32,9 +39,12 @@ pub struct SceneWrapper<'a> {
     paint: PaintId
 }
 impl<'a> SceneWrapper<'a> {
+    /// Creates new [`SceneWrapper`] from mutable reference to [`Scene`].
     pub fn new(scene: &'a mut Scene) -> Self {
         SceneWrapper::with_transform(scene, Transform2F::default())
     }
+
+    /// Same as [`SceneWrapper::new`], but applies the transformation `transform` to any render.
     pub fn with_transform(scene: &'a mut Scene, transform: Transform2F) -> Self {
         SceneWrapper {
             paint: scene.push_paint(&Paint::black()),
@@ -102,6 +112,8 @@ use crate::font::FontContext;
 use crate::layout::{LayoutSettings, Style};
 use pathfinder_export::{Export, FileFormat};
 
+
+/// Returns the SVG for the given formula, given a font file and a TeX formula.
 #[cfg(feature="fontrs-fontparser")]
 pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
     // TODO : remove '.unwrap()' 

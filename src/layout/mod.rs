@@ -1,4 +1,4 @@
-//! This module is where we convert [`crate::parser::ParseNode`]s to [`Layout`] boxes which are ready to be rendered.
+//! Converting [`ParseNode`](crate::parser::ParseNode)s to [`Layout`] boxes which are ready to be rendered.
 //! 
 //! The layout boxes follow a similar model as those found in HTML and TeX in that they both
 //! have horizontal and vertical boxes.  One difference will be how glue is handled.  HTML/CSS
@@ -31,14 +31,23 @@ use std::cmp::{max, min};
 use std::collections::BTreeMap;
 use crate::dimensions::*;
 
-// By default this will act as a horizontal box
+/// Contains a set of [`LayoutNode`s](crate::layout::LayoutNode) that defines the position of glyphs and rules (i.e. filled rectangles) and certain measurements useful for rendering.
+/// It serves as input to [`Renderer::render`](crate::render::Renderer::render).
 #[derive(Clone, Debug)]
 pub struct Layout<'f, F> {
-    pub contents: Vec<LayoutNode<'f, F>>,
-    pub width: Length<Px>,
-    pub height: Length<Px>,
-    pub depth: Length<Px>,
-    pub offset: Length<Px>,
+    /// The children nodes contained in the layout
+    /// By default, they are laid out, horizontally as a horizontal box.
+    pub contents:  Vec<LayoutNode<'f, F>>,
+    /// Width of content
+    pub width:     Length<Px>,
+    /// Height of content ; distance from baseline to the top of the layout
+    pub height:    Length<Px>,
+    /// Depth of content ; distance from baseline to the bottom of the layout
+    pub depth:     Length<Px>,
+    /// Offset from the baseline 
+    // (NB: does not seem used at the moment)
+    pub offset:    Length<Px>,
+    /// How to horizontally lay out children nodes
     pub alignment: Alignment,
 }
 
@@ -56,23 +65,28 @@ impl<'f, F> Default for Layout<'f, F> {
 }
 
 impl<'f, F> Layout<'f, F> {
+    /// Make layout into layout node, which can then be inserted in another layout
     pub fn as_node(self) -> LayoutNode<'f, F> {
         LayoutNode {
             width: self.width,
             height: self.height,
             depth: self.depth,
-            node: LayoutVariant::HorizontalBox(HorizontalBox {
-                                                   contents: self.contents,
-                                                   offset: self.offset,
-                                                   alignment: self.alignment,
-                                               }),
+            node: LayoutVariant::HorizontalBox(
+                HorizontalBox {
+                   contents: self.contents,
+                   offset: self.offset,
+                   alignment: self.alignment,
+                }
+            ),
         }
     }
 
+    /// Create new [`Layout`](crate::layout::Layout) ; equivalent to [Default::default]
     pub fn new() -> Layout<'f, F> {
         Layout::default()
     }
 
+    /// Append node at end of layout (i.e. right of layout)
     pub fn add_node(&mut self, node: LayoutNode<'f, F>) {
         self.width += node.width;
         self.height = max(self.height, node.height);
@@ -80,16 +94,20 @@ impl<'f, F> Layout<'f, F> {
         self.contents.push(node);
     }
 
+    /// Sets offset of layout
+    // TODO: not used at the moment figure out why (perhaps lack of alignement in array?)
     pub fn set_offset(&mut self, offset: Length<Px>) {
         self.offset = offset;
     }
 
+    /// Not clear what this does.
     pub fn finalize(mut self) -> Layout<'f, F> {
         self.depth -= self.offset;
         self.height -= self.offset;
         self
     }
 
+    /// Makes layout's width equal to given arguments, and centers children within that width
     pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f, F> {
         self.alignment = Alignment::Centered(self.width);
         self.width = new_width;
@@ -107,10 +125,15 @@ impl<'f, F> Layout<'f, F> {
     }
 }
 
+/// A sub-part of the layout hierarchy: can contain other nodes and may be contained in other nodes.
 pub struct LayoutNode<'f, F> {
+    /// Type of node
     pub node: LayoutVariant<'f, F>,
+    /// Width
     pub width: Length<Px>,
+    /// Height: distance from base line to top of the node
     pub height: Length<Px>,
+    /// Height: distance from base line to bottom of the node
     pub depth: Length<Px>,
 }
 
@@ -125,13 +148,21 @@ impl<'f, F> Clone for LayoutNode<'f, F> {
     }
 }
 
+/// Different types of layout nodes
 pub enum LayoutVariant<'f, F> {
+    /// A grid
     Grid(Grid<'f, F>),
+    /// A horizontal box
     HorizontalBox(HorizontalBox<'f, F>),
+    /// A vertical box
     VerticalBox(VerticalBox<'f, F>),
+    /// A symbol (aka glyph) from the font
     Glyph(LayoutGlyph<'f, F>),
+    /// A scope within which the main color is changed
     Color(ColorChange<'f, F>),
+    /// A filled rectangle
     Rule,
+    /// Some (possibly negative) spacing
     Kern,
 }
 
@@ -149,8 +180,11 @@ impl<'f, F> Clone for LayoutVariant<'f, F> {
     }
 }
 
+/// All children of this node will use the [ColorChange::color] as a fill color
 pub struct ColorChange<'f, F> {
+    /// Color to use
     pub color: RGBA,
+    /// Children of the given node
     pub inner: Vec<LayoutNode<'f, F>>,
 }
 
@@ -163,7 +197,10 @@ impl<'f, F> Clone for ColorChange<'f, F> {
     }
 }
 
+/// Place nodes in a grid-like pattern. 
+/// The number of rows and columns is determined automatically
 pub struct Grid<'f, F> {
+    /// Children nodes and their position in the grid
     pub contents: BTreeMap<(usize, usize), LayoutNode<'f, F>>,
     /// max length of each column
     pub columns: Vec<Length<Px>>,
@@ -181,9 +218,14 @@ impl<'f, F> Clone for Grid<'f, F> {
     }
 }
 
+/// A horizontal box : children are placed side by side.
 pub struct HorizontalBox<'f, F> {
+    /// Children nodes
     pub contents: Vec<LayoutNode<'f, F>>,
+    /// Offset
+    // Unclear what this does
     pub offset: Length<Px>,
+    /// How to align Children nodes
     pub alignment: Alignment,
 }
 
@@ -210,9 +252,13 @@ impl<'f, F> Default for HorizontalBox<'f, F> {
     }
 }
 
+/// Vertical box: children are placed on top of each other
 pub struct VerticalBox<'f, F> {
+    /// Children nodes
     pub contents: Vec<LayoutNode<'f, F>>,
+    /// Offset from baseline
     pub offset: Length<Px>,
+    /// Horizontal alignment
     pub alignment: Alignment,
 }
 
@@ -239,13 +285,20 @@ impl<'f, F> Default for VerticalBox<'f, F> {
 }
 
 
-
+/// Glyph : this node has no children ; simply specify some glyph (i.e. symbol) to draw
 pub struct LayoutGlyph<'f, F> {
+    /// glyph id
     pub gid: GlyphId,
+    /// width of the symbol
     pub size: Length<Px>,
+    /// offset from baseline
     pub offset: Length<Px>,
+    /// where to place accents
     pub attachment: Length<Px>,
+    /// italic correction: italic symbols, who lean, may come out of the bounding box towards the top ; when the next glyph is not as slanted (i.e. is not italic), the italic glyph may collide with next glyph.
+    /// The "italic correction" tells one how much wider the glyph needs to be in order to avoid any collisions with subsequent glyphs.
     pub italics: Length<Px>,
+    /// font to render glyph with
     pub font: &'f F,
 }
 
@@ -270,11 +323,17 @@ impl<'f, F> Copy for LayoutGlyph<'f, F> {}
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, Debug, PartialEq)]
+/// How to horizontally align certain elements
 pub enum Alignment {
+    /// Centered within the argument width
     Centered(Length<Px>),
+    /// Right-aligned within the argument width
     Right(Length<Px>),
+    /// Placed left to right, one after the other ; width is determined automatically
     Left,
+    /// inherit from previous
     Inherit,
+    /// default
     Default,
 }
 
@@ -380,6 +439,7 @@ impl<'f, F> LayoutNode<'f, F> {
     }
 }
 
+/// Determines if a set of nodes is a singleton set containing a symbol node
 pub fn is_symbol<'a, 'b: 'a, F>(contents: &'a [LayoutNode<'b, F>]) -> Option<LayoutGlyph<'b, F>> {
     if contents.len() != 1 {
         return None;
@@ -394,13 +454,21 @@ pub fn is_symbol<'a, 'b: 'a, F>(contents: &'a [LayoutNode<'b, F>]) -> Option<Lay
 #[derive(Serialize, Deserialize)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Style {
+    /// sub-script of sub-script with no spacing
     ScriptScriptCramped,
+    /// sub-script of sub-script
     ScriptScript,
+    /// sub-script with no sapce
     ScriptCramped,
+    /// sub-script 
     Script,
+    /// TODO
     TextCramped,
+    /// TODO
     Text,
+    /// TODO
     DisplayCramped,
+    /// TODO
     Display,
 }
 
@@ -479,9 +547,13 @@ impl Style {
 
 // NOTE: A limitation on derive(Clone) forces us to implement clone ourselves.
 // cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
+/// Defines the math font to use, the desired font size and whether to use Roman or Italic or various other scripts
 pub struct LayoutSettings<'a, 'f, F> {
+    /// Maths font
     pub ctx: &'a FontContext<'f, F>,
+    /// Font size in (in pixels per em)
     pub font_size: Scale<Px, Em>,
+    /// TODO
     pub style: Style,
 }
 
@@ -501,6 +573,7 @@ impl<'a, 'f, F> Copy for LayoutSettings<'a, 'f, F> {}
 
 
 impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
+    /// Creates a new LayoutSettings
     pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
         LayoutSettings {
             ctx,

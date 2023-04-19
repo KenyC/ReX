@@ -1,4 +1,4 @@
-//! Types for dimensions with units
+//! Types for quantities with units (em, pixels, etc.)
 //!
 //! This allows for compile-time checking of unit errors
 //! A function requiring an input to be in px units use [`Length<Px>`]

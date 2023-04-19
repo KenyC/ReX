@@ -1,7 +1,13 @@
-use raqote::{Color, DrawTarget, Source, SolidSource, DrawOptions, Transform, PathBuilder};
+//! Provides a [`Backend`] for [raqote](https://crates.io/crates/raqote)
+//!
+//! The type [`RaqoteBackend`] is a wrapper around [`DrawTarget`] that implements [`Backend`].
+//! With this, you can render a given formula to a `raqote` draw target.
+
+use raqote::{DrawTarget, Source, SolidSource, DrawOptions, Transform, PathBuilder};
 
 use crate::{Backend, font::backend::ttf_parser::TtfMathFont, GraphicsBackend, FontBackend};
 
+/// Wrapper around [`DrawTarget`]
 pub struct RaqoteBackend<'a> {
     target        : &'a mut DrawTarget,
     current_color : SolidSource,
@@ -9,6 +15,7 @@ pub struct RaqoteBackend<'a> {
 }
 
 impl<'a> RaqoteBackend<'a> {
+    /// Creates wrapper from mutable reference to a draw target.
     pub fn new(target: &'a mut DrawTarget) -> Self {
         Self {
             target,

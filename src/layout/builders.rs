@@ -140,6 +140,7 @@ impl<'a, F> HBox<'a, F> {
 }
 
 impl<'a, F> Grid<'a, F> {
+    /// Creates a new [`Grid`](crate::layout::Grid)
     pub fn new() -> Grid<'a, F> {
         Grid {
             contents: BTreeMap::new(),
@@ -147,6 +148,9 @@ impl<'a, F> Grid<'a, F> {
             columns: Vec::new(),
         }
     }
+
+    /// Insert node in the grid at the given position. 
+    /// Replaces any node there may have been in this position.
     pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, F>) {
         if row >= self.rows.len() {
             self.rows.resize(row + 1, (Length::zero(), Length::zero()));
@@ -164,8 +168,11 @@ impl<'a, F> Grid<'a, F> {
             self.columns[column] = node.width;
         }
 
+        // TODO: bug ; if the inserted node replaces an existing node, the values in columns and row might no longer be correct
         self.contents.insert((row, column), node);
     }
+
+    /// Convert [`Grid`](crate::layout::Grid) into [`LayoutNode`](crate::layout::LayoutNode)
     pub fn build(self) -> LayoutNode<'a, F> {
         LayoutNode {
             width:  self.columns.iter().cloned().sum(),
@@ -174,6 +181,8 @@ impl<'a, F> Grid<'a, F> {
             node: LayoutVariant::Grid(self)
         }
     }
+
+    /// Returns, for every column, the sum of the widths of the preceding columns.
     pub fn x_offsets(&self) -> Vec<Length<Px>> {
         self.columns.iter().scan(Length::zero(), |acc, &width| {
             let x = *acc;
@@ -181,6 +190,8 @@ impl<'a, F> Grid<'a, F> {
             Some(x)
         }).collect()
     }
+
+    /// Returns, for every row, the sum of the heights of the preceding rows.
     pub fn y_offsets(&self) -> Vec<Length<Px>> {
         self.rows.iter().scan(Length::zero(), |acc, &(height, depth)| {
             let x = *acc;

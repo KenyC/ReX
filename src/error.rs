@@ -47,7 +47,7 @@ pub enum ParseError<'a> {
     UnrecognizedEnvironment(&'a str),
     /// Unknown column specifier \begin{array}{xxx}
     UnrecognizedColumnFormat(Token<'a>),
-    /// Unknown vertical alignment argument \begin{array}[xxx]{rllc}
+    /// Unknown vertical alignment argument \begin{array}\[xxx\]{rllc}
     UnrecognizedVerticalAlignmentArg(Token<'a>),
     /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),

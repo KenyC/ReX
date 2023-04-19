@@ -1,4 +1,4 @@
-//! Parsing strings representing LateX formulas into [`ParseNode`]'s
+//! Parses strings representing LateX formulas into [`ParseNode`]'s
 //! 
 //! The main function function of interest is [`engine::parse`]
 

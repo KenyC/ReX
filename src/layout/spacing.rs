@@ -1,7 +1,12 @@
+//! This module defines functions that gives the most esthetically pleasing spacing between two types of symbols.
+//! Functions from this module for instance decide that "f" is followed by less space in "f(" than in "f +".
 use crate::font::{AtomType};
 use crate::layout::Style;
 use crate::dimensions::{Length, Em};
 
+/// Given the type of two subsequent atoms and the current style, 
+/// determines how much spacing should occur between the two
+/// symbols.
 pub fn atom_space(left: AtomType, right: AtomType, style: Style) -> Spacing {
     if style >= Style::TextCramped {
         match (left, right) {
@@ -48,15 +53,21 @@ pub fn atom_space(left: AtomType, right: AtomType, style: Style) -> Spacing {
     }
 }
 
+/// Different types of space
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Spacing {
+    /// no space
     None,
+    /// thin space
     Thin,
+    /// medium space
     Medium,
+    /// thick space
     Thick,
 }
 
 impl Spacing {
+    /// Returns how much a given type of spaces measure in *em* units
     pub fn to_length(self) -> Length<Em> {
         match self {
             Spacing::None   => Length::new(0.0, Em),

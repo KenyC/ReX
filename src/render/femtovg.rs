@@ -1,3 +1,9 @@
+//! Provides a [`Backend`] for [femtovg](https://crates.io/crates/femtovg)
+//!
+//! The type [`FemtoVGCanvas`] is a wrapper around [`Canvas<T>`] that implements [`Backend`].
+//! With this, you can render a given formula to a `femtovg` canvas.
+
+
 use femtovg::{Renderer, Canvas, Path, Paint};
 #[cfg(feature="fontrs-fontparser")]
 use font::{Font, OpenTypeFont};
@@ -19,6 +25,7 @@ fn v_xy(x: f64, y: f64) -> Vector2F {
     Vector2F::new(x as f32, y as f32)
 }
 
+/// Wrapper around [`Canvas<T>`](https://docs.rs/femtovg/0.6.0/femtovg/struct.Canvas.html) that implements [`Backend`]
 pub struct FemtoVGCanvas<'a, T : Renderer> {
     canvas : &'a mut Canvas<T>,
     current_paint : femtovg::Paint,
@@ -26,6 +33,7 @@ pub struct FemtoVGCanvas<'a, T : Renderer> {
 }
 
 impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
+    /// Creates a new renderer from a FemtoVG canvas and a default paint.
     pub fn new(
         canvas: &'a mut Canvas<T>, 
         current_paint: femtovg::Paint,
@@ -37,6 +45,7 @@ impl<'a, T: Renderer> FemtoVGCanvas<'a, T> {
         } 
     }
 
+    /// Retrieves a mutable reference to the wrapped `Canvas<T>`.
     pub fn canvas<'b>(&'b mut self) -> &'b mut Canvas<T> {
         self.canvas
     }

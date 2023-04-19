@@ -1,7 +1,14 @@
+//! Provides a [`Backend`] for [cairo-rs](https://crates.io/crates/cairo-rs)
+//!
+//! The type [`CairoBackend`] is a wrapper around a Cairo [`Context`] that implements [`Backend`].
+//! With this, you can render a given formula to a `cairo` context.
+
+
 use cairo::Context;
 
-use crate::{Backend, font::backend::ttf_parser::TtfMathFont, GraphicsBackend, FontBackend, parser::color};
+use crate::{Backend, font::backend::ttf_parser::TtfMathFont, GraphicsBackend, FontBackend};
 
+/// Wrapper around a Cairo [`Context`] that implements [`Backend`].
 pub struct CairoBackend {
     context : Context,
     current_color : (u8, u8, u8, u8),
@@ -9,6 +16,8 @@ pub struct CairoBackend {
 }
 
 impl CairoBackend {
+    /// Creates backend from [`Context`].
+    // TODO : be consistent across backends as to whether the context asks for a reference or value.
     pub fn new(context: Context) -> Self {
         context.set_source_rgba(0., 0., 0., 1.);
         Self {
@@ -18,6 +27,7 @@ impl CairoBackend {
         }
     }
 
+    /// Consumes [`CairoBackend`] and returns [`Context`]
     pub fn context(self) -> Context
     {self.context}
 
