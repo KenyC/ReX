@@ -1,4 +1,4 @@
-use crate::lexer::{Lexer, Token};
+use super::lexer::{Lexer, Token};
 use crate::font::{Style, AtomType};
 use crate::parser::{self, optional_argument_with, required_argument_with, ParseNode, symbols::Symbol};
 use crate::error::{ParseResult, ParseError};
@@ -193,7 +193,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
     let mut current = ArraySingleColumnFormatting::default();
 
     loop {
-        match lex.current {
+        match lex.current() {
             Token::Symbol('c') => current.alignment = ArrayColumnAlign::Centered,
             Token::Symbol('r') => current.alignment = ArrayColumnAlign::Right,
             Token::Symbol('l') => current.alignment = ArrayColumnAlign::Left,
@@ -204,7 +204,6 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
                 continue;
             }
             Token::Symbol('}') => {
-                lex.pos -= 1; // backtrack the lexer
                 break;
             }
             token => return Err(ParseError::UnrecognizedColumnFormat(token)),
@@ -230,7 +229,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
 ///
 /// For example: `\begin{array}[t]{cc}..\end{array}`.
 fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayVerticalAlign>> {
-    let ret = match lex.current {
+    let ret = match lex.current() {
         Token::Symbol('t') => Ok(Some(ArrayVerticalAlign::Top)),
         Token::Symbol('b') => Ok(Some(ArrayVerticalAlign::Bottom)),
         token => return Err(ParseError::UnrecognizedVerticalAlignmentArg(token)),
@@ -253,7 +252,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
     let mut current: Vec<Expression> = Vec::new();
     loop {
         let expr = parser::expression_until(lex, style, Token::Symbol('&'))?;
-        if lex.current == Token::Command(r"end") {
+        if lex.current() == Token::Command(r"end") {
             // If the last line is empty, ignore it.
             if expr.is_empty() && current.is_empty() {
                 break;
@@ -265,7 +264,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
         }
 
         current.push(expr);
-        match lex.current {
+        match lex.current() {
             Token::Symbol('&') => { /* no-op, carry on */ }
             Token::Command(r"\") |
             Token::Command(r"cr") => {
@@ -273,7 +272,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
                 rows.push(current);
                 current = Vec::new();
             }
-            _ => return Err(ParseError::UnexpectedEof(lex.current)),
+            _ => return Err(ParseError::UnexpectedEof(lex.current())),
         }
         lex.next();
     }
@@ -285,7 +284,6 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
 fn array<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, ParseNode> {
     let pos = optional_argument_with(lex, local, array_pos)?;
     let cols = required_argument_with(lex, local, array_col)?;
-    lex.next();
     let contents = array_body(lex, local)?;
     debug!("Array, pos: {:?}, cols: {:?}", pos, cols);
     debug!("Contents: {:#?}", contents);

@@ -11,6 +11,9 @@ pub mod nodes;
 pub mod color;
 #[deny(missing_docs)]
 pub mod symbols;
+pub mod environments;
+pub mod functions;
+pub mod lexer;
 
 pub use self::engine::*;
 pub use self::nodes::ParseNode;

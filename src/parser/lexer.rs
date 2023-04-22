@@ -1,6 +1,6 @@
 use std::fmt;
 use crate::dimensions::Unit;
-use crate::parser::color::RGBA;
+use super::color::RGBA;
 use crate::error::{ParseError, ParseResult};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -51,18 +51,18 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Lexer<'a> {
-    pub input: &'a str,
+    /// The text strings from which to retrieve data data
+    input: &'a str,
 
     /// The position of where _next_ token to be lexed begins.
-    pub pos: usize,
+    pos: usize,
 
     /// The position of where `self.current` begins.
-    pub prev_pos: usize,
+    prev_pos: usize,
 
-    /// The token currently being processed.
-    pub current: Token<'a>,
+    current: Token<'a>,
 }
 
 impl<'a> Lexer<'a> {
@@ -241,6 +241,12 @@ impl<'a> Lexer<'a> {
 
         Token::Command("trprime")
     }
+
+    /// The token currently being processed.
+    #[inline]
+    pub fn current(&self) -> Token<'a> {
+        self.current
+    }
 }
 
 
@@ -257,7 +263,7 @@ impl<'a> fmt::Display for Token<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::{Lexer, Token};
+    use super::{Lexer, Token};
 
     #[test]
     fn lex_primes() {

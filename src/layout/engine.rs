@@ -20,7 +20,7 @@ use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
 use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
-use crate::environments::{Array, ArrayColumnAlign};
+use crate::parser::environments::{Array, ArrayColumnAlign};
 use crate::dimensions::{*};
 use crate::layout;
 use crate::error::{LayoutResult, LayoutError};

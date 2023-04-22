@@ -1,7 +1,7 @@
 use crate::dimensions::Unit;
 use crate::font::{Weight, Family, AtomType, Style, style_symbol};
 use crate::layout::Style as LayoutStyle;
-use crate::lexer::{Lexer, Token};
+use super::lexer::{Lexer, Token};
 use crate::parser as parse;
 use crate::parser::nodes::{ParseNode, Radical, MathStyle, GenFraction, Rule, BarThickness, AtomChange,
                     Color, Stack};
@@ -266,7 +266,7 @@ fn text_operator<'a>(_: &mut Lexer<'a>, style: Style, text: &str, limits: bool) 
 }
 
 fn substack<'a>(lex: &mut Lexer<'a>, local: Style, atom_type: AtomType) -> ParseResult<'a, ParseNode> {
-    if lex.current != Token::Symbol('{') {
+    if lex.current() != Token::Symbol('{') {
         return Err(ParseError::StackMustFollowGroup);
     }
 
@@ -276,7 +276,7 @@ fn substack<'a>(lex: &mut Lexer<'a>, local: Style, atom_type: AtomType) -> Parse
     // Continue parsing expressions, until we reach '}'
     loop {
         lines.push(parse::expression(lex, local)?);
-        match lex.current {
+        match lex.current() {
             Token::Symbol('}') => break,
             Token::Command(r"\") => lex.next(),
             _ => return Err(ParseError::NoClosingBracket),

@@ -4,7 +4,7 @@
 //!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
 use crate::font::common::GlyphId;
-use crate::lexer::Token;
+use crate::parser::lexer::Token;
 use std::fmt;
 use crate::font::{AtomType};
 use crate::parser::symbols::Symbol;

@@ -1,13 +1,13 @@
 use crate::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
-use crate::lexer::{Lexer, Token};
 use crate::parser::{
     nodes::{Delimited, ParseNode, Accent, Scripts},
     symbols::Symbol,
-    color::RGBA
+    color::RGBA,
+    environments::Environment,
 };
-use crate::functions::get_command;
-use crate::environments::Environment;
+use super::lexer::{Lexer, Token};
+use super::functions::get_command;
 use crate::dimensions::*;
 
 fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token>) -> ParseResult<'a, Vec<ParseNode>> {
@@ -15,7 +15,7 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token
     loop {
         // TODO: Handle INFIX operators here, once we support them.
         lex.consume_whitespace();
-        if Some(lex.current) == end || lex.current.ends_expression() {
+        if Some(lex.current()) == end || lex.current().ends_expression() {
             break;
         }
 
@@ -32,9 +32,10 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token
                 continue;
             }
 
+
             // At this point, if the current `Token` is a Command,
             // then it must be an unrecognized Command.
-            if let Token::Command(cmd) = lex.current {
+            if let Token::Command(cmd) = lex.current() {
                 return Err(ParseError::UnrecognizedCommand(cmd.into()));
             }
         }
@@ -49,7 +50,7 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, end: Option<Token
         match node {
             Some(n) => ml.push(n),
             None => {
-                match lex.current {
+                match lex.current() {
                     Token::Symbol(c) => return Err(ParseError::UnrecognizedSymbol(c)),
                     _ => unreachable!(),
                 }
@@ -79,7 +80,7 @@ fn postfix<'a>(lex: &mut Lexer<'a>, local: Style, mut prev: Option<ParseNode>) -
     let mut subscript = None;
     loop {
         lex.consume_whitespace();
-        match lex.current {
+        match lex.current() {
             Token::Symbol('_') => {
                 lex.next();
                 // If we already have a subscript, bail.
@@ -133,7 +134,7 @@ fn postfix<'a>(lex: &mut Lexer<'a>, local: Style, mut prev: Option<ParseNode>) -
 /// font style and weight changes.
 pub fn state_change<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Option<Vec<ParseNode>>> {
     use crate::font::Family;
-    if let Token::Command(cmd) = lex.current {
+    if let Token::Command(cmd) = lex.current() {
         let new_style = match cmd {
             "mathbf" => style.with_bold(),
             "mathit" => style.with_italics(),
@@ -159,7 +160,7 @@ pub fn state_change<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Op
 /// along with the most useful primitives you find from amsmath and LaTeX.
 /// This function can error while parsing macro arguments.
 pub fn command<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<ParseNode>> {
-    if let Token::Command(cmd) = lex.current {
+    if let Token::Command(cmd) = lex.current() {
         match get_command(cmd) {
             Some(ref cmd) => {
                 lex.next();
@@ -177,7 +178,7 @@ pub fn command<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<
 /// characterize every command that will start a new implicit group
 /// (for instance, `\frac`).
 pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<ParseNode>> {
-    let token = lex.current;
+    let token = lex.current();
 
     if token == Token::Command("left") {
         let mut delimiters = Vec::with_capacity(2);
@@ -185,7 +186,7 @@ pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, 
 
         lex.next();
         let left = symbol(lex, local)?
-            .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
+            .ok_or(ParseError::ExpectedSymbol(lex.current().into()))?
             .expect_left()?;
         delimiters.push(left);
 
@@ -193,18 +194,18 @@ pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, 
             let inner = expression(lex, local)?;
             inners.push(inner);
 
-            if lex.current.expect_command("middle").is_ok() {
+            if lex.current().expect_command("middle").is_ok() {
                 lex.next();
                 let middle = symbol(lex, local)?
-                    .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
+                    .ok_or(ParseError::ExpectedSymbol(lex.current().into()))?
                     .expect_middle()?;
                 delimiters.push(middle);
             }
             else {
-                lex.current.expect_command("right")?;
+                lex.current().expect_command("right")?;
                 lex.next();
                 let right = symbol(lex, local)?
-                    .ok_or(ParseError::ExpectedSymbol(lex.current.into()))?
+                    .ok_or(ParseError::ExpectedSymbol(lex.current().into()))?
                     .expect_right()?;
                 delimiters.push(right);
                 break;
@@ -238,10 +239,10 @@ pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, 
 /// and will `Err` if it finds a `{` with no terminating `}`, or if
 /// there is a syntax error from within `<expression>`.
 pub fn group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<ParseNode>> {
-    if lex.current == Token::Symbol('{') {
+    if lex.current() == Token::Symbol('{') {
         lex.next();
         let inner = expression(lex, local)?;
-        lex.current.expect_symbol('}')?;
+        lex.current().expect_symbol('}')?;
         lex.next();
         Ok(Some(ParseNode::Group(inner)))
     } else {
@@ -256,7 +257,7 @@ pub fn group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<Pa
 /// `{` will not be recognized here and will therefore ParseResult in an `None`.
 /// In particular a group should be parsed before a `symbol`.
 pub fn symbol<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, Option<ParseNode>> {
-    match lex.current {
+    match lex.current() {
         Token::Command(cs) => {
             if let Some(sym) = Symbol::from_name(cs) {
                 lex.next();
@@ -322,12 +323,12 @@ pub fn required_argument_with<'a, F, O>(lex: &mut Lexer<'a>, local: Style, f: F)
     where F: FnOnce(&mut Lexer<'a>, Style) -> ParseResult<'a, O>
 {
     lex.consume_whitespace();
-    if lex.current == Token::Symbol('{') {
+    if lex.current() == Token::Symbol('{') {
         lex.next();
         lex.consume_whitespace();
         let parsed = f(lex, local)?;
         lex.consume_whitespace();
-        lex.current.expect_symbol('}')?;
+        lex.current().expect_symbol('}')?;
         lex.next();
         Ok(parsed)
     } else {
@@ -339,12 +340,12 @@ pub fn required_group_with<'a, F, O>(lex: &mut Lexer<'a>, local: Style, f: F) ->
     where F: FnOnce(&mut Lexer<'a>, Style) -> ParseResult<'a, O>
 {
     lex.consume_whitespace();
-    if lex.current == Token::Symbol('{') {
+    if lex.current() == Token::Symbol('{') {
         lex.next();
         lex.consume_whitespace();
         let parsed = f(lex, local)?;
         lex.consume_whitespace();
-        lex.current.expect_symbol('}')?;
+        lex.current().expect_symbol('}')?;
         lex.next();
         Ok(parsed)
     } else {
@@ -356,12 +357,12 @@ pub fn optional_argument_with<'a, F, O>(lex: &mut Lexer<'a>, local: Style, f: F)
     where F: for<'l> FnOnce(&'l mut Lexer<'a>, Style) -> ParseResult<'a, Option<O>>
 {
     lex.consume_whitespace();
-    if lex.current == Token::Symbol('[') {
+    if lex.current() == Token::Symbol('[') {
         lex.next();
         lex.consume_whitespace();
         let parsed = f(lex, local)?;
         lex.consume_whitespace();
-        lex.current.expect_symbol(']')?;
+        lex.current().expect_symbol(']')?;
         lex.next();
         Ok(parsed)
     } else {
@@ -384,7 +385,7 @@ pub fn expect_type<'a>(lex: &mut Lexer<'a>, local: Style, expected: AtomType) ->
             Err(ParseError::ExpectedAtomType(expected, sym.atom_type))
         }
     } else {
-        Err(ParseError::ExpectedSymbol(lex.current.into()))
+        Err(ParseError::ExpectedSymbol(lex.current().into()))
     }
 }
 
@@ -418,8 +419,8 @@ pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
     let mut lexer = Lexer::new(input);
     let local = Style::new();
     let parse_result = expression(&mut lexer, local)?;
-    if lexer.current != Token::EOF {
-        return Err(ParseError::UnexpectedEof(lexer.current.into()));
+    if lexer.current() != Token::EOF {
+        return Err(ParseError::UnexpectedEof(lexer.current().into()));
     }
 
     Ok(parse_result)
