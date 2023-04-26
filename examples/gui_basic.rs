@@ -14,18 +14,41 @@ use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::Renderer;
 use rex::layout::{LayoutDimensions};
 
+use clap::Parser;
+
+const DEFAULT_FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
 const DEFAULT_FORMULA: &str = &r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)";
+
+#[derive(Parser)]
+struct Options {
+    #[arg(default_value_t = DEFAULT_FORMULA.to_string(), help = "Formula to render")]
+    formula : String,
+
+    #[arg(short = 'i', long, conflicts_with("formula"))]
+    formula_path : Option<std::path::PathBuf>,
+
+    #[arg(short, long, default_value_t = false, help = "Display debug bounding boxes")]
+    debug   : bool,
+
+    #[arg(short, long = "fontfile", default_value_t = DEFAULT_FONT_FILE_PATH.to_string(), help = "Font file to use")]
+    font_file_path : String,
+}
+
  
 const WIDTH : u32 = 800; 
 const HEIGHT: u32 = 600; 
 
 fn main() { 
     env_logger::init();
-    let formula = std::env::args().nth(1).unwrap_or(DEFAULT_FORMULA.to_string());
 
+    // -- Parse command-line options
+    let Options {mut formula, debug, font_file_path, formula_path} = Options::parse();
+    if let Some(formula_path) = formula_path {
+        formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
+    }
 
     // -- Load font
-    let font_file = std::fs::read("resources/FiraMath_Regular.otf").unwrap();
+    let font_file = std::fs::read(font_file_path).unwrap();
     let font = load_font(&font_file);
 
 
@@ -74,7 +97,7 @@ fn main() {
 
     // -- Draw
     // Calls to ReX function are limited to this function
-    draw(&mut canvas_backend, &font, &formula);
+    draw(&mut canvas_backend, &font, &formula, debug);
 
     canvas.flush();
     window.gl_swap_window();
@@ -89,7 +112,7 @@ fn main() {
 }
 
 
-fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str) 
+fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str, debug : bool) 
 {
     // -- Create context
     let font_context = FontContext::new(font).unwrap();
@@ -110,8 +133,10 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMat
 
 
     // -- Render
-    let renderer = Renderer::new();
+    let mut renderer = Renderer::new();
+    renderer.debug = debug;
     renderer.render(&layout, backend);
+
 
     backend.canvas().restore();
 }

@@ -3,25 +3,43 @@ use rex::{
     layout::{LayoutSettings, Style},
     font::{FontContext, backend::ttf_parser::TtfMathFont}, cairo::CairoBackend
 };
+use clap::Parser;
 
-const FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
+const DEFAULT_FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
 const DEFAULT_FORMULA: &str = &r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)";
 
+#[derive(Parser)]
+struct Options {
+    #[arg(default_value_t = DEFAULT_FORMULA.to_string(), help = "Formula to render")]
+    formula : String,
 
+    #[arg(short = 'i', long, conflicts_with("formula"))]
+    formula_path : Option<std::path::PathBuf>,
+
+    #[arg(short, long, default_value_t = false, help = "Display debug bounding boxes")]
+    debug   : bool,
+
+    #[arg(short, long = "fontfile", default_value_t = DEFAULT_FONT_FILE_PATH.to_string(), help = "Font file to use")]
+    font_file_path : String,
+}
 
 fn main() {
     env_logger::init();
-    let formula = std::env::args().nth(1).unwrap_or(DEFAULT_FORMULA.to_string());
-
+    // -- Parse command-line options
+    let Options {mut formula, debug, font_file_path, formula_path} = Options::parse();
+    if let Some(formula_path) = formula_path {
+        formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
+    }
 
     // -- Load font
-    let font_file = std::fs::read(FONT_FILE_PATH).unwrap();
+    let font_file = std::fs::read(font_file_path).unwrap();
     let font = load_font(&font_file);
 
 
     // -- Create ReX context
     let ctx = FontContext::new(&font).unwrap();
-    let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+    // 12pt = 16px
+    let layout_settings = LayoutSettings::new(&ctx, 16.0, Style::Display);
 
 
 
@@ -46,7 +64,8 @@ fn main() {
 
     // -- Render to Cairo backend
     let mut backend = CairoBackend::new(context);
-    let renderer = Renderer::new();
+    let mut renderer = Renderer::new();
+    renderer.debug = debug;
     renderer.render(&layout, &mut backend);
     
 
