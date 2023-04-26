@@ -70,10 +70,10 @@ impl Spacing {
     /// Returns how much a given type of spaces measure in *em* units
     pub fn to_length(self) -> Length<Em> {
         match self {
-            Spacing::None   => Length::new(0.0, Em),
-            Spacing::Thin   => Length::new(1. / 6., Em),
-            Spacing::Medium => Length::new(2. / 9., Em),
-            Spacing::Thick  => Length::new(1. / 3., Em),
+            Spacing::None   => Length::<Em>::new(0.0),
+            Spacing::Thin   => Length::<Em>::new(1. / 6.),
+            Spacing::Medium => Length::<Em>::new(2. / 9.),
+            Spacing::Thick  => Length::<Em>::new(1. / 3.),
         }
     }
 }

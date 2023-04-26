@@ -27,8 +27,14 @@ impl<U> Length<U> {
     }
 
     /// Create a new dimension-full quantity from a dimensionless quantity and a unit
-    pub fn new(value: impl Into<f64>, _unit: U) -> Self {
-        Length { value: value.into(), _m: PhantomData }
+    /// Same as [`Length::new`] but can be used in const definitions
+    // pub fn new(value: impl Into<f64>, _unit: U) -> Self {
+    //     Length { value: value.into(), _m: PhantomData }
+    // }
+
+    /// Create a new dimension-full quantity from a dimensionless quantity and a unit
+    pub const fn new(value : f64) -> Self {
+        Length { value, _m: PhantomData }
     }
 }
 impl<U> Clone for Length<U> {
@@ -112,8 +118,11 @@ impl<U> Sum for Length<U> {
 pub struct Font;
 /// Pixel unit
 pub struct Px;
+/// Point unit 
+pub struct Pt;
 /// Em quadrat units
 pub struct Em;
+
 
 macro_rules! impl_length {
     ($($unit:ty),*) => {
@@ -132,7 +141,7 @@ macro_rules! impl_length {
     };
 }
 
-impl_length!(Font, Em, Px);
+impl_length!(Font, Em, Px, Pt);
 
 /// scale * T/U
 pub struct Scale<T, U> {
@@ -141,9 +150,20 @@ pub struct Scale<T, U> {
     _t: PhantomData<T>,
     _u: PhantomData<U>,
 }
+impl Scale<Pt, Px> {
+    /// Standard conversion factor from pixel to point (based on W3C standard) 1 px = 0.75 pt
+    pub const PX_TO_PT : Self = Scale::new(0.75);
+}
+impl Scale<Px, Pt> {
+    /// Inverse of [`Scale::PX_TO_PT`]
+    pub const PT_TO_PX : Self = Scale::new(1.3333333333333333333333333333333333333);
+}
+
 impl<T, U> Scale<T, U> {
+    // const PT_TO_PX : Self<Px, Pt> = Self::PT;
+
     /// Create a new scale to convert from unit `U` to `T`.
-    pub fn new(factor: f64, _t: T, _u: U) -> Self {
+    pub const fn new(factor: f64) -> Self {
         Scale { factor, _t: PhantomData, _u: PhantomData }
     }
     /// Returns the inverse scale, which can convert `T` back into `U`.

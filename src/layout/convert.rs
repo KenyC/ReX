@@ -23,7 +23,7 @@ impl<'f, F> AsLayoutNode<'f, F> for Glyph<'f, F> {
             node:   LayoutVariant::Glyph(LayoutGlyph {
                 font: self.font,
                 gid: self.gid,
-                size: Length::new(1.0, Em).scaled(config),
+                size: Length::<Em>::new(1.0).scaled(config),
                 attachment: self.attachment.scaled(config),
                 italics: self.italics.scaled(config),
                 offset:  Length::zero(),
@@ -59,7 +59,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                             let glyph = config.ctx.glyph_from_gid(instr.gid)?;
                             contents.add_node(glyph.as_layout(config)?);
                             if instr.overlap != 0 {
-                                let overlap = Length::new(instr.overlap, Font);
+                                let overlap = Length::<Font>::new(instr.overlap.into());
                                 let kern = -(overlap + glyph.depth()).scaled(config);
                                 contents.add_node(kern!(vert: kern));
                             }
@@ -73,7 +73,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                         for instr in parts {
                             let glyph = config.ctx.glyph_from_gid(instr.gid)?;
                             if instr.overlap != 0 {
-                                let kern = -Length::new(instr.overlap, Font).scaled(config);
+                                let kern = -Length::<Font>::new(instr.overlap.into()).scaled(config);
                                 contents.add_node(kern!(horz: kern));
                             }
                             contents.add_node(glyph.as_layout(config)?);
@@ -137,8 +137,8 @@ impl Scaled for Length<Em> {
 impl Scaled for Unit {
     fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
         let length = match self {
-            Unit::Em(em) => Length::new(em, Em) * config.font_size,
-            Unit::Px(px) => Length::new(px, Px)
+            Unit::Em(em) => Length::<Em>::new(em) * config.font_size,
+            Unit::Px(px) => Length::<Px>::new(px)
         };
         length * config.scale_factor()
     }

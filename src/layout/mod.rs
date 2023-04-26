@@ -599,7 +599,7 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
     pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
         LayoutSettings {
             ctx,
-            font_size: Scale::new(font_size, Px, Em),
+            font_size: Scale::<Px, Em>::new(font_size),
             style,
         }
     }

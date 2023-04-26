@@ -73,7 +73,7 @@ impl<'a> TtfMathFont<'a> {
     fn safe_constants(&self, font_units_to_em : Scale<Em, Font>) -> Option<Constants> {
         // perhaps cache : GlyphInfo table
         let math_constants = self.math.constants?;
-        let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
+        let em = |v: f64| -> Length<Em> { Length::<Font>::new(v) * font_units_to_em };
 
 
         Some(Constants {
@@ -121,8 +121,8 @@ impl<'a> TtfMathFont<'a> {
             stack_gap_min:                    em(math_constants.stack_gap_min().value.into()),
 
             delimiter_factor: 0.901,
-            delimiter_short_fall: Length::new(0.1, Em),
-            null_delimiter_space: Length::new(0.1, Em),
+            delimiter_short_fall: Length::<Em>::new(0.1),
+            null_delimiter_space: Length::<Em>::new(0.1),
 
 
             script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down()),
@@ -248,15 +248,15 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             font: self,
             gid,
             bbox: (
-                Length::new(bbox.x_min, Font), 
-                Length::new(bbox.y_min, Font), 
-                Length::new(bbox.x_max, Font), 
-                Length::new(bbox.y_max, Font),
+                Length::<Font>::new(bbox.x_min.into()), 
+                Length::<Font>::new(bbox.y_min.into()), 
+                Length::<Font>::new(bbox.x_max.into()), 
+                Length::<Font>::new(bbox.y_max.into()),
             ),
-            advance:    Length::new(advance, Font),
-            lsb:        Length::new(lsb,     Font),
-            italics:    Length::new(italics, Font),
-            attachment: Length::new(attachment, Font),
+            advance:    Length::<Font>::new(advance.into()),
+            lsb:        Length::<Font>::new(lsb.into()),
+            italics:    Length::<Font>::new(italics.into()),
+            attachment: Length::<Font>::new(attachment.into()),
 
         })
     }
@@ -284,20 +284,20 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         let count = table.count(); // size of height count
         for i in 0 .. count {
             // none of the ? should trigger if the font parser is set right
-            // Nevertheless, we don't to create an irrecoverable error
+            // Nevertheless, we don't want to create an irrecoverable error
             let h    = table.height(i)?.value; 
             let kern = table.kern(i)?.value;   
 
-            if height < Length::new(h, Font) {
-                return Some(Length::new(kern, Font));
+            if height < Length::<Font>::new(h.into()) {
+                return Some(Length::<Font>::new(kern.into()));
             }
         }
 
-        Some(Length::new(table.kern(count)?.value, Font))
+        Some(Length::<Font>::new(table.kern(count)?.value.into()))
     }
 
     fn font_units_to_em(&self) -> Scale<Em, Font> {
-        Scale::new(self.font_matrix.sx as f64, Em, Font)
+        Scale::<Em, Font>::new(self.font_matrix.sx as f64)
     }
 
 

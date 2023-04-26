@@ -688,10 +688,10 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // TODO: let jot = UNITS_PER_EM / 4;
-        let strut_height = Length::new(0.7, Em) * config.font_size; // \strutbox height = 0.7\baseline
-        let strut_depth = Length::new(0.3, Em) * config.font_size; // \strutbox depth  = 0.3\baseline
-        let row_sep = Length::new(0.25, Em) * config.font_size;
-        let column_sep = Length::new(5.0 / 12.0, Em) * config.font_size;
+        let strut_height = Length::<Em>::new(0.7) * config.font_size; // \strutbox height = 0.7\baseline
+        let strut_depth  = Length::<Em>::new(0.3) * config.font_size; // \strutbox depth  = 0.3\baseline
+        let row_sep      = Length::<Em>::new(0.25) * config.font_size;
+        let column_sep   = Length::<Em>::new(5.0 / 12.0) * config.font_size;
 
         // Don't bother constructing a new node if there is nothing.
         let num_rows = array.rows.len();

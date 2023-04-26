@@ -24,7 +24,7 @@ impl MathFont for OpenTypeFont {
     }
 
     fn glyph_from_gid<'f>(&'f self, gid: GlyphId) -> Result<Glyph<'f, Self>, FontError> {
-        use font::Font;
+        use font::Font as FontTrait;
         let font = self;
         let hmetrics = font.glyph_metrics(gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let italics = self.italics(gid);
@@ -37,15 +37,15 @@ impl MathFont for OpenTypeFont {
         Ok(Glyph {
             gid,
             font: self,
-            advance: Length::new(hmetrics.advance, Font),
-            lsb: Length::new(hmetrics.lsb, Font),
-            italics: Length::new(italics, Font),
-            attachment: Length::new(attachment, Font),
+            advance:    Length::<Font>::new(hmetrics.advance.into()),
+            lsb:        Length::<Font>::new(hmetrics.lsb.into()),
+            italics:    Length::<Font>::new(italics.into()),
+            attachment: Length::<Font>::new(attachment.into()),
             bbox: (
-                Length::new(ll.x(), Font),
-                Length::new(ur.y(), Font),
-                Length::new(ur.x(), Font),
-                Length::new(ll.y(), Font),
+                Length::<Font>::new(ll.x().into()),
+                Length::<Font>::new(ur.y().into()),
+                Length::<Font>::new(ur.x().into()),
+                Length::<Font>::new(ll.y().into()),
             )
         })
     }
@@ -61,7 +61,7 @@ impl MathFont for OpenTypeFont {
             Corner::BottomLeft => &record.bottom_left,
         };
 
-        Some(Length::new(table.kern_for_height((height / Font) as i16), Font))
+        Some(Length::<Font>::new(table.kern_for_height((height / Font) as i16).into()))
     }
 
 
@@ -91,7 +91,7 @@ impl MathFont for OpenTypeFont {
     }
 
     fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants {
-        let em = |v: f64| -> Length<Em> { Length::new(v, Font) * font_units_to_em };
+        let em = |v: f64| -> Length<Em> { Length::<Font>::new(v) * font_units_to_em };
 
         let math_constants = &self
             .math
@@ -145,8 +145,8 @@ impl MathFont for OpenTypeFont {
 
             // TODO: trait implementations should not be allowed to vary on these values
             delimiter_factor: 0.901,
-            delimiter_short_fall: Length::new(0.1, Em),
-            null_delimiter_space: Length::new(0.1, Em),
+            delimiter_short_fall: Length::<Em>::new(0.1),
+            null_delimiter_space: Length::<Em>::new(0.1),
 
             script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down),
             script_script_percent_scale_down: 0.01 * f64::from(math_constants.script_script_percent_scale_down),
@@ -154,8 +154,8 @@ impl MathFont for OpenTypeFont {
     }
 
     fn font_units_to_em(&self) -> Scale<Em, Font> {
-        use font::Font;
-        Scale::new(self.font_matrix().matrix.m11() as f64, Em, Font)
+        use font::Font as FontTrait;
+        Scale::<Em, Font>::new(self.font_matrix().matrix.m11() as f64)
     }
 
     fn horz_variant(&self, gid: GlyphId, width: Length<Font>) -> VariantGlyph {
