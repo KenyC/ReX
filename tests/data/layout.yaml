@@ -213,6 +213,12 @@ Arrays:
     - \begin{array}{c}a\\ aa\\ aaa\end{array}
     - \begin{array}{r}a\\ aa\\ aaa\end{array}
     - \begin{array}{lcr}lorem & ipsum & sit \\ amet & consectetur & adipscing \\ elit & set & do\end{array}
+  - Description: should display vertical bars and increase col separation accordingly
+    Snippets:
+    - \begin{array}{c|l} a & x \\ b & y \\ c & z \\ \end{array}
+    - \begin{array}{|r||c|} 1 & a \\ 2 & b \\ 3 & c \\ \end{array}
+    - \begin{array}{l|r} x & 1 \\ y & 2 \\ z & 3 \\ \end{array}
+    - \begin{array}{|c|c|} a & b \\ x & y \\ \end{array}
   - Description: should render
     Snippets:
     - |

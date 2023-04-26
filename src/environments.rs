@@ -95,7 +95,7 @@ pub struct ArraySingleColumnFormatting {
     pub alignment: ArrayColumnAlign,
 
     /// The number of vertical marks before column.
-    pub left_vert: u8,
+    pub n_vertical_bars_after: u8,
 }
 
 /// The collection of column formatting for an array.  This includes the vertical
@@ -107,7 +107,7 @@ pub struct ArrayColumnsFormatting {
     pub columns: Vec<ArraySingleColumnFormatting>,
 
     /// The number of vertical marks after the last column.
-    pub right_vert: u8,
+    pub n_vertical_bars_before: u8,
 }
 
 impl ArrayColumnsFormatting {
@@ -115,7 +115,7 @@ impl ArrayColumnsFormatting {
     pub fn default_for(n_cols : usize) -> Self {
         Self { 
             columns:    vec![ArraySingleColumnFormatting::default(); n_cols], 
-            right_vert: 0, 
+            n_vertical_bars_before: 0, 
         }
     }
 }
@@ -190,37 +190,54 @@ fn matrix_common<'a>(lex: &mut Lexer<'a>,
 /// For example: `\begin{array}{c|c|c}\end{array}`.
 fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsFormatting> {
     let mut cols = Vec::new();
-    let mut current = ArraySingleColumnFormatting::default();
+
+    lex.consume_whitespace();
+
+    let mut n_vertical_bars_before : u8 = 0;
+    while let Token::Symbol('|') = lex.current {
+        lex.next();
+        lex.consume_whitespace();
+        n_vertical_bars_before += 1;
+    }
 
     loop {
+        let alignment;
+
         match lex.current {
-            Token::Symbol('c') => current.alignment = ArrayColumnAlign::Centered,
-            Token::Symbol('r') => current.alignment = ArrayColumnAlign::Right,
-            Token::Symbol('l') => current.alignment = ArrayColumnAlign::Left,
-            Token::Symbol('|') => {
-                current.left_vert += 1;
-                lex.next();
-                lex.consume_whitespace();
-                continue;
-            }
+            Token::Symbol('c') => alignment = ArrayColumnAlign::Centered,
+            Token::Symbol('r') => alignment = ArrayColumnAlign::Right,
+            Token::Symbol('l') => alignment = ArrayColumnAlign::Left,
             Token::Symbol('}') => {
                 lex.pos -= 1; // backtrack the lexer
                 break;
             }
             token => return Err(ParseError::UnrecognizedColumnFormat(token)),
         }
-
-        cols.push(current);
-        current = ArraySingleColumnFormatting::default();
-
+        
         lex.next();
         lex.consume_whitespace();
+
+        let mut n_vertical_bars_after = 0_u8;
+        while let Token::Symbol('|') = lex.current {
+            lex.next();
+            lex.consume_whitespace();
+            n_vertical_bars_after += 1;
+        }
+
+
+        cols.push(ArraySingleColumnFormatting { 
+            alignment, 
+            n_vertical_bars_after,
+        });
+
+        // lex.next();
+        // lex.consume_whitespace();
     }
 
     Ok(ArrayColumnsFormatting {
-           columns: cols,
-           right_vert: current.left_vert,
-       })
+       columns: cols,
+       n_vertical_bars_before,
+    })
 }
 
 /// Parse the optional argument in an array environment.  This dictates the
@@ -295,4 +312,70 @@ fn array<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, ParseNode> {
                             left_delimiter: None,
                             right_delimiter: None,
                         }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{*, array_col};
+
+    #[test]
+    fn array_col_test() {
+        let cols = vec![
+            ("c", 
+            ArrayColumnsFormatting {
+                columns : vec![
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0}
+                ], 
+                n_vertical_bars_before: 0
+            }),
+            ("||l", 
+            ArrayColumnsFormatting {
+                columns : vec![
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left, n_vertical_bars_after : 0},
+                ], 
+                n_vertical_bars_before: 2
+            }),
+            ("||c|l", 
+            ArrayColumnsFormatting {
+                columns : vec![
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 1},
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 0},
+                ], 
+                n_vertical_bars_before: 2
+            }),
+            ("|  |c l|l|", 
+            ArrayColumnsFormatting {
+                columns : vec![
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0},
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
+                ], 
+                n_vertical_bars_before: 2
+            }),
+            (" |  r| l|| | |r||  ", 
+            ArrayColumnsFormatting {
+                columns : vec![
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 1},
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,  n_vertical_bars_after : 4},
+                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 2},
+                ], 
+                n_vertical_bars_before: 1
+            }),
+        ];
+
+        for (string, col_format) in cols {
+            let mut string = string.to_string();
+            string.push('}');
+
+            let mut lexer  = Lexer::new(&string);
+            let style = Style::new();
+
+            assert_eq!(
+                array_col(&mut lexer, style).unwrap(),
+                col_format,
+            );
+
+        }
+        
+    }
 }

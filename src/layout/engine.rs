@@ -687,11 +687,24 @@ impl<'f, F : MathFont> Layout<'f, F> {
     }
 
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
+        // From [https://tex.stackexchange.com/questions/48276/latex-specify-font-point-size] & `info latex`
+        // "A rule of thumb is that the baselineskip should be 1.2 times the font size."
+        let base_line_skip = Length::<Em>::new(1.2);
+
         // TODO: let jot = UNITS_PER_EM / 4;
-        let strut_height = Length::<Em>::new(0.7) * config.font_size; // \strutbox height = 0.7\baseline
-        let strut_depth  = Length::<Em>::new(0.3) * config.font_size; // \strutbox depth  = 0.3\baseline
-        let row_sep      = Length::<Em>::new(0.25) * config.font_size;
-        let column_sep   = Length::<Em>::new(5.0 / 12.0) * config.font_size;
+        // The values below are gathered from the definition of the corresponding commands in "article.cls" on a default LateX installation
+        const STRUT_HEIGHT      : f64 = 0.7;         // \strutbox height = 0.7\baseline
+        const STRUT_DEPTH       : f64 = 0.3;         // \strutbox depth  = 0.3\baseline
+        const COLUMN_SEP        : Length<Pt> = Length::<Pt>::new(5.0) ;  // \arraycolsep
+        const RULE_WIDTH        : Length<Pt> = Length::<Pt>::new(0.4) ;  // \arrayrulewidth
+        const DOUBLE_RULE_SEP   : Length<Pt> = Length::<Pt>::new(2.0) ;  // \doublerulesep
+        let strut_height     = base_line_skip * STRUT_HEIGHT    * config.font_size; 
+        let strut_depth      = base_line_skip * STRUT_DEPTH     * config.font_size; 
+        // From Lamport - LateX a document preparation system (2end edition) - p. 207
+        // "\arraycolsep : Half the width of the default horizontal space between columns in an array environment"
+        let half_col_sep     = COLUMN_SEP      * Scale::PT_TO_PX; 
+        let rule_width       = RULE_WIDTH      * Scale::PT_TO_PX;
+        let double_rule_sep  = DOUBLE_RULE_SEP * Scale::PT_TO_PX;
 
         // Don't bother constructing a new node if there is nothing.
         let num_rows = array.rows.len();
@@ -734,21 +747,51 @@ impl<'f, F : MathFont> Layout<'f, F> {
             row_max = strut_height;
             prev_depth = max(Length::zero(), max_depth - strut_depth);
         }
-
-        // TODO: reference row layout here: crl
         // the body of the matrix is an hbox of column vectors.
         let mut hbox = builders::HBox::new();
 
         // If there are no delimiters, insert a null space.  Otherwise we insert
         // the delimiters _after_ we have laidout the body of the matrix.
+        // if array.left_delimiter.is_none() {
+        //     hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);
+        // }
+
+
+        #[inline]
+        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_vertical_bars_after: u8, rule_width: Length<Px>, total_height: Length<Px>, double_rule_sep: Length<Px>) {
+            if n_vertical_bars_after != 0 {
+                let rule_width = rule_width;
+                let total_height = total_height;
+                let double_rule_sep = double_rule_sep;
+                hbox.add_node(rule![width: rule_width, height: total_height]);
+                for _ in 0 .. n_vertical_bars_after - 1 {
+                    hbox.add_node(kern![horz: double_rule_sep]);
+                    hbox.add_node(rule![width: rule_width, height: total_height]);
+                }
+            }
+        }
+
+
+
+        // add left vertical bars
+        let n_vertical_bars_before = array.col_format.n_vertical_bars_before;
+        let total_height : Length<Px> = 
+            row_heights.iter().cloned().sum::<Length<Px>>()
+            + strut_depth * (num_rows as f64)
+        ;
+        draw_vertical_bars(&mut hbox, n_vertical_bars_before, rule_width, total_height, double_rule_sep);
+
+        // If there are delimiters, don't put half column separation at the beginning of array 
+        // This appears to be what LateX does. Compare:
+        // 1. \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
+        // 2. \left\lbrace\begin{array}{c}1\\ 1\\ 1\\ 1\\ 1\end{array}\right\rbrace
         if array.left_delimiter.is_none() {
-            hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);
+            hbox.add_node(kern![horz: half_col_sep]);
         }
 
         // layout the body of the matrix
         let column_iter = 
-            Iterator
-            ::zip(columns.into_iter(), array.col_format.columns.iter())
+            Iterator::zip(columns.into_iter(), array.col_format.columns.iter())
             .enumerate()
         ;
         for (col_idx, (col, col_format)) in column_iter {
@@ -776,21 +819,26 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 // the row_seperation.
                 // FIXME: This should be actual depth, not additional kerning
                 let node = row.as_node();
-                if row_idx + 1 == num_rows {
-                    let depth = max(-node.depth, row_sep);
-                    vbox.add_node(node);
-                    vbox.add_node(kern![vert: depth]);
-                } else {
-                    vbox.add_node(node);
-                    vbox.add_node(kern![vert: row_sep]);
-                }
+                let mut vert_dist = strut_depth;
+                if row_idx + 1 == num_rows { 
+                    vert_dist = max(vert_dist, -node.depth); 
+                };
+                vbox.add_node(node);
+                vbox.add_node(kern![vert: vert_dist]);
             }
 
-            // add column to matrix body and column seperation spacing except for last one.
+            // add column to matrix body and full column seperation spacing except for last one.
             hbox.add_node(vbox.build());
-            if col_idx + 1 < num_columns {
-                hbox.add_node(kern![horz: column_sep]);
+            let n_vertical_bars_after = col_format.n_vertical_bars_after;
+
+            // don't add half col separation on the last node if there is a right delimiter
+            if !(array.right_delimiter.is_some() && col_idx + 1 == num_columns) {
+                hbox.add_node(kern![horz: half_col_sep]);
             }
+            draw_vertical_bars(&mut hbox, n_vertical_bars_after, rule_width, total_height, double_rule_sep);
+            if col_idx + 1 < num_columns {
+                hbox.add_node(kern![horz: half_col_sep]);
+            } 
         }
 
         if array.right_delimiter.is_none() {
@@ -800,7 +848,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // TODO: Reference array vertical alignment (optional [bt] arguments)
         // Vertically center the array on axis.
         // Note: hbox has no depth, so hbox.height is total height.
-        let height = hbox.height;
+        let height = dbg!(hbox.height);
         let mut vbox = builders::VBox::new();
         let offset = height * 0.5 - config.ctx.constants.axis_height.scaled(config);
         vbox.set_offset(offset);
@@ -839,4 +887,5 @@ impl<'f, F : MathFont> Layout<'f, F> {
         Ok(())
     }
 }
+
 

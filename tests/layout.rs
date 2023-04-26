@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use raqote::DrawTarget;
+use raqote::{DrawTarget, Transform};
 use rex::Renderer;
 
 mod common;
@@ -69,7 +69,7 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
 }
 
 fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontContext<TtfMathFont>) -> Equation {
-    const FONT_SIZE : f64 = 35.0;
+    const FONT_SIZE : f64 = 16.0;
     let description = format!("{}: {}", category, description);
 
     let parse_nodes = rex::parser::parse(equation).unwrap();
@@ -88,11 +88,13 @@ fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontCo
 
 
     // debug rendering: gather drawing command issued
-    let mut render = DebugRender::default();
-    renderer.render(&layout, &mut render);
+    let mut debug_render = DebugRender::default();
+    renderer.render(&layout, &mut debug_render);
 
     // rendering to png
-    let mut draw_target = DrawTarget::new(width.ceil() as i32, height.ceil() as i32);
+    const SCALE: f32 = 2.5;
+    let mut draw_target = DrawTarget::new((width.ceil() * f64::from(SCALE)) as i32, (height.ceil() * f64::from(SCALE)) as i32);
+    draw_target.set_transform(&Transform::scale(SCALE, SCALE));
     let mut raqote_backend = RaqoteBackend::new(&mut draw_target);
     renderer.render(&layout, &mut raqote_backend);
 
@@ -107,23 +109,19 @@ fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontCo
     }
     else {
         // Sometimes, a render is empty
-        // Raqote throws an error but it is ok to ignore it
+        // Raqote throws an error but it is ok to ignore empty renders
         // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
         // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
         // png error type...
         img_render = include_bytes!("../resources/couldnt_render.png").to_vec();
     }
 
-    // draw_target.write_png(&path).unwrap();
-
-
-
 
     Equation { 
         tex:         equation.to_owned(), 
         description, 
         width, height,
-        render, 
+        render: debug_render, 
         img_render, 
     }
 }

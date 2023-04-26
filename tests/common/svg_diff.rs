@@ -11,8 +11,9 @@ r##"<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Layout Tests</title>
+    <title>ReX layout tests</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism-okaidia.min.css"/>
+    <link rel="shortcut icon" href="rex.ico"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-latex.min.js"></script>
     <style>
