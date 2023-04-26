@@ -1,7 +1,7 @@
 use base64::Engine;
 use image::{Rgba, ImageOutputFormat};
 
-use super::debug_render::Equation;
+use super::debug_render::{Equation, EquationDiffs};
 
 use std::io::{Write, Cursor};
 use std::path::Path;
@@ -36,15 +36,11 @@ r##"<!DOCTYPE html>
 
 const END: &'static str = r"</body></html>";
 
-fn write_equations<W: Write>(f: &mut W, old: Equation, new: Equation) {
-    writeln!(f, "<h2>{}</h2>", old.description).unwrap();
-    writeln!(f,
-             r#"<pre><code class="language-latex">{}</code></pre>"#,
-             old.tex)
-            .unwrap();
+fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
+    write_equation_header(f, old);
 
-    let render_old = old.img_render;
-    let render_new = new.img_render;
+    let render_old = &old.img_render;
+    let render_new = &new.img_render;
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
@@ -70,9 +66,45 @@ fn write_equations<W: Write>(f: &mut W, old: Equation, new: Equation) {
         "#,
         engine.encode(&render_old),
         engine.encode(&render_new),
-        engine.encode(&diff_img(&render_old, &render_new)),
+        engine.encode(&diff_img(render_old, render_new)),
     ).unwrap();
 
+}
+
+fn write_equation<W: Write>(f: &mut W, eq: &Equation,) {
+    write_equation_header(f, eq);
+
+    let render = &eq.img_render;
+
+    let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
+
+    writeln!(
+        f, 
+        r#"
+        <table class="diff-array">
+        <thead><tr>
+        <td>New test</td>
+        </tr></thead>
+        <tbody>
+        <tr>
+        <td><img src="data:image/png;base64,{}"></td>
+        </tr>
+        </tbody>
+        </table>
+        "#,
+        engine.encode(render),
+    ).unwrap();
+
+}
+
+
+
+fn write_equation_header<W : Write>(f: &mut W, equation: &Equation) {
+    writeln!(f, "<h2>{}</h2>", equation.description).unwrap();
+    writeln!(f,
+             r#"<pre><code class="language-latex">{}</code></pre>"#,
+             equation.tex)
+            .unwrap();
 }
 
 
@@ -149,7 +181,7 @@ fn diff_img(bytes_before_img : &[u8], bytes_after_img : &[u8]) -> Vec<u8> {
     to_return.into_inner()
 }
 
-pub fn write_diff<P: AsRef<Path>>(path: P, diff: Vec<(Equation, Equation)>) {
+pub fn write_diff<P: AsRef<Path>>(path: P, diff: EquationDiffs) {
     use std::fs::File;
     use std::io::BufWriter;
 
@@ -157,8 +189,11 @@ pub fn write_diff<P: AsRef<Path>>(path: P, diff: Vec<(Equation, Equation)>) {
     let mut writer = BufWriter::new(out);
 
     writer.write(HEADER.as_bytes()).unwrap();
-    for (old, new) in diff {
-        write_equations(&mut writer, old, new);
+    for new_eq in diff.new_eqs {
+        write_equation(&mut writer, new_eq);
+    }
+    for (before, after) in diff.diffs {
+        write_equation_diff(&mut writer, before, after);
     }
     writer.write(END.as_bytes()).unwrap();
 }

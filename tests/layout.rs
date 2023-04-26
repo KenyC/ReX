@@ -15,7 +15,7 @@ use raqote::{DrawTarget, Transform};
 use rex::Renderer;
 
 mod common;
-use common::debug_render::{Equation, DebugRender};
+use common::debug_render::{Equation, DebugRender, EquationDiffs};
 use common::svg_diff;
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
@@ -45,22 +45,23 @@ fn collect_tests<P: AsRef<Path>>(path: P) -> Tests {
     tests
 }
 
-fn load_history<P: AsRef<Path>>(path: P) -> Vec<Equation> {
+fn load_history<P: AsRef<Path>>(path: P) -> BTreeMap<String, Equation> {
     let file = File::open(path.as_ref()).expect("failed to open test collection");
     let mut reader = BufReader::new(file);
-    let tests: Vec<Equation> = bincode::deserialize_from(&mut reader)
-        .expect("failed to load historical test results");
+    let tests: BTreeMap<String, Equation> = bincode::deserialize_from(&mut reader)
+        .expect("history file not understood - did you change the structure used for tests?");
 
     tests
 }
 
-fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tests: Tests) -> Vec<Equation> {
-    let mut equations: Vec<Equation> = Vec::new();
+fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tests: Tests) -> BTreeMap<String, Equation> {
+    let mut equations: BTreeMap<String, Equation> = BTreeMap::new();
     for (category, collection) in tests.0.iter() {
         for snippets in collection {
             for equation in &snippets.snippets {
                 let equation = make_equation(category, &snippets.description, equation, ctx);
-                equations.push(equation);
+                let key = format!("{} - {}", equation.description, equation.tex);
+                equations.insert(key, equation);
             }
         }
     }
@@ -127,22 +128,32 @@ fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontCo
 }
 
 
-fn equation_diffs(old: &[Equation], new: &[Equation]) -> Vec<(Equation, Equation)> {
+
+fn equation_diffs<'a>(old: &'a BTreeMap<String, Equation>, new: &'a BTreeMap<String, Equation>) -> EquationDiffs<'a> {
     if old.len() != new.len() {
-        panic!("Detected a change in the number of tests. Please be sure to run \
-               `cargo test --test layout -- --ignored` to update the tests first.\n\
-               Note: This should only be done before there are any changes which can alter \
-               the result of a test.");
+        eprintln!("Detected a change in the number of tests. Please be sure to run \
+               `cargo test --test layout -- --ignored` to update the test history.");
     }
 
-    let mut diff: Vec<(Equation, Equation)> = Vec::new();
-    for (left, right) in old.iter().zip(new.iter()) {
-        if !left.same_as(right) {
-            diff.push((left.clone(), right.clone()));
+    let mut diffs: Vec<(&'a Equation, &'a Equation)> = Vec::new();
+    let mut new_eqs = Vec::new();
+
+    // Only looking at tests in the intersection of both
+    for (key_new, equation_new) in new.iter() {
+        if let Some(equation_old) = old.get(key_new) {
+            if !equation_old.same_as(equation_new) {
+                diffs.push((equation_old, equation_new))
+            }
+        }
+        else {
+            new_eqs.push(equation_new)
         }
     }
 
-    diff
+    EquationDiffs {
+        diffs,
+        new_eqs,
+    }
 }
 
 #[test]
@@ -156,12 +167,14 @@ fn layout() {
     let history = load_history(LAYOUT_BINCODE);
     let diff = equation_diffs(&history, &rendered);
 
-    if diff.len() != 0 {
-        let count = diff.len();
+    if !diff.no_diff() {
+        let diff_count = diff.diffs.len();
+        let new_count  = diff.new_eqs.len();
         svg_diff::write_diff(LAYOUT_HTML, diff);
-        panic!("Detected {} formula changes. \
+        panic!("Detected {} formula changes and {} new formulas. \
                 Please review the changes in `{}`",
-               count,
+               diff_count,
+               new_count,
                LAYOUT_HTML);
     }
 }

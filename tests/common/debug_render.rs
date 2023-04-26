@@ -25,6 +25,21 @@ impl Equation {
     }
 }
 
+#[derive(Debug,)]
+pub struct EquationDiffs<'a> {
+    /// Equation diff between history test results and current test results
+    pub diffs   : Vec<(&'a Equation, &'a Equation)>,
+    /// Current test results with no correspondent in history
+    pub new_eqs : Vec<&'a Equation>,
+}
+
+impl<'a> EquationDiffs<'a> {
+    pub fn no_diff(&self) -> bool {
+        self.diffs.is_empty() && self.new_eqs.is_empty()
+    }
+}
+
+
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Clone, Default)]
 pub struct DebugRender {
