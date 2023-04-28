@@ -1,7 +1,7 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AtomType {
     Punctuation,
-    Ordinal,
+    Ordinary,
     Open,
     Close,
     Binary,

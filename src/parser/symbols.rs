@@ -95,10 +95,10 @@ fn others(name: &str) -> Option<Symbol> {
         // Symbol escape shim
         "{" => Symbol { codepoint: '\u{7B}', atom_type: AtomType::Open }, // 123
         "}" => Symbol { codepoint: '\u{7D}', atom_type: AtomType::Close }, // 125
-        "%" => Symbol { codepoint: '\u{25}', atom_type: AtomType::Ordinal }, // 37
-        "&" => Symbol { codepoint: '\u{26}', atom_type: AtomType::Ordinal }, // 38
-        "$" => Symbol { codepoint: '\u{24}', atom_type: AtomType::Ordinal }, // 36
-        "#" => Symbol { codepoint: '\u{23}', atom_type: AtomType::Ordinal }, // 35
+        "%" => Symbol { codepoint: '\u{25}', atom_type: AtomType::Ordinary }, // 37
+        "&" => Symbol { codepoint: '\u{26}', atom_type: AtomType::Ordinary }, // 38
+        "$" => Symbol { codepoint: '\u{24}', atom_type: AtomType::Ordinary }, // 36
+        "#" => Symbol { codepoint: '\u{23}', atom_type: AtomType::Ordinary }, // 35
 
         // Accents shim
         "`" => Symbol { codepoint: '\u{300}', atom_type: AtomType::Accent }, // 768
@@ -115,10 +115,9 @@ fn others(name: &str) -> Option<Symbol> {
 
         // dots shim
         // TODO: offer replacement if the font does not support these symbols
-        // TODO: understand what the atome type means and why XeTeX insists that cdots be an "ordinal" (cf unicode-math-table.tex) ; cf <https://github.com/wspr/unicode-math/issues/571>
-        "cdots" => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinal }, // 8943
-        "dots"  => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinal }, // 8943
-        "ldots" => Symbol { codepoint: '\u{2026}', atom_type: AtomType::Ordinal }, // 8230
+        "cdots" => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinary }, // 8943
+        "dots"  => Symbol { codepoint: '\u{22EF}', atom_type: AtomType::Ordinary }, // 8943
+        "ldots" => Symbol { codepoint: '\u{2026}', atom_type: AtomType::Ordinary }, // 8230
 
         // Misc symbols shim
         "|" => Symbol { codepoint: '\u{2016}', atom_type: AtomType::Fence }, // 8214

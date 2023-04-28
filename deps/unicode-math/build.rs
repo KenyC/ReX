@@ -78,7 +78,7 @@ fn atom_from_tex(name: &str, kind: &str) -> &'static str {
         "mathpunct" => "Punctuation",
         "mathopen" => "Open",
         "mathclose" => "Close",
-        "mathord" => "Ordinal",
+        "mathord" => "Ordinary",
         "mathbin" => "Binary",
         "mathrel" => "Relation",
         "mathop" if OPERATOR_LIMITS.contains(&name) => "Operator(true)",

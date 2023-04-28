@@ -11,7 +11,7 @@ use super::symbols::Symbol;
 /// Nodes are the output of parsing a LateX formula ; they can then be arranged in space with [`crate::layout::engine::layout`].
 // TODO: It might be worth letting the `Group` variant
 //   to have an atomtype associated with it.  By default,
-//   it will be a `Ordinal`.
+//   it will be a `Ordinary`.
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseNode {
     /// A simple symbole like 'x' or 'α'

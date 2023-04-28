@@ -11,7 +11,7 @@ use crate::parser::symbols::Symbol;
 
 
 macro_rules! sym {
-    (@at ord) => { AtomType::Ordinal };
+    (@at ord) => { AtomType::Ordinary };
     (@at bin) => { AtomType::Binary };
     (@at op)  => { AtomType::Operator };
     (@at open) => { AtomType::Open };
@@ -91,10 +91,10 @@ pub fn get_command(name: &str) -> Option<Command> {
         "Bigm"  => Command::DelimiterSize(2, AtomType::Relation),
         "biggm" => Command::DelimiterSize(3, AtomType::Relation),
         "Biggm" => Command::DelimiterSize(4, AtomType::Relation),
-        "big"   => Command::DelimiterSize(1, AtomType::Ordinal),
-        "Big"   => Command::DelimiterSize(2, AtomType::Ordinal),
-        "bigg"  => Command::DelimiterSize(3, AtomType::Ordinal),
-        "Bigg"  => Command::DelimiterSize(4, AtomType::Ordinal),
+        "big"   => Command::DelimiterSize(1, AtomType::Ordinary),
+        "Big"   => Command::DelimiterSize(2, AtomType::Ordinary),
+        "bigg"  => Command::DelimiterSize(3, AtomType::Ordinary),
+        "Bigg"  => Command::DelimiterSize(4, AtomType::Ordinary),
 
         // Spacing related commands
         "!"     => Command::Kerning(Unit::Em(-3f64/18f64)),
@@ -258,7 +258,7 @@ fn text_operator<'a>(_: &mut Lexer<'a>, style: Style, text: &str, limits: bool) 
                     .with_family(Family::Roman)
                     .with_weight(Weight::None);
             let codepoint = style_symbol(c, style);
-            inner.push(ParseNode::Symbol(Symbol { codepoint, atom_type: AtomType::Ordinal }));
+            inner.push(ParseNode::Symbol(Symbol { codepoint, atom_type: AtomType::Ordinary }));
         }
     }
 
