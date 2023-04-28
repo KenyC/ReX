@@ -7,6 +7,7 @@ use clap::Parser;
 
 const DEFAULT_FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
 const DEFAULT_FORMULA: &str = &r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)";
+const DEFAULT_FONT_SIZE : f64 = 16.;
 
 #[derive(Parser)]
 struct Options {
@@ -21,12 +22,15 @@ struct Options {
 
     #[arg(short, long = "fontfile", default_value_t = DEFAULT_FONT_FILE_PATH.to_string(), help = "Font file to use")]
     font_file_path : String,
+
+    #[arg(short='s', long = "fontsize", default_value_t = DEFAULT_FONT_SIZE, help = "Font size (in pixels/em)")]
+    font_size : f64,
 }
 
 fn main() {
     env_logger::init();
     // -- Parse command-line options
-    let Options {mut formula, debug, font_file_path, formula_path} = Options::parse();
+    let Options {mut formula, debug, font_file_path, formula_path, font_size } = Options::parse();
     if let Some(formula_path) = formula_path {
         formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
     }
@@ -39,7 +43,7 @@ fn main() {
     // -- Create ReX context
     let ctx = FontContext::new(&font).unwrap();
     // 12pt = 16px
-    let layout_settings = LayoutSettings::new(&ctx, 16.0, Style::Display);
+    let layout_settings = LayoutSettings::new(&ctx, font_size, Style::Display);
 
 
 

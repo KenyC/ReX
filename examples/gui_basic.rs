@@ -18,6 +18,8 @@ use clap::Parser;
 
 const DEFAULT_FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
 const DEFAULT_FORMULA: &str = &r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)";
+const DEFAULT_FONT_SIZE : f64 = 16.;
+
 
 #[derive(Parser)]
 struct Options {
@@ -32,6 +34,9 @@ struct Options {
 
     #[arg(short, long = "fontfile", default_value_t = DEFAULT_FONT_FILE_PATH.to_string(), help = "Font file to use")]
     font_file_path : String,
+
+    #[arg(short='s', long = "fontsize", default_value_t = DEFAULT_FONT_SIZE, help = "Font size (in pixels/em)")]
+    font_size : f64,
 }
 
  
@@ -42,7 +47,7 @@ fn main() {
     env_logger::init();
 
     // -- Parse command-line options
-    let Options {mut formula, debug, font_file_path, formula_path} = Options::parse();
+    let Options {mut formula, debug, font_file_path, formula_path, font_size } = Options::parse();
     if let Some(formula_path) = formula_path {
         formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
     }
@@ -83,7 +88,7 @@ fn main() {
 
 
 
-    // -- Render
+    // -- Prepare render : clear
     window.gl_swap_window();
     canvas.clear_rect(0, 0, WIDTH, HEIGHT, femtovg::Color::white());
 
@@ -97,8 +102,11 @@ fn main() {
 
     // -- Draw
     // Calls to ReX function are limited to this function
-    draw(&mut canvas_backend, &font, &formula, debug);
+    draw(&mut canvas_backend, &font, &formula, debug, font_size);
 
+
+
+    // -- place render onto screen
     canvas.flush();
     window.gl_swap_window();
 
@@ -112,11 +120,11 @@ fn main() {
 }
 
 
-fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str, debug : bool) 
+fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str, debug : bool, font_size : f64) 
 {
     // -- Create context
     let font_context = FontContext::new(font).unwrap();
-    let layout_settings = rex::layout::LayoutSettings::new(&font_context, 10.0, rex::layout::Style::Display);
+    let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display);
 
 
     // -- Parse formula
