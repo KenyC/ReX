@@ -223,8 +223,7 @@ pub fn implicit_group<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, 
         let end = required_group_with(lex, local, environment_name)?;
 
         if env != end {
-            panic!("env: {:?} != end: {:?}", env, end);
-            // return Err(ParseError::Todo);
+            return Err(ParseError::UnexpectedEndEnv { expected: env.name(), found: end.name() });
         }
 
         Ok(Some(node))

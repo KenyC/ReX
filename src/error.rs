@@ -3,6 +3,7 @@
 //!   - [`ParseError`] : syntax error in the formula provided (mismatching brackets, unknown command).
 //!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
+use crate::environments::Environment;
 use crate::font::common::GlyphId;
 use crate::lexer::Token;
 use std::fmt;
@@ -72,6 +73,13 @@ pub enum ParseError<'a> {
     ExpectedSymbol(Token<'a>),
     /// Expected an opening '{'
     ExpectedOpenGroup,
+    /// An unexpected end of environment, e.g. an `\end{bar}' appeared when we were expecting a `\end{foo}'
+    UnexpectedEndEnv {
+        /// environment expected to end
+        expected  : &'a str, 
+        /// actual `\end{bar}' implemented
+        found : &'a str,     
+    },
 
     /// unused
     MissingSymbolAfterDelimiter,
@@ -167,6 +175,8 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "expected atom type {:?} found {:?}", left, right),
             ExpectedSymbol(ref sym) =>
                 write!(f, "expected symbol, found {}", sym),
+            UnexpectedEndEnv { expected, found } => 
+                write!(f, r"expected \end{{{}}}, found \end{{{}}}", expected, found),
             RequiredMacroArg =>
                 write!(f, "missing required macro argument"),
             ExpectedTokenFound(ref expected, ref found) =>

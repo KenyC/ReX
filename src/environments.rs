@@ -30,6 +30,18 @@ impl Environment {
         }
     }
 
+    pub fn name(&self) -> & 'static str {
+        match self {
+            Environment::Array    => "array",
+            Environment::Matrix   => "matrix",
+            Environment::PMatrix  => "pmatrix",
+            Environment::BMatrix  => "bmatrix",
+            Environment::BbMatrix => "Bmatrix",
+            Environment::VMatrix  => "vmatrix",
+            Environment::VvMatrix => "Vmatrix",
+        }
+    }
+
     /// Parse the enviornment for a given `Environment`.  This can be thought
     /// of as a parsing primitive.
     pub fn parse<'a>(&self, lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, ParseNode> {
