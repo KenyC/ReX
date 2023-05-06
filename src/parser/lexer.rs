@@ -53,15 +53,20 @@ impl<'a> Token<'a> {
 
 #[derive(Clone, Debug)]
 pub struct Lexer<'a> {
-    /// The text strings from which to retrieve data data
+    /// The current input string being lexed.
+    ///
+    /// The [`Lexer::current`] token was lexed from that part of the string before.
+    ///
+    /// EMPTYNESS GUARANTEE: if [`Lexer::input`] is empty, so is [`Lexer::next_inputs`].
+    /// This way, [`Lexer::input`] is not empty unless we're at the end of the string.
     input: &'a str,
 
-    /// The position of where _next_ token to be lexed begins.
-    pos: usize,
+    /// .The next input strings to be lexed after [`Lexer::input`]
+    ///
+    /// When [`Lexer::input`] becomes empty, the last extry of [`Lexer::next_inputs`] is popped and become [`Lexer::input`].
+    next_inputs : Vec<&'a str>,
 
-    /// The position of where `self.current` begins.
-    prev_pos: usize,
-
+    /// The last token which has been lexed.
     current: Token<'a>,
 }
 
@@ -71,8 +76,7 @@ impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Lexer<'a> {
         let mut lex = Lexer {
             input: input,
-            pos: 0,
-            prev_pos: 0,
+            next_inputs: Vec::new(),
             current: Token::EOF,
         };
 
@@ -83,7 +87,6 @@ impl<'a> Lexer<'a> {
     /// Advanced to the next token to be processed, and return it.
     /// This will also modify `Lexer.current`.
     pub fn next(&mut self) -> Token<'a> {
-        self.prev_pos = self.pos;
         self.current = match self.next_char() {
             Some(c) if c.is_whitespace() => {
                 self.advance_while_whitespace();
@@ -119,39 +122,67 @@ impl<'a> Lexer<'a> {
             if !c.is_whitespace() {
                 break;
             }
-            self.pos += c.len_utf8();
+            self.advance_by(c.len_utf8());
         }
     }
+
+    fn advance_by(&mut self, size : usize) {
+        let len = self.input.len();
+        if len <= size {
+            self.input = &self.input[0 .. 0];
+            if self.pop_input() {
+                self.advance_by(size - len);
+            }
+        }
+        else {
+            self.input = &self.input[size ..];
+        }
+    }
+
+
+    fn pop_input(&mut self) -> bool {
+        if let Some(input) = self.next_inputs.pop() {
+            self.input = input;
+            true
+        }
+        else {
+            false
+        }
+    }
+
 
     /// Lex a control sequence.  This method assumes that
     /// `self.pos` points to the first character after `\`.
     /// The cursor will advance through the control sequence
     /// name, and consume all whitespace proceeding.  When
-    /// complete `self.pos` will point to the first character
-    /// of the next item to be lexed.
+    /// complete `self.current`'s  will start with the first character
+    /// of the next item to be lexed. This function does not parse a command name
+    /// across input boudaries ; the command name must wholly reside in [`Lexer::input`]
+    /// (It is implicitly assumed that [`Lexer::input`] is separated from [`Lexer::next_input`] by empty groups)
     fn control_sequence(&mut self) -> Token<'a> {
-        let start = self.pos;
+        let start = self.input;
 
         // The first character is special in that a non-alphabetic
         // character is valid, but will terminate the lex.
-        let end = match self.next_char() {
+        let total_advance = match self.current_char() {
             None => return Token::EOF,
-            Some(c) if !c.is_alphabetic() => self.pos,
+            Some(c) if !c.is_alphabetic() => c.len_utf8(),
             _ => {
                 // Otherwise Proceed until the first non alphabetic.
-                while let Some(c) = self.current_char() {
-                    if !c.is_alphabetic() {
-                        break;
-                    }
-                    self.pos += c.len_utf8();
-                }
-                self.pos
+                start
+                    .char_indices()
+                    .take_while(|(_, c)| c.is_alphabetic())
+                    .map(|(i, c)| i + c.len_utf8())
+                    .last()
+                    .unwrap_or(0)
             }
         };
+        self.advance_by(total_advance);
+
 
         // Consume all whitespace proceeding a control sequence
         self.advance_while_whitespace();
-        Token::Command(&self.input[start..end])
+        Token::Command(&start[ .. total_advance])
     }
 
     /// This method will parse a dimension.  It assumes
@@ -163,43 +194,49 @@ impl<'a> Lexer<'a> {
         unimplemented!()
     }
 
+    // TODO: may be needed to parse \newcommand
     /// Expect to find an {<inner>}, and return <inner>
-    pub fn group(&mut self) -> ParseResult<'a, &'a str> {
-        self.consume_whitespace();
-        self.current.expect(Token::Symbol('{'))?;
+    // pub fn group(&mut self) -> ParseResult<'a, &'a str> {
+    //     self.consume_whitespace();
+    //     self.current.expect(Token::Symbol('{'))?;
 
-        let start = self.pos;
-        let end = match self.input[self.pos..].find('}') {
-            Some(pos) => start + pos,
-            None => return Err(ParseError::NoClosingBracket),
-        };
+    //     let i_closing = match self.input.find('}') {
+    //         Some(pos) => pos,
+    //         None => return Err(ParseError::NoClosingBracket),
+    //     };
 
-        // Place cursor immediately after }
-        self.pos = end + 1;
-        self.next();
-        Ok(&self.input[start..end])
-    }
+    //     // Place cursor immediately after }
+    //     let group_inside = &self.input[.. i_closing];
+    //     self.advance_by(i_closing + 1);
+    //     self.next();
+    //     Ok(group_inside)
+    // }
 
     /// Match a segment of alphanumeric characters.  This method will
     /// return an empty string if there are no alphanumeric characters.
-    pub fn alphanumeric(&mut self) -> &'a str {
+    pub fn alphanumeric(&mut self) -> String {
+        let mut to_return = String::new();
+
+
         // This method expects that the next "Token" is a sequence of
         // alphanumerics.  Since `current_char` points at the first
         // non-parsed token, we must check the current Token to proceed.
-        let start = match self.current {
-            Token::Symbol(c) if c.is_alphanumeric() => self.pos - c.len_utf8(),
-            _ => return "",
+        match self.current {
+            Token::Symbol(c) if c.is_alphanumeric() => to_return.push(c),
+            _ => return String::new(),
         };
 
+        let start = self.input;
         while let Some(c) = self.current_char() {
             if !c.is_alphanumeric() {
                 break;
             }
-            self.pos += c.len_utf8()
+            self.advance_by(c.len_utf8());
         }
-        let result = &self.input[start..self.pos];
+        let total_advance = start.len() - self.input.len();
+        to_return.push_str(&start[.. total_advance]);
         self.next();
-        result
+        to_return
     }
 
     // Match a valid Color.  A color is defined as either:
@@ -215,14 +252,14 @@ impl<'a> Lexer<'a> {
         match self.current_char() {
             None => None,
             Some(c) => {
-                self.pos += c.len_utf8();
+                self.advance_by(c.len_utf8());
                 Some(c)
             }
         }
     }
 
     fn current_char(&mut self) -> Option<char> {
-        self.input[self.pos..].chars().next()
+        self.input.chars().next()
     }
 
 
@@ -232,12 +269,12 @@ impl<'a> Lexer<'a> {
         if !matches!(self.current_char(), Some('\'')) {
             return Token::Command("prime");
         }
-        self.pos += PRIME_LEN;
+        self.advance_by(PRIME_LEN);
 
         if !matches!(self.current_char(), Some('\'')) {
             return Token::Command("dprime");
         }
-        self.pos += PRIME_LEN;
+        self.advance_by(PRIME_LEN);
 
         Token::Command("trprime")
     }
@@ -263,7 +300,56 @@ impl<'a> fmt::Display for Token<'a> {
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
+
     use super::{Lexer, Token};
+
+    impl<'a> Lexer<'a> {
+        // If `Lexer::input` is empty, so must `Lexer::next_input` be
+        fn check_input_not_empty_guarantee(&self) -> bool {
+            return !self.input.is_empty() || self.next_inputs.is_empty();
+        }
+    }
+
+    #[test]
+    fn advance_does_not_break_input_not_empty_guarantee() {
+        let mut rng = rand::thread_rng();
+
+        fn generate_random_string(length: usize) -> String {
+            let mut rng = rand::thread_rng();
+            let chars: String = (0..length).map(|_| {
+                let random_char : u32 = rng.gen_range(('a' as u32) .. ('z' as u32));
+                char::from_u32(random_char).unwrap()
+            }).collect();
+
+            chars
+        }
+
+
+        for _ in 0 .. 50 {
+            let input  = generate_random_string(rng.gen_range(1 .. 5));
+            let mut next_inputs_owned = Vec::new();
+            for _ in 0 .. 10 {
+                next_inputs_owned.push(generate_random_string(rng.gen_range(0 .. 5)));
+            }
+
+            let next_inputs : Vec<&str> = next_inputs_owned.iter().map(|x| x.as_ref()).collect();
+
+            let mut lexer = Lexer {
+                input : &input,
+                next_inputs: next_inputs,
+                current: Token::EOF,
+            };
+
+            for _ in 0 .. 20 {
+                // All strings are ASCII so no byte advance will create a bug
+                let advance = rng.gen_range(0 .. 5);
+                lexer.advance_by(advance);
+                assert!(lexer.check_input_not_empty_guarantee());
+            }
+        }
+
+    }
 
     #[test]
     fn lex_primes() {
@@ -293,6 +379,27 @@ mod tests {
     }
 
     #[test]
+    fn lex_control_sequence() {
+        let tests = [
+            (r"cal 0",     Token::Command("cal"), "0"),
+            (r"$ 0",       Token::Command("$"),   "0"),
+            (r"cal{} 0",   Token::Command("cal"), "{} 0"),
+            (r"c{} 0",     Token::Command("c"),   "{} 0"),
+        ];
+
+        for (input, token, remainder) in tests {
+            let mut lexer = Lexer {
+                input,
+                next_inputs: Vec::new(),
+                current: Token::EOF,
+            };
+            assert_eq!(lexer.control_sequence(), token);
+            assert_eq!(lexer.input, remainder);
+        }
+    }
+
+
+    #[test]
     fn lex_tokens() {
         macro_rules! assert_eq_token_stream {
             ($left:expr, $right:expr) => {{
@@ -319,23 +426,24 @@ mod tests {
         assert_eq_token_stream!(r"123\", "123");
     }
 
-    #[test]
-    fn lex_group() {
-        macro_rules! assert_group {
-            ($input:expr, $result:expr) => {
-                let mut l = Lexer::new($input);
-                assert_eq!(l.group(), $result);
-                assert!(!(l.current == Token::Symbol('}')));
-            }
-        }
+    // TODO: may be needed to parse \newcommand
+    // #[test]
+    // fn lex_group() {
+    //     macro_rules! assert_group {
+    //         ($input:expr, $result:expr) => {
+    //             let mut l = Lexer::new($input);
+    //             assert_eq!(l.group(), $result);
+    //             assert!(!(l.current == Token::Symbol('}')));
+    //         }
+    //     }
 
-        assert_group!("{1}", Ok("1"));
-        assert_group!("   {  abc } ", Ok("  abc "));
-        assert_group!("{}", Ok(""));
+    //     assert_group!("{1}", Ok("1"));
+    //     assert_group!("   {  abc } ", Ok("  abc "));
+    //     assert_group!("{}", Ok(""));
 
-        // This doesn't seem correct:
-        // assert_group!("{{}}", Ok("{"));
-    }
+    //     // This doesn't seem correct:
+    //     // assert_group!("{{}}", Ok("{"));
+    // }
 
     #[test]
     fn lex_alphanumeric() {

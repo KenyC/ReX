@@ -403,14 +403,14 @@ pub fn dimension<'a>(_: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Unit> {
 // TODO: implement parsing for other formats.
 pub fn color<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, RGBA> {
     let color_str = lex.alphanumeric();
-    let color = RGBA::from_name(color_str)
-        .ok_or_else(|| ParseError::UnrecognizedColor(color_str.into()))?;
+    let color = RGBA::from_name(&color_str)
+        .ok_or_else(|| ParseError::UnrecognizedColor(color_str))?;
     Ok(color)
 }
 
 pub fn environment_name<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Environment> {
     let name = lex.alphanumeric();
-    Environment::try_from_str(name)
+    Environment::try_from_str(&name)
         .ok_or(ParseError::UnrecognizedEnvironment(name))
 }
 
@@ -557,7 +557,8 @@ mod tests {
         ];
 
         for formula in CORRECT_FORMULAS.iter().cloned() {
-            assert!(parse(formula).is_ok());
+            eprintln!("correct: {}", formula);
+            parse(formula).unwrap();
         }
 
         const INCORRECT_FORMULAS : &[&str] = &[
@@ -566,6 +567,7 @@ mod tests {
         ];
 
         for formula in INCORRECT_FORMULAS.iter().cloned() {
+            eprintln!("incorrect: {}", formula);
             assert!(parse(formula).is_err());
         }
     }

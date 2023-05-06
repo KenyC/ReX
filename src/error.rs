@@ -44,7 +44,7 @@ pub enum ParseError<'a> {
     /// Unknown command. \xyz
     UnrecognizedCommand(&'a str),
     /// Unknown environment \begin{xyz}
-    UnrecognizedEnvironment(&'a str),
+    UnrecognizedEnvironment(String),
     /// Unknown column specifier \begin{array}{xxx}
     UnrecognizedColumnFormat(Token<'a>),
     /// Unknown vertical alignment argument \begin{array}\[xxx\]{rllc}
@@ -54,7 +54,7 @@ pub enum ParseError<'a> {
     /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
     UnrecognizedDimension,
     /// The name of the color used does not appear in `rex::parser::color::COLOR_MAP`
-    UnrecognizedColor(&'a str),
+    UnrecognizedColor(String),
 
     /// unused at present
     ExpectedMathField(Token<'a>),
@@ -138,7 +138,7 @@ impl fmt::Display for FontError {
 impl<'a> fmt::Display for ParseError<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ParseError::*;
-        match *self {
+        match self {
             UnrecognizedCommand(ref cmd) =>
                 write!(f, "unrecognized command: \\{}`", cmd),
             UnrecognizedEnvironment(name) => 
