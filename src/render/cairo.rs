@@ -65,7 +65,8 @@ impl GraphicsBackend for CairoBackend {
 
 
     fn begin_color(&mut self, color: crate::RGBA) {
-        self.current_color = (color.0, color.1, color.2, color.3,);
+        let old_color = std::mem::replace(&mut self.current_color, (color.0, color.1, color.2, color.3,));
+        self.color_stack.push(old_color);
         self.set_current_color();
     }
 
