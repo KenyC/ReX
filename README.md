@@ -7,98 +7,113 @@ This is a fork of [ReX](https://github.com/cbreeden/rex), a Rust mathematical ty
 
 # Why the fork?
 
-This fork of ReX is designed to allow users to use their preferred rendering engine and font parser, instead of relying on Pathfinder and the font-parsing crate `font` (whose continuing development is not guaranteed). Implementing the trait MathFont allows users to specify their own font parser, and implementing `Backend<F : MathFont>`, where F is the type of the desired font parser, allows users to use their own rendering engine. 
+This fork of ReX is designed to allow users to use their preferred rendering engine and font parser. I also plan on continue making bug fixes and improvements (use Issues tab to request features and report bugs)
 
-The following features define some implementations of these traits for you:
+Rendering engine supported:
 
-  - `fontcrate-backend`: uses the `font` crate for font parsing
-  - `ttfparser-backend`: uses the `ttf-parser` crate for font parsing
-  - `pathfinder-backend`: in combination with `fontcrate-backend`, implements `Backend<OpenTypeFont>` the `pathfinder`for rendering 
-  - `femtovg-backend`: uses the `femtovg` for rendering ; in combination with `fontcrate-backend`, implements `Backend<OpenTypeFont>` ; in combination with `ttfparser-backend`, implements `Backend<ttf_parser::Font>`.
+ - [FemtoVG](https://crates.io/crates/femtovg) : feature `femtovg-renderer`
+ - [Cairo](https://crates.io/crates/cairo-rs) : feature `cairo-renderer`
+ - [Raqote](https://crates.io/crates/raqote) : feature `raqote-renderer`
+ - [Pathfinder](https://github.com/servo/pathfinder) : feature `pathfinder-renderer`
 
 
-Perhaps, this fork may ultimately turn into an attempt to take full ownership of the engine.
+Font parser supported:
+
+  - [ttfparser](https://crates.io/crates/ttf-parser) : feature `ttfparser-fontparser` 
+  - [font](https://github.com/pdf-rs/font) : feature `font-fontparser`
+
+You may add support for other font parser by implementing the `MathFont` trait and other rendering engines by implementing `Backend<F>` where `F` is a `MathFont` type.
+
+
+# Features / TODO list
+
+  - [x] Font change (`\mathbf`, `\mathrm`, `\mathfrak`, etc.)
+  - [x] Fractions
+  - [x] Delimiters and extensible symbols `\left\lbrace x \middle| x = 0 \right\rbrace`
+  - [x] Arrays, matrices
+  - [x] Sub- and super-scripts
+  - [ ] Text fragment `\text{...}` (even rudimentary support would be good)
+  - [ ] Custom macros
+
 
 # Samples
 
-Note: ReX rendered all of these examples in SVG, but due to limitations in SVG rendering on GitHub, we need to convert them to PNG.
-See the `samples/` folder for the original SVG source.
-
-### The Quadratic Fromula
+### The Quadratic Formula
 `x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`
 
-![Example](samples/The_Quadratic_Fromula.png)
+![Example](samples/The_Quadratic_Formula.svg)
 
 ### Double angle formula for Sine
 `\sin(\theta + \phi) = \sin(\theta)\cos(\phi) + \sin(\phi)\cos(\theta)`
 
-![Example](samples/Double_angle_formula_for_Sine.png)
+![Example](samples/Double_angle_formula_for_Sine.svg)
 
 ### Divergence Theorem
 `\int_D (\nabla \cdot F)\,\mathrm{d}V = \int_{\partial D} F \cdot n\,\mathrm{d}S`
 
-![Example](samples/Divergence_Theorem.png)
+![Example](samples/Divergence_Theorem.svg)
 
 ### Standard Deviation
 `\sigma = \sqrt{ \frac{1}{N} \sum_{i=1}^N (x_i - \mu)^2 }`
 
-![Example](samples/Standard_Deviation.png)
+![Example](samples/Standard_Deviation.svg)
 
 ### Fourier Inverse
 `f(x) = \int_{-\infty}^{\infty} \hat f(\xi) e^{2\pi i \xi x}\,\mathrm{d}\xi`
 
-![Example](samples/Fourier_Inverse.png)
+![Example](samples/Fourier_Inverse.svg)
 
 ### Cauchy-Schwarz Inequality
 `\left\vert \sum_k a_kb_k \right\vert \leq \left(\sum_k a_k^2\right)^{\frac12}\left(\sum_k b_k^2\right)^{\frac12}`
 
-![Example](samples/Cauchy-Schwarz_Inequality.png)
+![Example](samples/Cauchy-Schwarz_Inequality.svg)
 
 ### Exponent
 `e = \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n`
 
-![Example](samples/Exponent.png)
+![Example](samples/Exponent.svg)
 
 ### Ramanujan's Identity
 `\frac{1}{\pi} = \frac{2\sqrt{2}}{9801} \sum_{k=0}^\infty \frac{ (4k)! (1103+26390k) }{ (k!)^4 396^{4k} }`
 
-![Example](samples/Ramanujan's_Identity.png)
+![Example](samples/Ramanujan's_Identity.svg)
 
 ### A surprising identity
 `\int_{-\infty}^{\infty} \frac{\sin(x)}{x}\,\mathrm{d}x = \int_{-\infty}^{\infty}\frac{\sin^2(x)}{x^2}\,\mathrm{d}x`
 
-![Example](samples/A_surprising_identity.png)
+![Example](samples/A_surprising_identity.svg)
 
 ### Another gem from Ramanujan
 `\frac{1}{\left(\sqrt{\phi\sqrt5} - \phi\right) e^{\frac{2}{5}\pi}} = 1 + \frac{e^{-2\pi}}{1 + \frac{e^{-4\pi}}{1 + \frac{e^{-6\pi}}{1 + \frac{e^{-8\pi}}{1 + \cdots}}}}`
 
-![Example](samples/Another_gem_from_Ramanujan.png)
+![Example](samples/Another_gem_from_Ramanujan.svg)
 
 ### Another gem from Cauchy
 `f^{(n)}(z) = \frac{n!}{2\pi i} \oint \frac{f(\xi)}{(\xi - z)^{n+1}}\,\mathrm{d}\xi`
 
-![Example](samples/Another_gem_from_Cauchy.png)
+![Example](samples/Another_gem_from_Cauchy.svg)
 
 ### An unneccesary number of scripts
 `x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}`
 
-![Example](samples/An_unneccesary_number_of_scripts.png)
+![Example](samples/An_unneccesary_number_of_scripts.svg)
 
 ### Quartic Function
 `\mathop{\overbrace{c_4x^4 + c_3x^3 + c_2x^2 + c_1x + c_0}}\limits^{\gray{\mathrm{Quartic}}}`
 
-![Example](samples/Quartic_Function.png)
+![Example](samples/Quartic_Function.svg)
 
 ### Another fun identity
 `3^3 + 4^4 + 3^3 + 5^5 = 3435`
 
-![Example](samples/Another_fun_identity.png)
+![Example](samples/Another_fun_identity.svg)
+
 
 # Usage
 
 ## Simple example
 
-You can see a simple example of use in [examples/gui_basic.rs](examples/svg_basic.rs). To run this example, run the following in the root of the repository.
+You can see a simple example of use in [examples/svg_basic.rs](examples/svg_basic.rs). To run this example, run the following in the root of the repository.
 
 ```bash
 cargo r --example svg-basic --features="cairo-renderer ttfparser-fontparser" -- "\oint \mathbf{E}\cdot \mathrm{d}\mathbf{A} = \frac{Q_{enc}}{\epsilon_0}"
@@ -112,31 +127,32 @@ You can see the same result in a GUI with:
 cargo r --example gui-basic --features="femtovg-renderer ttfparser-fontparser" -- "\oint \mathbf{E}\cdot \mathrm{d}\mathbf{A} = \frac{Q_{enc}}{\epsilon_0}"
 ```
 
-## More generally
 
-In a nutshell, rendering a formula requires:
 
-  - Parsing the formula into `ParseNode` (using `rex::parser::engine::parse`).
-  - Creating a `FontContext` struct from a certain font struct provided by the crate.
-  - Creating a `LayoutSettings` struct from this font context, specifying font size and font context.
-  - Creating a `Layout` from `ParseNode` using `rex::layout::engine::layout`.
-  - Create a `Renderer`;
-  - Create the relevant renderer backend (e.g. `CairoBackend::new` for cairo).
-  - Call `Renderer::render` with the layout and the backend as arguments.
+## As a library
 
-## Intended use: as a library
-
-Add the following to `Cargo.toml`:
+The crate is primarily intended as a library. To use it as such, first add the following line to `[dependencies]` section of `Cargo.toml`:
 
 ```toml
-rex = {git = "https://github.com/KenyC/ReX", features = [<whatever features you deem relevant>]}
+rex = {git = "https://github.com/KenyC/ReX", features = ["ttfparser-fontparser", "cairo-fontparser"]} # replace with whichever features you may need
 ```
+
+The process of rendering of formula in code is as follows:
+
+  - Parse the formula into `ParseNode`, using `rex::parser::engine::parse`.
+  - Create a `FontContext` struct from your font (the font provided by the font parser, e.g. `ttfparser`).
+  - Create a `LayoutSettings` struct from this font context, specifying font size.
+  - Create a `Layout` from `ParseNode` using `rex::layout::engine::layout`.
+  - Create a `Renderer`.
+  - Create the relevant renderer backend (e.g. `CairoBackend::new` for `cairo`).
+  - Call `Renderer::render` with the layout and the backend as arguments.
+
 
 # License
 
 ## Fork
 
-Any modifications made in this fork is distributed under the MIT license. See LICENSE for details.
+Any modifications made in this fork is distributed under the MIT license. See [LICENSE](LICENSE) for details.
 
 ## Original
 
@@ -144,4 +160,4 @@ The original ReX is primarily distributed under the terms of both the MIT licens
 the Apache License (Version 2.0), with portions covered by various BSD-like
 licenses. 
 
-*Note (Keny C):* The license files were not provided in the original repository. The problem was raised [here](https://github.com/ReTeX/ReX/issues/39)). Given lack of reply, I'm not sure which parts are licensed by what.
+*Note (Keny C):* The license files were not provided in the original repository. The problem was raised [here](https://github.com/ReTeX/ReX/issues/39). Given lack of reply, I'm not sure which parts of the original code were licensed by what.

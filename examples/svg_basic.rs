@@ -1,3 +1,5 @@
+use std::process::Output;
+
 use rex::{
     render::Renderer,
     layout::{LayoutSettings, Style},
@@ -6,6 +8,7 @@ use rex::{
 use clap::Parser;
 
 const DEFAULT_FONT_FILE_PATH : &str = "resources/Garamond_Math.otf";
+const DEFAULT_OUTPUT_FILE : &str = "test.svg";
 const DEFAULT_FORMULA: &str = &r"\iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)";
 const DEFAULT_FONT_SIZE : f64 = 16.;
 
@@ -16,6 +19,9 @@ struct Options {
 
     #[arg(short = 'i', long, conflicts_with("formula"))]
     formula_path : Option<std::path::PathBuf>,
+
+    #[arg(short = 'o', long = "output", help = "SVG output file")]
+    output_file_path : Option<std::path::PathBuf>,
 
     #[arg(short, long, default_value_t = false, help = "Display debug bounding boxes")]
     debug   : bool,
@@ -30,7 +36,8 @@ struct Options {
 fn main() {
     env_logger::init();
     // -- Parse command-line options
-    let Options {mut formula, debug, font_file_path, formula_path, font_size } = Options::parse();
+    let Options {mut formula, debug, font_file_path, formula_path, font_size, output_file_path } = Options::parse();
+    let output_file_path = output_file_path.unwrap_or_else(|| DEFAULT_OUTPUT_FILE.into());
     if let Some(formula_path) = formula_path {
         formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
     }
@@ -59,7 +66,7 @@ fn main() {
 
     // -- create Cairo surface & context
     let dims = layout.size();
-    let svg_surface = cairo::SvgSurface::new(dims.width, dims.height - dims.depth, Some("test.svg")).unwrap();
+    let svg_surface = cairo::SvgSurface::new(dims.width, dims.height - dims.depth, Some(output_file_path)).unwrap();
     let context = cairo::Context::new(&svg_surface).unwrap();
     // So that top-left corner of SVG is aligned with top of formula
     context.translate(0., dims.height);
