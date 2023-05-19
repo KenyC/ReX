@@ -27,7 +27,7 @@ if not os.path.exists(output_dir):
 for formula, name in formulas:
     # Generate the SVG file
     svg_file = os.path.join(output_dir, f'{name}.svg')
-    command = f'cargo r --example svg-basic --features="cairo-renderer ttfparser-fontparser" -- "{formula}" -o "{svg_file}"'
+    command = f'cargo r --example svg-basic --features="cairo-renderer ttfparser-fontparser" -- "{formula}" -o "{svg_file}" -s 40'
     subprocess.run(command, shell=True, check=True)
 
     # Convert SVG to PNG using an external tool (e.g., Inkscape)
