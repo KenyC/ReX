@@ -70,6 +70,15 @@ pub enum ParseError<'a> {
     ExpectedAtomType(AtomType, AtomType),
     /// Error thrown if after '\left' and '\right', a token that is not a symbol is found
     ExpectedSymbol(Token<'a>),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when one of the top-level declaration isn't `\newcommand...`. 
+    ExpectedNewCommand(Token<'a>),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the number of arguments ... in `\newcommand{\commandname}[...]` cannot be interpreted as an nonnegative integer 
+    ExpectedNumber(String),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when `\newcommand...` isn't followed by the command name (either as `\mycommandname` or `{\mycommandname}`). 
+    ExpectedCommandName(Token<'a>),
     /// Expected an opening '{'
     ExpectedOpenGroup,
 
@@ -94,6 +103,16 @@ pub enum ParseError<'a> {
     ExcessiveSubscripts,
     /// One has used two or more subscripts in a row, e.g. "x_2_2".
     ExcessiveSuperscripts,
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when a command is defined twice
+    CommandDefinedTwice(& 'a str),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the command definition (i.e. the ... in \newcommand{\mycommand}[2]{...}) cannot be parsed.  
+    /// This may be because an unescaped # is not followed by a number.
+    CannotParseCommandDefinition(& 'a str),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the command definition (i.e. the ... in \newcommand{\mycommand}[n]{...}) refers to a `#i` with i > n.
+    IncorrectNumberOfArguments(usize, usize),
 
     /// EOF appeared while a group or an array was incomplete
     UnexpectedEof,
@@ -158,6 +177,12 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "an excessive number of subscripts"),
             ExcessiveSuperscripts =>
                 write!(f, "excessive number of superscripts"),
+            CommandDefinedTwice(command_name) =>
+                write!(f, "'{}' was defined twice", command_name),
+            CannotParseCommandDefinition(command_definition) =>
+                write!(f, "'{}' cannot be parsed as the body of a command definition", command_definition),
+            IncorrectNumberOfArguments(declared, got) =>
+                write!(f, "command was declared with {} arguments, but needs at least {} arguments", declared, got),
             LimitsMustFollowOperator =>
                 write!(f, "limit commands must follow an operator"),
             ExpectedMathField(ref field) =>
@@ -170,6 +195,12 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "expected atom type {:?} found {:?}", left, right),
             ExpectedSymbol(ref sym) =>
                 write!(f, "expected symbol, found {}", sym),
+            ExpectedNewCommand(ref tok) =>
+                write!(f, "expected \newcommand, found {}", tok),
+            ExpectedCommandName(ref tok) =>
+                write!(f, "expected command name, found {}", tok),
+            ExpectedNumber(string) =>
+                write!(f, "expected number, found {}", string),
             RequiredMacroArg =>
                 write!(f, "missing required macro argument"),
             ExpectedTokenFound(ref expected, ref found) =>

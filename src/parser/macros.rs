@@ -1,8 +1,12 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
+use std::unreachable;
+
+use crate::{error::ParseError, parser::lexer::{Lexer, Token}};
+
 
 /// A collection of custom commands. You can find a macro with the given name using [`CommandCollection::query`].
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CommandCollection(Vec<(String, CustomCommand)>);
 
 
@@ -29,6 +33,70 @@ impl CommandCollection {
         else {
             None
         }
+    }
+
+    /// Parse a series of `\newcommand{...}[]{fezefzezf}` into a command collection
+    pub fn parse(command_definitions : &str) -> Result<Self, ParseError> {
+        let mut lexer = Lexer::new(command_definitions);
+        let mut to_return = CommandCollection::default();
+
+
+        while lexer.current() != Token::EOF {
+            match lexer.current() {
+                Token::Command("newcommand") => (),
+                Token::Symbol(_) | Token::Command(_) => 
+                    return Err(ParseError::ExpectedNewCommand(lexer.current())),
+                Token::WhiteSpace => {
+                    lexer.consume_whitespace();
+                    continue;
+                },
+                Token::EOF => unreachable!("already checked above"),
+            };
+
+
+            // -- parse command name
+            lexer.consume_whitespace();
+            lexer.next();
+            let token_command_name;
+            if let Ok(inner) = lexer.group() {
+                let mut lexer = Lexer::new(inner);
+                lexer.consume_whitespace();
+                token_command_name = lexer.current();
+            }
+            else {
+                token_command_name = lexer.current();
+            }
+
+            let command_name = match token_command_name {
+                Token::Command(name) => name,
+                tok => return Err(ParseError::ExpectedCommandName(tok)),
+            };
+
+            // -- parse number of arguments
+            lexer.next().expect_symbol('[')?;
+            lexer.next();
+            let alphanumeric = lexer.alphanumeric();
+            let n_args = alphanumeric.parse::<usize>().ok().ok_or(ParseError::ExpectedNumber(alphanumeric))?;
+            lexer.current().expect_symbol(']')?;
+
+
+            // -- parse definition body
+            lexer.next();
+            let definition = lexer.group()?;
+
+            // TODO : more specific error message?
+            let custom_command = CustomCommand::parse(definition).ok_or(ParseError::CannotParseCommandDefinition(definition))?;
+
+            if custom_command.n_args != n_args {
+                return Err(ParseError::IncorrectNumberOfArguments(custom_command.n_args, n_args));
+            }
+            to_return.insert(command_name, custom_command);
+
+
+            lexer.next();
+        }
+
+        Ok(to_return)
     }
 }
 
@@ -191,5 +259,58 @@ mod tests {
         let custom_command = CustomCommand::parse(command_def).unwrap();
         let result = custom_command.apply(&["x + 2", "x"]);
         assert_eq!(result, r"\left\lbrace x + 2\middle| x\right\rbrace");
+    }
+
+    #[test]
+    fn parse_command_file() {
+        use super::ChunkCommand::*;
+
+        let file = include_str!("macros_test_files/ok1.tex");
+
+        let expected = CommandCollection(vec![
+            ("dbb".to_string(), CustomCommand { n_args : 1, chunks: vec![
+                Text(r"\left\lBrack".to_string()),
+                ArgSlot(0),
+                Text(r"\right\rBrack".to_string()),
+            ]}),
+            ("quo".to_string(), CustomCommand { n_args : 1, chunks: vec![
+                Text(r"``\mathrm{".to_string()),
+                ArgSlot(0),
+                Text(r"}''".to_string()),
+            ]}),
+            ("poly".to_string(), CustomCommand { n_args : 3, chunks: vec![
+                ArgSlot(0),
+                Text(r"x^2 + ".to_string()),
+                ArgSlot(1),
+                Text(r"x + ".to_string()),
+                ArgSlot(2),
+                Text(r" = 0".to_string()),
+            ]})
+        ]);
+        let got = CommandCollection::parse(file).unwrap();
+        assert_eq!(expected, got);
+
+
+        let file = include_str!("macros_test_files/ok2.tex");
+
+        let expected = CommandCollection(vec![
+            ("dbb".to_string(), CustomCommand { n_args : 1, chunks: vec![
+                Text(r"\left\lBrack".to_string()),
+                ArgSlot(0),
+                Text(r"\right\rBrack".to_string()),
+            ]}),
+            ("poly".to_string(), CustomCommand { n_args : 3, chunks: vec![
+                ArgSlot(0),
+                Text(r"x^2 + ".to_string()),
+                ArgSlot(1),
+                Text(r"x + ".to_string()),
+                ArgSlot(2),
+                Text(r" = 0".to_string()),
+            ]}),
+        ]);
+        let got = CommandCollection::parse(file).unwrap();
+        assert_eq!(expected, got);
+
+
     }
 }
