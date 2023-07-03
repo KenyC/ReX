@@ -4,7 +4,7 @@ use crate::dimensions::{Unit};
 use crate::layout::Style;
 use crate::error::{ParseResult, ParseError};
 use super::color::RGBA;
-use crate::environments::Array;
+use super::environments::Array;
 use crate::font::{AtomType};
 use super::symbols::Symbol;
 
@@ -14,7 +14,7 @@ use super::symbols::Symbol;
 //   it will be a `Ordinary`.
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseNode {
-    /// A simple symbole like 'x' or 'α'
+    /// A simple symbol like 'x' or 'α'
     Symbol(Symbol),
     /// A group of nodes enclosed by '\left' and '\right'
     Delimited(Delimited),

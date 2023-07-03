@@ -3,9 +3,9 @@
 //!   - [`ParseError`] : syntax error in the formula provided (mismatching brackets, unknown command).
 //!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
-use crate::environments::Environment;
+use crate::parser::environments::Environment;
 use crate::font::common::GlyphId;
-use crate::lexer::Token;
+use crate::parser::lexer::Token;
 use std::fmt;
 use crate::font::{AtomType};
 use crate::parser::symbols::Symbol;
@@ -45,7 +45,7 @@ pub enum ParseError<'a> {
     /// Unknown command. \xyz
     UnrecognizedCommand(&'a str),
     /// Unknown environment \begin{xyz}
-    UnrecognizedEnvironment(&'a str),
+    UnrecognizedEnvironment(String),
     /// Unknown column specifier \begin{array}{xxx}
     UnrecognizedColumnFormat(Token<'a>),
     /// Unknown vertical alignment argument \begin{array}\[xxx\]{rllc}
@@ -55,7 +55,7 @@ pub enum ParseError<'a> {
     /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
     UnrecognizedDimension,
     /// The name of the color used does not appear in `rex::parser::color::COLOR_MAP`
-    UnrecognizedColor(&'a str),
+    UnrecognizedColor(String),
 
     /// unused at present
     ExpectedMathField(Token<'a>),
@@ -71,6 +71,15 @@ pub enum ParseError<'a> {
     ExpectedAtomType(AtomType, AtomType),
     /// Error thrown if after '\left' and '\right', a token that is not a symbol is found
     ExpectedSymbol(Token<'a>),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when one of the top-level declaration isn't `\newcommand...`. 
+    ExpectedNewCommand(Token<'a>),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the number of arguments ... in `\newcommand{\commandname}[...]` cannot be interpreted as an nonnegative integer 
+    ExpectedNumber(String),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when `\newcommand...` isn't followed by the command name (either as `\mycommandname` or `{\mycommandname}`). 
+    ExpectedCommandName(Token<'a>),
     /// Expected an opening '{'
     ExpectedOpenGroup,
     /// An unexpected end of environment, e.g. an `\end{bar}' appeared when we were expecting a `\end{foo}'
@@ -102,9 +111,22 @@ pub enum ParseError<'a> {
     ExcessiveSubscripts,
     /// One has used two or more subscripts in a row, e.g. "x_2_2".
     ExcessiveSuperscripts,
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when a command is defined twice
+    CommandDefinedTwice(& 'a str),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the command definition (i.e. the ... in \newcommand{\mycommand}[2]{...}) cannot be parsed.  
+    /// This may be because an unescaped # is not followed by a number.
+    CannotParseCommandDefinition(& 'a str),
+    /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
+    /// when the command definition (i.e. the ... in \newcommand{\mycommand}[n]{...}) refers to a `#i` with i > n.
+    IncorrectNumberOfArguments(usize, usize),
 
-    /// EOF appeared while some groups were not closed
-    UnexpectedEof(Token<'a>),
+    /// EOF appeared while a group or an array was incomplete
+    UnexpectedEof,
+    /// Expected EOF because we're done parsing, but there's still some input left.
+    /// If this happens, it's a bug of the parser, not a problem in user input.
+    ExpectedEof(Token<'a>),
 
     /// An unspecific error value for errors we haven't yet included in the list above
     Todo,
@@ -146,7 +168,7 @@ impl fmt::Display for FontError {
 impl<'a> fmt::Display for ParseError<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ParseError::*;
-        match *self {
+        match self {
             UnrecognizedCommand(ref cmd) =>
                 write!(f, "unrecognized command: \\{}`", cmd),
             UnrecognizedEnvironment(name) => 
@@ -163,6 +185,12 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "an excessive number of subscripts"),
             ExcessiveSuperscripts =>
                 write!(f, "excessive number of superscripts"),
+            CommandDefinedTwice(command_name) =>
+                write!(f, "'{}' was defined twice", command_name),
+            CannotParseCommandDefinition(command_definition) =>
+                write!(f, "'{}' cannot be parsed as the body of a command definition", command_definition),
+            IncorrectNumberOfArguments(declared, got) =>
+                write!(f, "command was declared with {} arguments, but needs at least {} arguments", declared, got),
             LimitsMustFollowOperator =>
                 write!(f, "limit commands must follow an operator"),
             ExpectedMathField(ref field) =>
@@ -177,6 +205,12 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "expected symbol, found {}", sym),
             UnexpectedEndEnv { expected, found } => 
                 write!(f, r"expected \end{{{}}}, found \end{{{}}}", expected, found),
+            ExpectedNewCommand(ref tok) =>
+                write!(f, "expected \newcommand, found {}", tok),
+            ExpectedCommandName(ref tok) =>
+                write!(f, "expected command name, found {}", tok),
+            ExpectedNumber(string) =>
+                write!(f, "expected number, found {}", string),
             RequiredMacroArg =>
                 write!(f, "missing required macro argument"),
             ExpectedTokenFound(ref expected, ref found) =>
@@ -195,8 +229,10 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "stack commands must follow a group"),
             AccentMissingArg(ref acc) =>
                 write!(f, "the accent '\\{}' must have an argument", acc),
-            UnexpectedEof(ref tok) =>
-                write!(f, "unexpectedly ended parsing; unmatched end of expression? Stoped parsing at {}", tok),
+            UnexpectedEof =>
+                write!(f, "unexpected end of input; unmatched end of array? unfinished group?"),
+            ExpectedEof(ref token) =>
+                write!(f, "unexpectedly ended parsing; Stoped parsing at {}", token),
             UnrecognizedDimension =>
                 write!(f, "failed to parse dimension"),
             UnrecognizedColor(ref color) =>

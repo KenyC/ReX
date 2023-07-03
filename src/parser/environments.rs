@@ -1,4 +1,5 @@
-use crate::lexer::{Lexer, Token};
+use super::lexer::{Lexer, Token};
+use super::macros::CommandCollection;
 use crate::font::{Style, AtomType};
 use crate::parser::{self, optional_argument_with, required_argument_with, ParseNode, symbols::Symbol};
 use crate::error::{ParseResult, ParseError};
@@ -44,15 +45,15 @@ impl Environment {
 
     /// Parse the enviornment for a given `Environment`.  This can be thought
     /// of as a parsing primitive.
-    pub fn parse<'a>(&self, lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, ParseNode> {
+    pub fn parse<'a>(&self, lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
         match *self {
-            Environment::Array => array(lex, local),
-            Environment::Matrix => matrix(lex, local),
-            Environment::PMatrix => matrix_with(lex, local, '(', ')'),
-            Environment::BMatrix => matrix_with(lex, local, '[', ']'),
-            Environment::BbMatrix => matrix_with(lex, local, '{', '}'),
-            Environment::VMatrix => matrix_with(lex, local, '|', '|'),
-            Environment::VvMatrix => matrix_with(lex, local, '\u{2016}', '\u{2016}'),
+            Environment::Array    => array(lex, local, command_collection),
+            Environment::Matrix   => matrix(lex, local, command_collection),
+            Environment::PMatrix  => matrix_with(lex, local, command_collection, '(', ')'),
+            Environment::BMatrix  => matrix_with(lex, local, command_collection, '[', ']'),
+            Environment::BbMatrix => matrix_with(lex, local, command_collection, '{', '}'),
+            Environment::VMatrix  => matrix_with(lex, local, command_collection, '|', '|'),
+            Environment::VvMatrix => matrix_with(lex, local, command_collection, '\u{2016}', '\u{2016}'),
         }
     }
 }
@@ -148,25 +149,29 @@ pub struct Array {
 }
 
 
-fn matrix<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, None, None)
+fn matrix<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
+    matrix_common(lex, style, command_collection, None, None)
 }
 
-fn matrix_with<'a>(lex: &mut Lexer<'a>,
-               style: Style,
-               left_delimiter: char,
-               right_delimiter: char)
-               -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, Some(left_delimiter), Some(right_delimiter))
+fn matrix_with<'a>(
+    lex: &mut Lexer<'a>,
+    style: Style,
+    command_collection : &CommandCollection,
+    left_delimiter:  char,
+    right_delimiter: char
+) -> ParseResult<'a, ParseNode> {
+    matrix_common(lex, style, command_collection, Some(left_delimiter), Some(right_delimiter))
 }
 
-fn matrix_common<'a>(lex: &mut Lexer<'a>,
-                 style: Style,
-                 left_delimiter: Option<char>,
-                 right_delimiter: Option<char>)
-                 -> ParseResult<'a, ParseNode> {
+fn matrix_common<'a>(
+    lex: &mut Lexer<'a>,
+    style: Style,
+    command_collection : &CommandCollection,
+    left_delimiter:  Option<char>,
+    right_delimiter: Option<char>
+) -> ParseResult<'a, ParseNode> {
     // matrix bodies are paresed like arrays.
-    let body = array_body(lex, style)?;
+    let body = array_body(lex, style, command_collection)?;
     let left_delimiter = left_delimiter.map(|code| {
                                                 Symbol {
                                                     codepoint: code,
@@ -200,13 +205,13 @@ fn matrix_common<'a>(lex: &mut Lexer<'a>,
 ///   - `|` insert a vertical bar at position.
 ///
 /// For example: `\begin{array}{c|c|c}\end{array}`.
-fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsFormatting> {
+fn array_col<'a>(lex: &mut Lexer<'a>, _: Style, _ : &CommandCollection) -> ParseResult<'a, ArrayColumnsFormatting> {
     let mut cols = Vec::new();
 
     lex.consume_whitespace();
 
     let mut n_vertical_bars_before : u8 = 0;
-    while let Token::Symbol('|') = lex.current {
+    while let Token::Symbol('|') = lex.current() {
         lex.next();
         lex.consume_whitespace();
         n_vertical_bars_before += 1;
@@ -215,12 +220,11 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
     loop {
         let alignment;
 
-        match lex.current {
+        match lex.current() {
             Token::Symbol('c') => alignment = ArrayColumnAlign::Centered,
             Token::Symbol('r') => alignment = ArrayColumnAlign::Right,
             Token::Symbol('l') => alignment = ArrayColumnAlign::Left,
             Token::Symbol('}') => {
-                lex.pos -= 1; // backtrack the lexer
                 break;
             }
             token => return Err(ParseError::UnrecognizedColumnFormat(token)),
@@ -230,7 +234,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
         lex.consume_whitespace();
 
         let mut n_vertical_bars_after = 0_u8;
-        while let Token::Symbol('|') = lex.current {
+        while let Token::Symbol('|') = lex.current() {
             lex.next();
             lex.consume_whitespace();
             n_vertical_bars_after += 1;
@@ -259,7 +263,7 @@ fn array_col<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, ArrayColumnsF
 ///
 /// For example: `\begin{array}[t]{cc}..\end{array}`.
 fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayVerticalAlign>> {
-    let ret = match lex.current {
+    let ret = match lex.current() {
         Token::Symbol('t') => Ok(Some(ArrayVerticalAlign::Top)),
         Token::Symbol('b') => Ok(Some(ArrayVerticalAlign::Bottom)),
         token => return Err(ParseError::UnrecognizedVerticalAlignmentArg(token)),
@@ -277,12 +281,12 @@ fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayV
 /// space between the rows.  Note, the last line termination is ignored
 /// if the a line is empty.
 type Expression = Vec<ParseNode>;
-fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<Expression>>> {
+fn array_body<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, Vec<Vec<Expression>>> {
     let mut rows: Vec<Vec<Expression>> = Vec::new();
     let mut current: Vec<Expression> = Vec::new();
     loop {
-        let expr = parser::expression_until(lex, style, Token::Symbol('&'))?;
-        if lex.current == Token::Command(r"end") {
+        let expr = parser::expression_until(lex, style, command_collection, Token::Symbol('&'))?;
+        if lex.current() == Token::Command(r"end") {
             // If the last line is empty, ignore it.
             if expr.is_empty() && current.is_empty() {
                 break;
@@ -294,7 +298,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
         }
 
         current.push(expr);
-        match lex.current {
+        match lex.current() {
             Token::Symbol('&') => { /* no-op, carry on */ }
             Token::Command(r"\") |
             Token::Command(r"cr") => {
@@ -302,7 +306,7 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
                 rows.push(current);
                 current = Vec::new();
             }
-            _ => return Err(ParseError::UnexpectedEof(lex.current)),
+            _ => return Err(ParseError::UnexpectedEof),
         }
         lex.next();
     }
@@ -311,11 +315,10 @@ fn array_body<'a>(lex: &mut Lexer<'a>, style: Style) -> ParseResult<'a, Vec<Vec<
 
 /// Parse an array environment.  This method assumes that the lexer is currently
 /// positioned after the `\begin{array}` declaration.
-fn array<'a>(lex: &mut Lexer<'a>, local: Style) -> ParseResult<'a, ParseNode> {
+fn array<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
     let pos = optional_argument_with(lex, local, array_pos)?;
-    let cols = required_argument_with(lex, local, array_col)?;
-    lex.next();
-    let contents = array_body(lex, local)?;
+    let cols = required_argument_with(lex, local, command_collection, array_col)?;
+    let contents = array_body(lex, local, command_collection)?;
     debug!("Array, pos: {:?}, cols: {:?}", pos, cols);
     debug!("Contents: {:#?}", contents);
     Ok(ParseNode::Array(Array {
@@ -383,7 +386,7 @@ mod tests {
             let style = Style::new();
 
             assert_eq!(
-                array_col(&mut lexer, style).unwrap(),
+                array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
                 col_format,
             );
 
