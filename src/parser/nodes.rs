@@ -32,6 +32,8 @@ pub enum ParseNode {
     Accent(Accent),
     /// A style (text cramped) to apply over a certain group of nodes
     Style(Style),
+    /// A span of normal text without special math symbol replacement, spacing, etc.
+    PlainText(PlainText),
     /// A change in the type of atoms
     AtomChange(AtomChange),
     /// A change in color
@@ -97,6 +99,13 @@ pub struct AtomChange {
     pub at: AtomType,
     /// Inner nodes
     pub inner: Vec<ParseNode>,
+}
+
+/// Cf [`ParseNode::PlainText`]
+#[derive(Clone, Debug, PartialEq)]
+pub struct PlainText {
+    /// Text to be renderered
+    pub text: String,
 }
 
 /// Cf [`ParseNode::Accent`]
@@ -251,6 +260,7 @@ impl ParseNode {
             ParseNode::Symbol(ref sym)  => sym.atom_type,
             ParseNode::Delimited(_)     => AtomType::Inner,
             ParseNode::Radical(_)       => AtomType::Alpha,
+            ParseNode::PlainText(_)     => AtomType::Alpha,
             ParseNode::GenFraction(_)   => AtomType::Inner,
             ParseNode::Group(_)         => AtomType::Alpha,
             ParseNode::Scripts(ref scr) => scr.base.as_ref()

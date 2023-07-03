@@ -37,6 +37,14 @@ Delimiters:
       - \left( c \middle| \frac{a}{b} \right)^{\frac{d}{e}}
       - \left( c \middle| \frac{a}{b} \middle\| e \right)^{\frac{d}{e}}
 
+Text:
+  - Description: Spaces should render, dash should be dashes
+    Snippets:
+      - \text{10 + 12}
+      - \text{log-in}
+      - \text{1_2}
+      - \text{1^2}
+
 Fractions:
   - Description: should properly scale
     Snippets:

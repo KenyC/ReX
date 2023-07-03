@@ -40,6 +40,7 @@ pub enum Command {
     AtomChange(AtomType),
     TextOperator(&'static str, bool),
     SubStack(AtomType),
+    Text,
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -49,6 +50,7 @@ impl Command {
         match self {
             Radical              => radical(lex, local, command_collection),
             Rule                 => rule(lex, local),
+            Text                 => text(lex),
             VExtend              => v_extend(lex, local, command_collection),
             Color                => color(lex, local, command_collection),
             ColorLit(a)          => color_lit(lex, local, command_collection, a),
@@ -61,6 +63,13 @@ impl Command {
             SubStack(a)          => substack(lex, local, command_collection, a),
         }
     }
+}
+
+fn text<'a>(lex: &mut Lexer<'a>) -> ParseResult<'a, ParseNode> {
+    lex.consume_whitespace();
+    let text = lex.group()?.to_owned();
+    lex.next();
+    Ok(ParseNode::PlainText(parse::nodes::PlainText { text }))
 }
 
 
@@ -115,6 +124,7 @@ pub fn get_command(name: &str) -> Option<Command> {
         "displaystyle"      => Command::Style(LayoutStyle::Display),
         "scriptstyle"       => Command::Style(LayoutStyle::Script),
         "scriptscriptstyle" => Command::Style(LayoutStyle::ScriptScript),
+        "text"              => Command::Text,
 
         // Atom-type changes
         "mathop"  => Command::AtomChange(AtomType::Operator(false)),

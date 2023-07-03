@@ -72,7 +72,7 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, command_collectio
 }
 
 /// Parses a custom command
-fn custom_command<'a>(lex: &mut Lexer<'a>, local: Style, command_collection: &CommandCollection) -> ParseResult<'a, Option<String>> {
+fn custom_command<'a>(lex: &mut Lexer<'a>, _: Style, command_collection: &CommandCollection) -> ParseResult<'a, Option<String>> {
     if let Token::Command(name) = lex.current() {
         if let Some(command) = command_collection.query(name) {
             let n_args = command.n_args();
@@ -484,7 +484,7 @@ fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{engine::parse, macros::{CustomCommand, CommandCollection}};
+    use crate::parser::{engine::parse, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText};
 
     use super::parse_with_custom_commands;
 
@@ -633,5 +633,12 @@ mod tests {
         let expected = parse("1 + 2 + 34");
         let got      = parse_with_custom_commands(r"\add{1}{\add{2}{3}}4", &command_collection);
         assert_eq!(expected, got);   
+    }
+
+    #[test]
+    fn text_command() {
+        let got = parse(r"\text{re + 43}").unwrap();
+        let expected = vec![ParseNode::PlainText(PlainText {text : "re + 43".to_string()})];
+        assert_eq!(expected, got);
     }
 }

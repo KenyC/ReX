@@ -5,6 +5,7 @@
 
 
 use std::cmp::{min, max};
+use std::unimplemented;
 
 use super::builders;
 use super::convert::AsLayoutNode;
@@ -18,7 +19,7 @@ use crate::font::{
 };
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack};
+use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack, PlainText};
 use crate::parser::symbols::Symbol;
 use crate::parser::environments::{Array, ArrayColumnAlign};
 use crate::dimensions::{*};
@@ -136,8 +137,20 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 self.add_node(builders::color(inner, clr))
             }
 
-            // TODO: deal with ignored parse nodes
-            _ => warn!("ignored ParseNode: {:?}", node),
+            ParseNode::PlainText(PlainText {ref text}) => {
+                for character in text.chars() {
+                    if character.is_ascii_whitespace() {
+                        self.add_node(kern![horz : Spacing::Medium.to_length().scaled(config)])
+                    }
+                    else {
+                        self.add_node(config.ctx.glyph(character)?.as_layout(config)?);
+                    }
+                }
+            },
+
+            // TODO: understand whether these are needed anywhere
+            ParseNode::Style(_)     => unimplemented!(),
+            ParseNode::Extend(_, _) => unimplemented!(),
         }
         Ok(())
     }
@@ -848,7 +861,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // TODO: Reference array vertical alignment (optional [bt] arguments)
         // Vertically center the array on axis.
         // Note: hbox has no depth, so hbox.height is total height.
-        let height = dbg!(hbox.height);
+        let height = hbox.height;
         let mut vbox = builders::VBox::new();
         let offset = height * 0.5 - config.ctx.constants.axis_height.scaled(config);
         vbox.set_offset(offset);

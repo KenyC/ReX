@@ -77,12 +77,12 @@ pub enum Spacing {
 
 impl Spacing {
     /// Returns how much a given type of spaces measure in *em* units
-    pub fn to_length(self) -> Length<Em> {
+    pub const fn to_length(self) -> Length<Em> {
         match self {
             Spacing::None   => Length::<Em>::new(0.0),
-            Spacing::Thin   => Length::<Em>::new(1. / 6.),
-            Spacing::Medium => Length::<Em>::new(2. / 9.),
-            Spacing::Thick  => Length::<Em>::new(1. / 3.),
+            Spacing::Thin   => Length::<Em>::new(0.1666666666666666666666666), // 1 / 6
+            Spacing::Medium => Length::<Em>::new(0.2222222222222222222222222), // 2 / 9
+            Spacing::Thick  => Length::<Em>::new(0.3333333333333333333333333), // 1 / 3
         }
     }
 }
