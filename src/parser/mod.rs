@@ -11,6 +11,8 @@ pub mod nodes;
 pub mod color;
 #[deny(missing_docs)]
 pub mod symbols;
+#[deny(missing_docs)]
+pub mod macros;
 pub mod environments;
 pub mod functions;
 pub mod lexer;

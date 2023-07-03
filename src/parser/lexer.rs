@@ -61,11 +61,6 @@ pub struct Lexer<'a> {
     /// This way, [`Lexer::input`] is not empty unless we're at the end of the string.
     input: &'a str,
 
-    /// .The next input strings to be lexed after [`Lexer::input`]
-    ///
-    /// When [`Lexer::input`] becomes empty, the last extry of [`Lexer::next_inputs`] is popped and become [`Lexer::input`].
-    next_inputs : Vec<&'a str>,
-
     /// The last token which has been lexed.
     current: Token<'a>,
 }
@@ -76,7 +71,6 @@ impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Lexer<'a> {
         let mut lex = Lexer {
             input: input,
-            next_inputs: Vec::new(),
             current: Token::EOF,
         };
 
@@ -127,28 +121,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn advance_by(&mut self, size : usize) {
-        let len = self.input.len();
-        if len <= size {
-            self.input = &self.input[0 .. 0];
-            if self.pop_input() {
-                self.advance_by(size - len);
-            }
-        }
-        else {
-            self.input = &self.input[size ..];
-        }
+        self.input = &self.input[size ..];
     }
 
 
-    fn pop_input(&mut self) -> bool {
-        if let Some(input) = self.next_inputs.pop() {
-            self.input = input;
-            true
-        }
-        else {
-            false
-        }
-    }
 
 
     /// Lex a control sequence.  This method assumes that
@@ -194,23 +170,42 @@ impl<'a> Lexer<'a> {
         unimplemented!()
     }
 
-    // TODO: may be needed to parse \newcommand
-    /// Expect to find an {<inner>}, and return <inner>
-    // pub fn group(&mut self) -> ParseResult<'a, &'a str> {
-    //     self.consume_whitespace();
-    //     self.current.expect(Token::Symbol('{'))?;
+    // Expects to find an {<inner>}, and return <inner>
+    pub fn group(&mut self) -> ParseResult<'a, &'a str> {
+        self.consume_whitespace();
+        self.current.expect(Token::Symbol('{'))?;
 
-    //     let i_closing = match self.input.find('}') {
-    //         Some(pos) => pos,
-    //         None => return Err(ParseError::NoClosingBracket),
-    //     };
+        let mut open_parenthesis = 1;
+        let mut char_indices_iterator = self.input.char_indices();
+        let mut no_escape = true;
+        let mut last_index;
 
-    //     // Place cursor immediately after }
-    //     let group_inside = &self.input[.. i_closing];
-    //     self.advance_by(i_closing + 1);
-    //     self.next();
-    //     Ok(group_inside)
-    // }
+        loop {
+            let (next_index, next_char) = char_indices_iterator.next().ok_or(ParseError::UnexpectedEof)?;
+            last_index = next_index; 
+            if no_escape {
+                match next_char {
+                    '{'  => open_parenthesis += 1,
+                    '}'  => open_parenthesis -= 1,
+                    '\\' => no_escape = false,
+                    _    => (),
+                }
+            }
+            else {
+                no_escape = true;
+            }
+
+            if open_parenthesis == 0 {
+                break;
+            }
+        }
+
+        // Place cursor immediately after }
+        let group_inside = &self.input[.. last_index];
+        self.advance_by(last_index);
+        self.next();
+        Ok(group_inside)
+    }
 
     /// Match a segment of alphanumeric characters.  This method will
     /// return an empty string if there are no alphanumeric characters.
@@ -284,6 +279,15 @@ impl<'a> Lexer<'a> {
     pub fn current(&self) -> Token<'a> {
         self.current
     }
+
+    /// Consumes all remaining output till EOF.  
+    /// This is useful when another lexer takes over (in the case of custom command), but we still want to make
+    /// sure the old one has been consumed.
+    pub fn move_to_end(&mut self) -> & 'a str {
+        let Self { input, current } = self;
+        *current = Token::EOF;
+        std::mem::replace(input, &input[0 .. 0])
+    }
 }
 
 
@@ -304,52 +308,7 @@ mod tests {
 
     use super::{Lexer, Token};
 
-    impl<'a> Lexer<'a> {
-        // If `Lexer::input` is empty, so must `Lexer::next_input` be
-        fn check_input_not_empty_guarantee(&self) -> bool {
-            return !self.input.is_empty() || self.next_inputs.is_empty();
-        }
-    }
 
-    #[test]
-    fn advance_does_not_break_input_not_empty_guarantee() {
-        let mut rng = rand::thread_rng();
-
-        fn generate_random_string(length: usize) -> String {
-            let mut rng = rand::thread_rng();
-            let chars: String = (0..length).map(|_| {
-                let random_char : u32 = rng.gen_range(('a' as u32) .. ('z' as u32));
-                char::from_u32(random_char).unwrap()
-            }).collect();
-
-            chars
-        }
-
-
-        for _ in 0 .. 50 {
-            let input  = generate_random_string(rng.gen_range(1 .. 5));
-            let mut next_inputs_owned = Vec::new();
-            for _ in 0 .. 10 {
-                next_inputs_owned.push(generate_random_string(rng.gen_range(0 .. 5)));
-            }
-
-            let next_inputs : Vec<&str> = next_inputs_owned.iter().map(|x| x.as_ref()).collect();
-
-            let mut lexer = Lexer {
-                input : &input,
-                next_inputs: next_inputs,
-                current: Token::EOF,
-            };
-
-            for _ in 0 .. 20 {
-                // All strings are ASCII so no byte advance will create a bug
-                let advance = rng.gen_range(0 .. 5);
-                lexer.advance_by(advance);
-                assert!(lexer.check_input_not_empty_guarantee());
-            }
-        }
-
-    }
 
     #[test]
     fn lex_primes() {
@@ -390,7 +349,6 @@ mod tests {
         for (input, token, remainder) in tests {
             let mut lexer = Lexer {
                 input,
-                next_inputs: Vec::new(),
                 current: Token::EOF,
             };
             assert_eq!(lexer.control_sequence(), token);
@@ -426,24 +384,40 @@ mod tests {
         assert_eq_token_stream!(r"123\", "123");
     }
 
-    // TODO: may be needed to parse \newcommand
-    // #[test]
-    // fn lex_group() {
-    //     macro_rules! assert_group {
-    //         ($input:expr, $result:expr) => {
-    //             let mut l = Lexer::new($input);
-    //             assert_eq!(l.group(), $result);
-    //             assert!(!(l.current == Token::Symbol('}')));
-    //         }
-    //     }
+    #[test]
+    fn lex_group() {
+        macro_rules! assert_group {
+            ($input:expr, $result:expr) => {
+                let mut l = Lexer::new($input);
+                assert_eq!(l.group(), $result);
+                assert!(!(l.current == Token::Symbol('}')));
+            }
+        }
+        let mut l = Lexer::new("{1}");
+        assert_eq!(l.group(), Ok("1"));
+        assert!(!(l.current() == Token::EOF));
 
-    //     assert_group!("{1}", Ok("1"));
-    //     assert_group!("   {  abc } ", Ok("  abc "));
-    //     assert_group!("{}", Ok(""));
+        let mut l = Lexer::new("   {  abc } ");
+        assert_eq!(l.group(), Ok("  abc "));
+        assert!(!(l.current() == Token::EOF));
 
-    //     // This doesn't seem correct:
-    //     // assert_group!("{{}}", Ok("{"));
-    // }
+        let mut l = Lexer::new("{}");
+        assert_eq!(l.group(), Ok(""));
+        assert!(!(l.current() == Token::EOF));
+
+
+        let mut l = Lexer::new("{fez{fe}}");
+        assert_eq!(l.group(), Ok("fez{fe}"));
+        assert!(!(l.current() == Token::EOF));
+
+        let mut l = Lexer::new(r"{fez\{}");
+        assert_eq!(l.group(), Ok(r"fez\{"));
+        assert!(!(l.current() == Token::EOF));
+
+
+        // This doesn't seem correct:
+        // assert_group!("{{}}", Ok("{"));
+    }
 
     #[test]
     fn lex_alphanumeric() {

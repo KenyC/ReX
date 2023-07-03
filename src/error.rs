@@ -95,8 +95,11 @@ pub enum ParseError<'a> {
     /// One has used two or more subscripts in a row, e.g. "x_2_2".
     ExcessiveSuperscripts,
 
-    /// EOF appeared while some groups were not closed
-    UnexpectedEof(Token<'a>),
+    /// EOF appeared while a group or an array was incomplete
+    UnexpectedEof,
+    /// Expected EOF because we're done parsing, but there's still some input left.
+    /// If this happens, it's a bug of the parser, not a problem in user input.
+    ExpectedEof(Token<'a>),
 
     /// An unspecific error value for errors we haven't yet included in the list above
     Todo,
@@ -185,8 +188,10 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "stack commands must follow a group"),
             AccentMissingArg(ref acc) =>
                 write!(f, "the accent '\\{}' must have an argument", acc),
-            UnexpectedEof(ref tok) =>
-                write!(f, "unexpectedly ended parsing; unmatched end of expression? Stoped parsing at {}", tok),
+            UnexpectedEof =>
+                write!(f, "unexpected end of input; unmatched end of array? unfinished group?"),
+            ExpectedEof(ref token) =>
+                write!(f, "unexpectedly ended parsing; Stoped parsing at {}", token),
             UnrecognizedDimension =>
                 write!(f, "failed to parse dimension"),
             UnrecognizedColor(ref color) =>
