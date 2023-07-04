@@ -128,6 +128,12 @@ pub enum ParseError<'a> {
     /// If this happens, it's a bug of the parser, not a problem in user input.
     ExpectedEof(Token<'a>),
 
+
+    // TODO: more specific error
+    /// Any error happening in the expansion of custom macro  
+    /// More specific information about which error it is is currently unsupported 
+    /// as it would require some owned strings
+    ErrorInMacroExpansion,
     /// An unspecific error value for errors we haven't yet included in the list above
     Todo,
 }
@@ -237,6 +243,8 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "failed to parse dimension"),
             UnrecognizedColor(ref color) =>
                 write!(f, "failed to recognize the color '{}'", color),
+            ErrorInMacroExpansion =>
+                write!(f, "some error occurred while expanding a custom command"),
             Todo =>
                 write!(f, "failed with an unspecified error that has yet be implemented"),
         }

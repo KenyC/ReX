@@ -38,7 +38,7 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, command_collectio
                 new_input.push_str(remaining_string);
                 let mut new_lexer = Lexer::new(&new_input);
                 // TODO: no unwrap, deal with errors that occur in a custom command 
-                let mut nodes = expression(&mut new_lexer, local, command_collection).unwrap();
+                let mut nodes = expression(&mut new_lexer, local, command_collection).ok().ok_or(ParseError::ErrorInMacroExpansion)?;
                 ml.append(&mut nodes);
                 return Ok(ml);
             }
@@ -59,6 +59,11 @@ fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, command_collectio
         // an unrecognized symbol (perhaps from non-english, non-greek).
         // TODO: We should allow for more dialects.
         match node {
+            // Special case: useless empty groups
+            // Such groups are only used as syntactic delimiters, in e.g. macro arguments
+            // or as support for sub and superscripts 
+            // Since the latter case has already been dealt with, we can discard any empty group left at this stage
+            Some(ParseNode::Group(inner)) if inner.is_empty() => (),
             Some(n) => ml.push(n),
             None => {
                 match lex.current() {
@@ -611,9 +616,11 @@ mod tests {
 
     #[test]
     fn test_custom_command() {
-        let command = CustomCommand::parse("#1 + #2").unwrap();
         let mut command_collection = CommandCollection::default();
-        command_collection.insert("add", command).unwrap();
+        let command = CustomCommand::parse("#1 + #2").unwrap();
+        command_collection.insert("add",  command).unwrap();
+        let command = CustomCommand::parse(r"\lbrace#1\rbrace").unwrap();
+        command_collection.insert("wrap", command).unwrap();
 
         let expected = parse("45 + 68");
         let got      = parse_with_custom_commands(r"\add{45}{68}", &command_collection);
@@ -632,6 +639,16 @@ mod tests {
         // recursive macros
         let expected = parse("1 + 2 + 34");
         let got      = parse_with_custom_commands(r"\add{1}{\add{2}{3}}4", &command_collection);
+        assert_eq!(expected, got);   
+
+        // check that macro arg can't complete commands inside macro definition
+        let expected = parse(r"\lbrace{}a\rbrace");
+        let got      = parse_with_custom_commands(r"\wrap{a}", &command_collection);
+        assert_eq!(expected, got);   
+
+        // check that subsequent text can't complete commands inside macro def
+        let expected = parse(r"\lbrace\rbrace{}a");
+        let got      = parse_with_custom_commands(r"\wrap{}a", &command_collection);
         assert_eq!(expected, got);   
     }
 

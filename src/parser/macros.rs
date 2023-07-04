@@ -182,25 +182,35 @@ impl CustomCommand {
     /// This method returns the string obtained by replacing the argument slots with the provided values.
     /// This method does not check if the number of arguments given is correct and may panic if provided with too few arguments
     pub fn apply(&self, args : &[&str]) -> String {
+        // This string is added on both sides of arguments to prevent 
+        // expansion like "\wrapbraces{a}" => "\lbracea\brace" (syntax error)
+        // With guards, the macro is expanded as "\lbrace{}a{}\rbrace"
+        const GUARD: &str = "{}";
+        const ARG_GUARD_SIZE:   usize = 2 * GUARD.len();
+        const FINAL_GUARD_SIZE: usize = GUARD.len();
         let string_size : usize = self.chunks
             .iter()
             .map(|chunk| match chunk {
-                ChunkCommand::ArgSlot(i) => args[*i].len(),
+                ChunkCommand::ArgSlot(i) => args[*i].len() + ARG_GUARD_SIZE,
                 ChunkCommand::Text(text) => text.len(),
             })
-            .sum()
+            .sum::<usize>()
+            + FINAL_GUARD_SIZE
         ;
 
         let mut to_return = String::with_capacity(string_size);
 
         for chunk in self.chunks.iter() {
-            let to_push = match chunk {
-                ChunkCommand::ArgSlot(i) => args[*i],
-                ChunkCommand::Text(text) => text,
+            match chunk {
+                ChunkCommand::ArgSlot(i) => {
+                    to_return.push_str(GUARD);
+                    to_return.push_str(args[*i]);
+                    to_return.push_str(GUARD);
+                },
+                ChunkCommand::Text(text) => to_return.push_str(text),
             };
-            to_return.push_str(to_push);
         }
-
+        to_return.push_str(GUARD);
         to_return
     }
 
@@ -253,12 +263,12 @@ mod tests {
         let custom_command = CustomCommand::parse(command_def).unwrap();
         assert_eq!(custom_command, expected);
         let result = custom_command.apply(&["custard",]);
-        assert_eq!(result, "I love custard and 2");
+        assert_eq!(result, "I love {}custard{} and 2{}");
 
         let command_def = r"\left\lbrace #1\middle| #2\right\rbrace";
         let custom_command = CustomCommand::parse(command_def).unwrap();
         let result = custom_command.apply(&["x + 2", "x"]);
-        assert_eq!(result, r"\left\lbrace x + 2\middle| x\right\rbrace");
+        assert_eq!(result, r"\left\lbrace {}x + 2{}\middle| {}x{}\right\rbrace{}");
     }
 
     #[test]
