@@ -138,12 +138,31 @@ impl<'f, F : MathFont> Layout<'f, F> {
             }
 
             ParseNode::PlainText(PlainText {ref text}) => {
+                // ignore braces, unless they are escaped
+                let mut escape = false;
                 for character in text.chars() {
+                    if escape && !"{}".contains(character) {
+                        self.add_node(config.ctx.glyph('\\')?.as_layout(config)?);
+                    }
+
+
                     if character.is_ascii_whitespace() {
                         self.add_node(kern![horz : Spacing::Medium.to_length().scaled(config)])
                     }
+                    else if "{}\\".contains(character) {
+                        if escape && "{}".contains(character) {
+                            self.add_node(config.ctx.glyph(character)?.as_layout(config)?);
+                        }
+                    }
                     else {
                         self.add_node(config.ctx.glyph(character)?.as_layout(config)?);
+                    }
+
+                    if character == '\\' {
+                        escape = !escape;
+                    }
+                    else {
+                        escape = false;
                     }
                 }
             },

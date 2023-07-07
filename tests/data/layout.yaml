@@ -44,6 +44,8 @@ Text:
       - \text{log-in}
       - \text{1_2}
       - \text{1^2}
+      - \text{{}\{{}\}\a}
+      - \text{\\a{\}}}
 
 Fractions:
   - Description: should properly scale
