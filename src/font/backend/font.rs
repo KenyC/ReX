@@ -5,7 +5,9 @@ use font::opentype::OpenTypeFont;
 use crate::font::{Constants, Glyph};
 use crate::font::common::VariantGlyph;
 
-use crate::{dimensions::*, font::common::GlyphId};
+use crate::{font::common::GlyphId};
+use crate::dimensions::Unit;
+use crate::dimensions::units::{Em, FUnit, Ratio};
 use crate::error::FontError;
 
 use crate::font::kerning::Corner;
@@ -37,20 +39,20 @@ impl MathFont for OpenTypeFont {
         Ok(Glyph {
             gid,
             font: self,
-            advance:    Length::<Font>::new(hmetrics.advance.into()),
-            lsb:        Length::<Font>::new(hmetrics.lsb.into()),
-            italics:    Length::<Font>::new(italics.into()),
-            attachment: Length::<Font>::new(attachment.into()),
+            advance:    Unit::<FUnit>::new(hmetrics.advance.into()),
+            lsb:        Unit::<FUnit>::new(hmetrics.lsb.into()),
+            italics:    Unit::<FUnit>::new(italics.into()),
+            attachment: Unit::<FUnit>::new(attachment.into()),
             bbox: (
-                Length::<Font>::new(ll.x().into()),
-                Length::<Font>::new(ur.y().into()),
-                Length::<Font>::new(ur.x().into()),
-                Length::<Font>::new(ll.y().into()),
+                Unit::<FUnit>::new(ll.x().into()),
+                Unit::<FUnit>::new(ur.y().into()),
+                Unit::<FUnit>::new(ur.x().into()),
+                Unit::<FUnit>::new(ll.y().into()),
             )
         })
     }
 
-    fn kern_for(&self, glyph_id : GlyphId, height : Length<Font>, side : Corner) -> Option<Length<Font>> {
+    fn kern_for(&self, glyph_id : GlyphId, height : Unit<FUnit>, side : Corner) -> Option<Unit<FUnit>> {
         let math = self.math.as_ref().unwrap();
         let record = math.glyph_info.kern_info.entries.get(&glyph_id.into())?;
 
@@ -61,7 +63,7 @@ impl MathFont for OpenTypeFont {
             Corner::BottomLeft => &record.bottom_left,
         };
 
-        Some(Length::<Font>::new(table.kern_for_height((height / Font) as i16).into()))
+        Some(Unit::<FUnit>::new(table.kern_for_height((height.unitless(FUnit)) as i16).into()))
     }
 
 
@@ -90,8 +92,8 @@ impl MathFont for OpenTypeFont {
             .unwrap_or_default()
     }
 
-    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants {
-        let em = |v: f64| -> Length<Em> { Length::<Font>::new(v) * font_units_to_em };
+    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> Constants {
+        let em = |v: f64| -> Unit<Em> { Unit::<FUnit>::new(v) * font_units_to_em };
 
         let math_constants = &self
             .math
@@ -145,36 +147,36 @@ impl MathFont for OpenTypeFont {
 
             // TODO: trait implementations should not be allowed to vary on these values
             delimiter_factor: 0.901,
-            delimiter_short_fall: Length::<Em>::new(0.1),
-            null_delimiter_space: Length::<Em>::new(0.1),
+            delimiter_short_fall: Unit::<Em>::new(0.1),
+            null_delimiter_space: Unit::<Em>::new(0.1),
 
             script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down),
             script_script_percent_scale_down: 0.01 * f64::from(math_constants.script_script_percent_scale_down),
         }
     }
 
-    fn font_units_to_em(&self) -> Scale<Em, Font> {
+    fn font_units_to_em(&self) -> Unit<Ratio<Em, FUnit>> {
         use font::Font as FontTrait;
-        Scale::<Em, Font>::new(self.font_matrix().matrix.m11() as f64)
+        Unit::<Ratio<Em, FUnit>>::new(self.font_matrix().matrix.m11() as f64)
     }
 
-    fn horz_variant(&self, gid: GlyphId, width: Length<Font>) -> VariantGlyph {
+    fn horz_variant(&self, gid: GlyphId, width: Unit<FUnit>) -> VariantGlyph {
         self
             .math
             .as_ref()
             .unwrap()
             .variants
-            .horz_variant(gid.into(), (width / Font) as u32)
+            .horz_variant(gid.into(), (width.unitless(FUnit)) as u32)
             .into()
     }
 
-    fn vert_variant(&self, gid: GlyphId, height: Length<Font>) -> VariantGlyph {
+    fn vert_variant(&self, gid: GlyphId, height: Unit<FUnit>) -> VariantGlyph {
         self
             .math
             .as_ref()
             .unwrap()
             .variants
-            .vert_variant(gid.into(), (height / Font) as u32)
+            .vert_variant(gid.into(), (height.unitless(FUnit)) as u32)
             .into()
     }
 

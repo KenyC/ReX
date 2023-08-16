@@ -8,8 +8,8 @@ use crate::parser::{
 };
 use super::lexer::{Lexer, Token};
 use super::functions::get_command;
-use super::macros::{CommandCollection, CustomCommand};
-use crate::dimensions::*;
+use super::macros::CommandCollection;
+use crate::dimensions::AnyUnit;
 
 fn expression_until_opt<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection, end: Option<Token>) -> ParseResult<'a, Vec<ParseNode>> {
     let mut ml: Vec<ParseNode> = Vec::new();
@@ -425,7 +425,7 @@ pub fn expect_type<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &
 }
 
 /// TODO: to be implemented
-pub fn dimension<'a>(_: &mut Lexer<'a>, _: Style, _ : &CommandCollection) -> ParseResult<'a, Unit> {
+pub fn dimension<'a>(_: &mut Lexer<'a>, _: Style, _ : &CommandCollection) -> ParseResult<'a, AnyUnit> {
     unimplemented!()
 }
 

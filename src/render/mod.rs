@@ -24,7 +24,7 @@
 
 
 use crate::error::Error;
-use crate::dimensions::*;
+use crate::dimensions::units::Px;
 use crate::font::MathFont;
 use crate::font::common::GlyphId;
 use crate::layout::{LayoutNode, LayoutVariant, Alignment, LayoutSettings, Layout, Grid};
@@ -153,7 +153,7 @@ impl Renderer {
             x: 0.0,
             y: 0.0,
         };
-        self.render_hbox(out, pos, &layout.contents, layout.height / Px, layout.width / Px, Alignment::Default);
+        self.render_hbox(out, pos, &layout.contents, layout.height.unitless(Px), layout.width.unitless(Px), Alignment::Default);
     }
 
     fn render_grid<F>(&self, out: &mut impl Backend<F>, pos: Cursor, _width: f64, _height: f64, grid: &Grid<F>) {
@@ -165,7 +165,7 @@ impl Renderer {
 
             self.render_node(
                 out,
-                pos.translate(x_offsets[column] / Px, (y_offsets[row] + height) / Px),
+                pos.translate(x_offsets[column].unitless(Px), (y_offsets[row] + height).unitless(Px)),
                 node
             );
         }
@@ -176,44 +176,44 @@ impl Renderer {
             out.bbox(pos.up(height), nodes_width, height, Role::HBox);
         }
         if let Alignment::Centered(w) = alignment {
-            pos.x += (nodes_width - w / Px) * 0.5;
+            pos.x += (nodes_width - w.unitless(Px)) * 0.5;
         }
         else if let Alignment::Right(w) = alignment {
-            pos.x += nodes_width - w / Px;
+            pos.x += nodes_width - w.unitless(Px);
         }
 
         for node in nodes {
             self.render_node(out, pos, node);
 
-            pos.x += node.width / Px;
+            pos.x += node.width.unitless(Px);
         }
     }
     fn render_vbox<F>(&self, out: &mut impl Backend<F>, mut pos: Cursor, nodes: &[LayoutNode<F>]) {
         for node in nodes {
             match node.node {
-                LayoutVariant::Rule => out.rule(pos, node.width / Px, node.height / Px),
-                LayoutVariant::Grid(ref grid) => self.render_grid(out, pos, node.height / Px, node.width / Px, grid),
+                LayoutVariant::Rule => out.rule(pos, node.width.unitless(Px), node.height.unitless(Px)),
+                LayoutVariant::Grid(ref grid) => self.render_grid(out, pos, node.height.unitless(Px), node.width.unitless(Px), grid),
                 LayoutVariant::HorizontalBox(ref hbox) => {
                     self.render_hbox(out,
-                                     pos.down(node.height / Px),
+                                     pos.down(node.height.unitless(Px)),
                                      &hbox.contents,
-                                     node.height / Px,
-                                     node.width / Px,
+                                     node.height.unitless(Px),
+                                     node.width.unitless(Px),
                                      hbox.alignment)
                 }
 
                 LayoutVariant::VerticalBox(ref vbox) => {
                     if self.debug {
-                        out.bbox(pos, node.width / Px, (node.height - node.depth) / Px, Role::VBox);
+                        out.bbox(pos, node.width.unitless(Px), (node.height - node.depth).unitless(Px), Role::VBox);
                     }
                     self.render_vbox(out, pos, &vbox.contents);
                 }
 
                 LayoutVariant::Glyph(ref gly) => {
                     if self.debug {
-                        out.bbox(pos, node.width / Px, (node.height - node.depth) / Px, Role::Glyph);
+                        out.bbox(pos, node.width.unitless(Px), (node.height - node.depth).unitless(Px), Role::Glyph);
                     }
-                    out.symbol(pos.down(node.height / Px), gly.gid, gly.size / Px, gly.font);
+                    out.symbol(pos.down(node.height.unitless(Px)), gly.gid, gly.size.unitless(Px), gly.font);
                 }
 
                 LayoutVariant::Color(_) => panic!("Shouldn't have a color in a vertical box???"),
@@ -221,7 +221,7 @@ impl Renderer {
                 LayoutVariant::Kern => { /* NOOP */ }
             }
 
-            pos.y += node.height / Px;
+            pos.y += node.height.unitless(Px);
         }
     }
 
@@ -229,28 +229,28 @@ impl Renderer {
         match node.node {
             LayoutVariant::Glyph(ref gly) => {
                 if self.debug {
-                    out.bbox(pos.up(node.height / Px), node.width / Px, (node.height - node.depth) / Px, Role::Glyph);
+                    out.bbox(pos.up(node.height.unitless(Px)), node.width.unitless(Px), (node.height - node.depth).unitless(Px), Role::Glyph);
                 }
-                out.symbol(pos, gly.gid, gly.size / Px, gly.font);
+                out.symbol(pos, gly.gid, gly.size.unitless(Px), gly.font);
             }
 
-            LayoutVariant::Rule => out.rule(pos.up(node.height / Px), node.width / Px, node.height / Px),
+            LayoutVariant::Rule => out.rule(pos.up(node.height.unitless(Px)), node.width.unitless(Px), node.height.unitless(Px)),
 
             LayoutVariant::VerticalBox(ref vbox) => {
                 if self.debug {
-                    out.bbox(pos.up(node.height / Px), node.width / Px, (node.height - node.depth) / Px, Role::VBox);
+                    out.bbox(pos.up(node.height.unitless(Px)), node.width.unitless(Px), (node.height - node.depth).unitless(Px), Role::VBox);
                 }
-                self.render_vbox(out, pos.up(node.height / Px), &vbox.contents);
+                self.render_vbox(out, pos.up(node.height.unitless(Px)), &vbox.contents);
             }
 
             LayoutVariant::HorizontalBox(ref hbox) => {
-                self.render_hbox(out, pos, &hbox.contents, node.height / Px, node.width / Px, hbox.alignment);
+                self.render_hbox(out, pos, &hbox.contents, node.height.unitless(Px), node.width.unitless(Px), hbox.alignment);
             }
-            LayoutVariant::Grid(ref grid) => self.render_grid(out, pos, node.height / Px, node.width / Px, grid),
+            LayoutVariant::Grid(ref grid) => self.render_grid(out, pos, node.height.unitless(Px), node.width.unitless(Px), grid),
 
             LayoutVariant::Color(ref clr) => {
                 out.begin_color(clr.color);
-                self.render_hbox(out, pos, &clr.inner, node.height / Px, node.width / Px, Alignment::Default);
+                self.render_hbox(out, pos, &clr.inner, node.height.unitless(Px), node.width.unitless(Px), Alignment::Default);
                 out.end_color();
             }
 

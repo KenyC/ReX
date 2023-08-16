@@ -1,23 +1,23 @@
 #![allow(dead_code)]
 use super::{VerticalBox, HorizontalBox, LayoutNode, LayoutVariant, Alignment, Grid, Layout, ColorChange};
-use std::cmp::{max, min};
-use crate::dimensions::*;
+
+use crate::dimensions::{units::Px, Unit};
 use std::collections::BTreeMap;
 use crate::parser::nodes;
 
 pub struct VBox<'a, F> {
-    pub width: Length<Px>,
-    pub height: Length<Px>,
-    pub depth: Length<Px>,
+    pub width:  Unit<Px>,
+    pub height: Unit<Px>,
+    pub depth:  Unit<Px>,
     node: VerticalBox<'a, F>,
 }
 
 impl<'a, F> Default for VBox<'a, F> {
     fn default() -> Self {
         Self {
-            width:  Length::default(),
-            height: Length::default(),
-            depth:  Length::default(),
+            width:  Unit::ZERO,
+            height: Unit::ZERO,
+            depth:  Unit::ZERO,
             node:   VerticalBox::default(),
         }
     }
@@ -29,18 +29,18 @@ impl<'a, F> VBox<'a, F> {
     }
 
     pub fn insert_node(&mut self, idx: usize, node: LayoutNode<'a, F>) {
-        self.width = max(self.width, node.width);
+        self.width = Unit::max(self.width, node.width);
         self.height += node.height;
         self.node.contents.insert(idx, node);
     }
 
     pub fn add_node(&mut self, node: LayoutNode<'a, F>) {
-        self.width = max(self.width, node.width);
+        self.width = Unit::max(self.width, node.width);
         self.height += node.height;
         self.node.contents.push(node);
     }
 
-    pub fn set_offset(&mut self, offset: Length<Px>) {
+    pub fn set_offset(&mut self, offset: Unit<Px>) {
         self.node.offset = offset;
     }
 
@@ -79,9 +79,9 @@ macro_rules! vbox {
 }
 
 pub struct HBox<'a, F> {
-    pub width: Length<Px>,
-    pub height: Length<Px>,
-    pub depth: Length<Px>,
+    pub width: Unit<Px>,
+    pub height: Unit<Px>,
+    pub depth: Unit<Px>,
     pub node: HorizontalBox<'a, F>,
     pub alignment: Alignment,
 }
@@ -91,9 +91,9 @@ pub struct HBox<'a, F> {
 impl<'a, F> Default for HBox<'a, F> {
     fn default() -> Self {
         Self {
-            width:     Length::default(),
-            height:    Length::default(),
-            depth:     Length::default(),
+            width:     Unit::ZERO,
+            height:    Unit::ZERO,
+            depth:     Unit::ZERO,
             alignment: Alignment::default(),
             node:      HorizontalBox::default(),
         }
@@ -109,12 +109,12 @@ impl<'a, F> HBox<'a, F> {
 
     pub fn add_node(&mut self, node: LayoutNode<'a, F>) {
         self.width += node.width;
-        self.height = max(self.height, node.height);
-        self.depth = min(self.depth, node.depth);
+        self.height = Unit::max(self.height, node.height);
+        self.depth = Unit::min(self.depth, node.depth);
         self.node.contents.push(node);
     }
 
-    pub fn set_offset(&mut self, offset: Length<Px>) {
+    pub fn set_offset(&mut self, offset: Unit<Px>) {
         self.node.offset = offset;
     }
 
@@ -122,7 +122,7 @@ impl<'a, F> HBox<'a, F> {
         self.node.alignment = align;
     }
 
-    pub fn set_width(&mut self, width: Length<Px>) {
+    pub fn set_width(&mut self, width: Unit<Px>) {
         self.width = width;
     }
 
@@ -153,7 +153,7 @@ impl<'a, F> Grid<'a, F> {
     /// Replaces any node there may have been in this position.
     pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, F>) {
         if row >= self.rows.len() {
-            self.rows.resize(row + 1, (Length::zero(), Length::zero()));
+            self.rows.resize(row + 1, (Unit::ZERO, Unit::ZERO));
         }
         if node.height > self.rows[row].0 {
             self.rows[row].0 = node.height;
@@ -162,7 +162,7 @@ impl<'a, F> Grid<'a, F> {
             self.rows[row].1 = node.depth;
         }
         if column >= self.columns.len() {
-            self.columns.resize(column + 1, Length::zero());
+            self.columns.resize(column + 1, Unit::ZERO);
         }
         if node.width > self.columns[column] {
             self.columns[column] = node.width;
@@ -177,14 +177,14 @@ impl<'a, F> Grid<'a, F> {
         LayoutNode {
             width:  self.columns.iter().cloned().sum(),
             height: self.rows.iter().map(|&(height, depth)| height - depth).sum(),
-            depth: Length::zero(),
+            depth: Unit::ZERO,
             node: LayoutVariant::Grid(self)
         }
     }
 
     /// Returns, for every column, the sum of the widths of the preceding columns.
-    pub fn x_offsets(&self) -> Vec<Length<Px>> {
-        self.columns.iter().scan(Length::zero(), |acc, &width| {
+    pub fn x_offsets(&self) -> Vec<Unit<Px>> {
+        self.columns.iter().scan(Unit::ZERO, |acc, &width| {
             let x = *acc;
             *acc += width;
             Some(x)
@@ -192,8 +192,8 @@ impl<'a, F> Grid<'a, F> {
     }
 
     /// Returns, for every row, the sum of the heights of the preceding rows.
-    pub fn y_offsets(&self) -> Vec<Length<Px>> {
-        self.rows.iter().scan(Length::zero(), |acc, &(height, depth)| {
+    pub fn y_offsets(&self) -> Vec<Unit<Px>> {
+        self.rows.iter().scan(Unit::ZERO, |acc, &(height, depth)| {
             let x = *acc;
             *acc += height - depth;
             Some(x)
@@ -228,7 +228,7 @@ macro_rules! hbox {
 
 macro_rules! rule {
     (width: $width:expr, height: $height:expr) => (
-        rule!(width: $width, height: $height, depth: Length::zero())
+        rule!(width: $width, height: $height, depth: Unit::ZERO)
     );
 
     (width: $width:expr, height: $height:expr, depth: $depth:expr) => (
@@ -244,9 +244,9 @@ macro_rules! rule {
 macro_rules! kern {
     (vert: $height:expr) => (
         LayoutNode {
-            width:  Length::zero(),
+            width:  Unit::ZERO,
             height: $height,
-            depth:  Length::zero(),
+            depth:  Unit::ZERO,
             node:   LayoutVariant::Kern,
         }
     );
@@ -254,8 +254,8 @@ macro_rules! kern {
     (horz: $width:expr) => (
         LayoutNode {
             width:   $width,
-            height: Length::zero(),
-            depth:  Length::zero(),
+            height: Unit::ZERO,
+            depth:  Unit::ZERO,
             node:   LayoutVariant::Kern,
         }
     );

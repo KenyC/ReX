@@ -1,8 +1,10 @@
 //! This module defines functions that gives the most esthetically pleasing spacing between two types of symbols.
 //! Functions from this module for instance decide that "f" is followed by less space in "f(" than in "f +".
-use crate::font::{AtomType};
+use crate::font::AtomType;
 use crate::layout::Style;
-use crate::dimensions::{Length, Em};
+use crate::dimensions::Unit;
+use crate::dimensions::units::Em;
+
 
 /// Given the type of two subsequent atoms and the current style, 
 /// determines how much spacing should occur between the two
@@ -77,12 +79,12 @@ pub enum Spacing {
 
 impl Spacing {
     /// Returns how much a given type of spaces measure in *em* units
-    pub const fn to_length(self) -> Length<Em> {
+    pub const fn to_length(self) -> Unit<Em> {
         match self {
-            Spacing::None   => Length::<Em>::new(0.0),
-            Spacing::Thin   => Length::<Em>::new(0.1666666666666666666666666), // 1 / 6
-            Spacing::Medium => Length::<Em>::new(0.2222222222222222222222222), // 2 / 9
-            Spacing::Thick  => Length::<Em>::new(0.3333333333333333333333333), // 1 / 3
+            Spacing::None   => Unit::<Em>::new(0.0),
+            Spacing::Thin   => Unit::<Em>::new(0.1666666666666666666666666), // 1 / 6
+            Spacing::Medium => Unit::<Em>::new(0.2222222222222222222222222), // 2 / 9
+            Spacing::Thick  => Unit::<Em>::new(0.3333333333333333333333333), // 1 / 3
         }
     }
 }

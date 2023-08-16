@@ -1,4 +1,4 @@
-use crate::dimensions::Unit;
+use crate::dimensions::AnyUnit;
 use crate::font::{Weight, Family, AtomType, Style, style_symbol};
 use crate::layout::Style as LayoutStyle;
 use super::lexer::{Lexer, Token};
@@ -35,7 +35,7 @@ pub enum Command {
     ColorLit(RGBA),
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
     DelimiterSize(u8, AtomType),
-    Kerning(Unit),
+    Kerning(AnyUnit),
     Style(LayoutStyle),
     AtomChange(AtomType),
     TextOperator(&'static str, bool),
@@ -107,13 +107,13 @@ pub fn get_command(name: &str) -> Option<Command> {
         "Bigg"  => Command::DelimiterSize(4, AtomType::Ordinary),
 
         // Spacing related commands
-        "!"     => Command::Kerning(Unit::Em(-3f64/18f64)),
-        ","     => Command::Kerning(Unit::Em(3f64/18f64)),
-        ":"     => Command::Kerning(Unit::Em(4f64/18f64)),
-        ";"     => Command::Kerning(Unit::Em(5f64/18f64)),
-        " "     => Command::Kerning(Unit::Em(1f64/4f64)),
-        "quad"  => Command::Kerning(Unit::Em(1.0f64)),
-        "qquad" => Command::Kerning(Unit::Em(2.0f64)),
+        "!"     => Command::Kerning(AnyUnit::Em(-3f64/18f64)),
+        ","     => Command::Kerning(AnyUnit::Em(3f64/18f64)),
+        ":"     => Command::Kerning(AnyUnit::Em(4f64/18f64)),
+        ";"     => Command::Kerning(AnyUnit::Em(5f64/18f64)),
+        " "     => Command::Kerning(AnyUnit::Em(1f64/4f64)),
+        "quad"  => Command::Kerning(AnyUnit::Em(1.0f64)),
+        "qquad" => Command::Kerning(AnyUnit::Em(2.0f64)),
         "rule"  => Command::Rule,
 
         // Useful other than debugging?
@@ -244,7 +244,7 @@ fn delimiter_size<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &C
     Ok(ParseNode::Symbol(symbol))
 }
 
-fn kerning<'a>(_: &mut Lexer<'a>, _: Style, unit: Unit) -> ParseResult<'a, ParseNode> {
+fn kerning<'a>(_: &mut Lexer<'a>, _: Style, unit: AnyUnit) -> ParseResult<'a, ParseNode> {
     Ok(ParseNode::Kerning(unit))
 }
 
@@ -258,7 +258,7 @@ fn atom_change<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &Comm
 }
 
 fn text_operator<'a>(_: &mut Lexer<'a>, style: Style, text: &str, limits: bool) -> ParseResult<'a, ParseNode> {
-    const SMALL_SKIP: Unit = Unit::Em(3f64 / 18f64);
+    const SMALL_SKIP: AnyUnit = AnyUnit::Em(3f64 / 18f64);
     let at = AtomType::Operator(limits);
     let mut inner = Vec::with_capacity(text.len());
 

@@ -4,7 +4,6 @@
 //! this function returns a layout. The layout can then be sent to the renderer (cf [`render`](crate::render)) to create a graphical output.
 
 
-use std::cmp::{min, max};
 use std::unimplemented;
 
 use super::builders;
@@ -22,7 +21,8 @@ use super::spacing::{atom_space, Spacing};
 use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack, PlainText};
 use crate::parser::symbols::Symbol;
 use crate::parser::environments::{Array, ArrayColumnAlign};
-use crate::dimensions::{*};
+use crate::dimensions::Unit;
+use crate::dimensions::units::{Px, Em, Pt, FUnit};
 use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
 
@@ -189,7 +189,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             let axis_offset = config.ctx.constants.axis_height.scaled(config);
             let largeop = config.ctx.vert_variant(sym.codepoint, config.ctx.constants.display_operator_min_height * config.ctx.units_per_em)?
                 .as_layout(config)?;
-            let shift = (largeop.height + largeop.depth) * 0.5 - axis_offset;
+            let shift = (largeop.height + largeop.depth).scale(0.5) - axis_offset;
             Ok(vbox!(offset: shift; largeop))
         } else {
             glyph.as_layout(config)
@@ -216,11 +216,11 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 if !glyph.attachment.is_zero() {
                     glyph.attachment.scaled(config)
                 } else {
-                    let offset = (glyph.advance + glyph.italics) * 0.5;
+                    let offset = (glyph.advance + glyph.italics).scale(0.5);
                     offset.scaled(config)
                 }
             }
-            None => base.width * 0.5,
+            None => base.width.scale(0.5),
         };
 
         let acc_offset = match accent_variant {
@@ -231,17 +231,17 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 } else {
                     // For glyphs without attachmens, we must
                     // also account for combining glyphs
-                    let offset = (glyph.bbox.2 + glyph.bbox.0) * 0.5;
+                    let offset = (glyph.bbox.2 + glyph.bbox.0).scale(0.5);
                     offset.scaled(config)
                 }
             }
 
-            VariantGlyph::Constructable(_, _) => accent.width * 0.5,
+            VariantGlyph::Constructable(_, _) => accent.width.scale(0.5),
         };
 
         // Do not place the accent any further than you would if given
         // an `x` character in the current style.
-        let delta = -min(base.height, config.ctx.constants.accent_base_height.scaled(config));
+        let delta = -Unit::min(base.height, config.ctx.constants.accent_base_height.scaled(config));
 
         // By not placing an offset on this vbox, we are assured that the
         // baseline will match the baseline of `base.as_node()`
@@ -255,12 +255,12 @@ impl<'f, F : MathFont> Layout<'f, F> {
     fn delimited<'a>(&mut self, delim: &Delimited, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // let inner = layout(&delim.inner, config)?.as_node();
         let mut inners = Vec::with_capacity(delim.inners().len());
-        let mut max_height = Length::zero();
-        let mut min_depth  = Length::zero();
+        let mut max_height = Unit::ZERO;
+        let mut min_depth  = Unit::ZERO;
         for inner_parse_nodes in delim.inners() {
             let inner = layout(inner_parse_nodes.as_slice(), config)?.as_node();
-            max_height = max(max_height, inner.height);
-            min_depth  = min(min_depth,  inner.depth);
+            max_height = Unit::max(max_height, inner.height);
+            min_depth  = Unit::min(min_depth,  inner.depth);
             inners.push(inner);
         }
 
@@ -272,8 +272,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         #[derive(Debug, Clone, Copy)]
         struct ExtensionMetrics {
-            axis:      Length<Px>,
-            clearance: Length<Font>,
+            axis:      Unit<Px>,
+            clearance: Unit<FUnit>,
         }
 
         let mut extension_metrics = None;
@@ -281,12 +281,12 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // Only extend if we meet a certain size
         // TODO: This quick height check doesn't seem to be strong enough,
         // reference: http://tug.org/pipermail/luatex/2010-July/001745.html
-        if max(max_height, -min_depth) > min_height * 0.5 {
+        if Unit::max(max_height, -min_depth) > min_height.scale(0.5) {
             let axis = config.ctx.constants.axis_height * config.font_size;
 
-            let inner_size = max(max_height - axis, axis - min_depth) * 2.0;
-            let clearance_px  = max(
-                inner_size * config.ctx.constants.delimiter_factor,
+            let inner_size = Unit::max(max_height - axis, axis - min_depth).scale(2.0);
+            let clearance_px  = Unit::max(
+                inner_size.scale(config.ctx.constants.delimiter_factor),
                 max_height - min_depth - config.ctx.constants.delimiter_short_fall * config.font_size
             );
             let clearance = config.to_font(clearance_px);
@@ -298,7 +298,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         fn make_delimiter<'a, 'f, F : MathFont>(
             symbol : Symbol, 
             extension_metrics: &Option<ExtensionMetrics>, 
-            null_delimiter_space: Length<Px>,
+            null_delimiter_space: Unit<Px>,
             config: LayoutSettings<'a, 'f, F>
         ) -> Result<LayoutNode<'f, F>, LayoutError> {
             if symbol.codepoint == '.' {
@@ -356,10 +356,10 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         // We calculate the vertical positions of the scripts.  The `adjust_up`
         // variable will describe how far we need to adjust the superscript up.
-        let mut adjust_up = Length::zero();
-        let mut adjust_down = Length::zero();
-        let mut sup_kern = Length::zero();
-        let mut sub_kern = Length::zero();
+        let mut adjust_up = Unit::ZERO;
+        let mut adjust_down = Unit::ZERO;
+        let mut sup_kern = Unit::ZERO;
+        let mut sub_kern = Unit::ZERO;
 
         if scripts.superscript.is_some() {
             // Use default font values for first iteration of vertical height.
@@ -435,7 +435,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             let sub_top = sub.height - adjust_down;
             let gap_min = config.ctx.constants.sub_superscript_gap_min.scaled(config);
             if sup_bot - sub_top < gap_min {
-                let adjust = (gap_min - sup_bot + sub_top) * 0.5;
+                let adjust = (gap_min - sup_bot + sub_top).scale(0.5);
                 adjust_up += adjust;
                 adjust_down += adjust;
             }
@@ -474,14 +474,14 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // the superscript and subscript of the limits.
         let delta = match base.is_symbol() {
             Some(gly) => gly.italics,
-            None => Length::zero()
+            None => Unit::ZERO
         };
 
         // Next we calculate the kerning required to separate the superscript
         // and subscript (respectively) from the base.
-        let sup_kern = max(config.ctx.constants.upper_limit_baseline_rise_min.scaled(config),
+        let sup_kern = Unit::max(config.ctx.constants.upper_limit_baseline_rise_min.scaled(config),
                         config.ctx.constants.upper_limit_gap_min.scaled(config) - sup.depth);
-        let sub_kern = max(config.ctx.constants.lower_limit_gap_min.scaled(config),
+        let sub_kern = Unit::max(config.ctx.constants.lower_limit_gap_min.scaled(config),
                         config.ctx.constants.lower_limit_baseline_drop_min.scaled(config) - sub.height) -
                     base.depth;
 
@@ -493,13 +493,13 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         // We will construct a vbox containing the superscript/base/subscript.
         // We will all of these nodes, so we widen each to the largest.
-        let width = max!(base.width, sub.width + delta * 0.5, sup.width + delta * 0.5);
+        let width = max!(base.width, sub.width + delta.scale(0.5), sup.width + delta.scale(0.5));
 
         self.add_node(vbox![
             offset: offset;
             hbox![align: Alignment::Centered(sup.width);
                 width: width;
-                kern![horz: delta * 0.5],
+                kern![horz: delta.scale(0.5)],
                 sup.as_node()
             ],
 
@@ -509,7 +509,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
             hbox![align: Alignment::Centered(sub.width);
                 width: width;
-                kern![horz: -delta * 0.5],
+                kern![horz: -delta.scale(0.5)],
                 sub.as_node()
             ]
         ]);
@@ -526,7 +526,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         let bar = match frac.bar_thickness {
             BarThickness::Default => config.ctx.constants.fraction_rule_thickness.scaled(config),
-            BarThickness::None => Length::zero(),
+            BarThickness::None => Unit::ZERO,
             BarThickness::Unit(u) => u.scaled(config),
         };
 
@@ -562,9 +562,9 @@ impl<'f, F : MathFont> Layout<'f, F> {
             gap_denom = config.ctx.constants.fraction_denominator_gap_min.scaled(config);
         }
 
-        let kern_num = max(shift_up - axis - bar * 0.5, gap_num - numer.depth);
-        let kern_den = max(shift_down + axis - denom.height - bar * 0.5, gap_denom);
-        let offset = denom.height + kern_den + bar * 0.5 - axis;
+        let kern_num = Unit::max(shift_up - axis - bar.scale(0.5), gap_num - numer.depth);
+        let kern_den = Unit::max(shift_down + axis - denom.height - bar.scale(0.5), gap_denom);
+        let offset = denom.height + kern_den + bar.scale(0.5) - axis;
 
         let width = numer.width;
         let inner = vbox!(offset: offset;
@@ -581,8 +581,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
         let left = match frac.left_delimiter {
             None => kern!(horz: null_delimiter_space),
             Some(sym) => {
-                let clearance = max(inner.height - axis_height, axis_height - inner.depth) * 2.0;
-                let clearance = max(clearance, config.ctx.constants.delimited_sub_formula_min_height * config.font_size);
+                let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
+                let clearance = Unit::max(clearance, config.ctx.constants.delimited_sub_formula_min_height * config.font_size);
 
                 config.ctx.vert_variant(sym.codepoint, config.to_font(clearance))?
                     .as_layout(config)?
@@ -593,8 +593,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
         let right = match frac.right_delimiter {
             None => kern!(horz: null_delimiter_space),
             Some(sym) => {
-                let clearance = max(inner.height - axis_height, axis_height - inner.depth) * 2.0;
-                let clearance = max(clearance, config.ctx.constants.delimited_sub_formula_min_height * config.font_size);
+                let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
+                let clearance = Unit::max(clearance, config.ctx.constants.delimited_sub_formula_min_height * config.font_size);
 
                 config.ctx.vert_variant(sym.codepoint, config.to_font(clearance))?
                     .as_layout(config)?
@@ -627,8 +627,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
         let sqrt = config.ctx.vert_variant('√', config.to_font(inner_height))?.as_layout(config)?;
 
         // pad between radicand and radical bar
-        let delta = (sqrt.height - sqrt.depth - inner_height) * 0.5 + rule_thickness;
-        let gap = max(delta, gap);
+        let delta = (sqrt.height - sqrt.depth - inner_height).scale(0.5) + rule_thickness;
+        let gap = Unit::max(delta, gap);
 
         // offset radical symbol
         let offset = rule_thickness + gap + contents.height;
@@ -655,7 +655,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         // Layout each line in the substack, and track which line is the widest
         let mut lines: Vec<Layout<F>> = Vec::with_capacity(stack.lines.len());
-        let mut widest = Length::zero();
+        let mut widest = Unit::ZERO;
         let mut widest_idx = 0;
         for (n, line) in stack.lines.iter().enumerate() {
             let line = layout(line, config)?;
@@ -687,12 +687,12 @@ impl<'f, F : MathFont> Layout<'f, F> {
             config.ctx.constants.stack_top_display_style_shift_up
             - config.ctx.constants.axis_height
             + config.ctx.constants.stack_bottom_shift_down
-            - config.ctx.constants.accent_base_height * 2.0
+            - config.ctx.constants.accent_base_height.scale(2.0)
         } else {
             config.ctx.constants.stack_top_shift_up
             - config.ctx.constants.axis_height
             + config.ctx.constants.stack_bottom_shift_down
-            - config.ctx.constants.accent_base_height * 2.0
+            - config.ctx.constants.accent_base_height.scale(2.0)
         }
         .scaled(config);
 
@@ -705,13 +705,13 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
             // Try for an ideal gap, otherwise use the minimum
             if idx < length {
-                let gap = max(gap_min, gap_try - prev);
+                let gap = Unit::max(gap_min, gap_try - prev);
                 vbox.add_node(kern![vert: gap]);
             }
         }
 
         // Vertically center the stack to the axis
-        let offset = (vbox.height + vbox.depth) * 0.5 - config.ctx.constants.axis_height.scaled(config);
+        let offset = (vbox.height + vbox.depth).scale(0.5) - config.ctx.constants.axis_height.scaled(config);
         vbox.set_offset(offset);
         self.add_node(vbox.build());
         
@@ -721,22 +721,22 @@ impl<'f, F : MathFont> Layout<'f, F> {
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         // From [https://tex.stackexchange.com/questions/48276/latex-specify-font-point-size] & `info latex`
         // "A rule of thumb is that the baselineskip should be 1.2 times the font size."
-        let base_line_skip = Length::<Em>::new(1.2);
+        let base_line_skip = Unit::<Em>::new(1.2);
 
         // TODO: let jot = UNITS_PER_EM / 4;
         // The values below are gathered from the definition of the corresponding commands in "article.cls" on a default LateX installation
         const STRUT_HEIGHT      : f64 = 0.7;         // \strutbox height = 0.7\baseline
         const STRUT_DEPTH       : f64 = 0.3;         // \strutbox depth  = 0.3\baseline
-        const COLUMN_SEP        : Length<Pt> = Length::<Pt>::new(5.0) ;  // \arraycolsep
-        const RULE_WIDTH        : Length<Pt> = Length::<Pt>::new(0.4) ;  // \arrayrulewidth
-        const DOUBLE_RULE_SEP   : Length<Pt> = Length::<Pt>::new(2.0) ;  // \doublerulesep
-        let strut_height     = base_line_skip * STRUT_HEIGHT    * config.font_size; 
-        let strut_depth      = base_line_skip * STRUT_DEPTH     * config.font_size; 
+        const COLUMN_SEP        : Unit<Pt> = Unit::<Pt>::new(5.0) ;  // \arraycolsep
+        const RULE_WIDTH        : Unit<Pt> = Unit::<Pt>::new(0.4) ;  // \arrayrulewidth
+        const DOUBLE_RULE_SEP   : Unit<Pt> = Unit::<Pt>::new(2.0) ;  // \doublerulesep
+        let strut_height     = base_line_skip.scale(STRUT_HEIGHT) * config.font_size; 
+        let strut_depth      = base_line_skip.scale(STRUT_DEPTH)  * config.font_size; 
         // From Lamport - LateX a document preparation system (2end edition) - p. 207
         // "\arraycolsep : Half the width of the default horizontal space between columns in an array environment"
-        let half_col_sep     = COLUMN_SEP      * Scale::PT_TO_PX; 
-        let rule_width       = RULE_WIDTH      * Scale::PT_TO_PX;
-        let double_rule_sep  = DOUBLE_RULE_SEP * Scale::PT_TO_PX;
+        let half_col_sep     = COLUMN_SEP      * Unit::standard_pt_to_px(); 
+        let rule_width       = RULE_WIDTH      * Unit::standard_pt_to_px();
+        let double_rule_sep  = DOUBLE_RULE_SEP * Unit::standard_pt_to_px();
 
         // Don't bother constructing a new node if there is nothing.
         let num_rows = array.rows.len();
@@ -751,21 +751,21 @@ impl<'f, F : MathFont> Layout<'f, F> {
         }
 
         // Layout each node in each row, while keeping track of the largest row/col
-        let mut col_widths = vec![Length::zero(); num_columns];
+        let mut col_widths = vec![Unit::ZERO; num_columns];
         let mut row_heights = Vec::with_capacity(num_rows);
-        let mut prev_depth = Length::zero();
+        let mut prev_depth = Unit::ZERO;
         let mut row_max = strut_height;
         for row in &array.rows {
-            let mut max_depth = Length::zero();
+            let mut max_depth = Unit::ZERO;
             for col_idx in 0..num_columns {
                 // layout row element if it exists
                 let square = match row.get(col_idx) {
                     Some(r) => {
                         // record the max height/width for current row/col
                         let square = layout(r, config)?;
-                        row_max = max(square.height, row_max);
-                        max_depth = max(max_depth, -square.depth);
-                        col_widths[col_idx] = max(col_widths[col_idx], square.width);
+                        row_max = Unit::max(square.height, row_max);
+                        max_depth = Unit::max(max_depth, -square.depth);
+                        col_widths[col_idx] = Unit::max(col_widths[col_idx], square.width);
                         square
                     },
                     _ => Layout::new(),
@@ -777,7 +777,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             // ensure row height >= strut_height
             row_heights.push(row_max + prev_depth);
             row_max = strut_height;
-            prev_depth = max(Length::zero(), max_depth - strut_depth);
+            prev_depth = Unit::max(Unit::ZERO, max_depth - strut_depth);
         }
         // the body of the matrix is an hbox of column vectors.
         let mut hbox = builders::HBox::new();
@@ -790,7 +790,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
 
         #[inline]
-        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_vertical_bars_after: u8, rule_width: Length<Px>, total_height: Length<Px>, double_rule_sep: Length<Px>) {
+        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_vertical_bars_after: u8, rule_width: Unit<Px>, total_height: Unit<Px>, double_rule_sep: Unit<Px>) {
             if n_vertical_bars_after != 0 {
                 let rule_width = rule_width;
                 let total_height = total_height;
@@ -807,9 +807,9 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         // add left vertical bars
         let n_vertical_bars_before = array.col_format.n_vertical_bars_before;
-        let total_height : Length<Px> = 
-            row_heights.iter().cloned().sum::<Length<Px>>()
-            + strut_depth * (num_rows as f64)
+        let total_height : Unit<Px> = 
+            row_heights.iter().cloned().sum::<Unit<Px>>()
+            + strut_depth.scale(num_rows as f64)
         ;
         draw_vertical_bars(&mut hbox, n_vertical_bars_before, rule_width, total_height, double_rule_sep);
 
@@ -853,7 +853,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 let node = row.as_node();
                 let mut vert_dist = strut_depth;
                 if row_idx + 1 == num_rows { 
-                    vert_dist = max(vert_dist, -node.depth); 
+                    vert_dist = Unit::max(vert_dist, -node.depth); 
                 };
                 vbox.add_node(node);
                 vbox.add_node(kern![vert: vert_dist]);
@@ -882,7 +882,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // Note: hbox has no depth, so hbox.height is total height.
         let height = hbox.height;
         let mut vbox = builders::VBox::new();
-        let offset = height * 0.5 - config.ctx.constants.axis_height.scaled(config);
+        let offset = height.scale(0.5) - config.ctx.constants.axis_height.scaled(config);
         vbox.set_offset(offset);
         vbox.add_node(hbox.build());
         let vbox = vbox.build();
@@ -897,7 +897,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // place delimiters in an hbox surrounding the matrix body
         let mut hbox = builders::HBox::new();
         let axis = config.ctx.constants.axis_height.scaled(config);
-        let clearance = max(height * config.ctx.constants.delimiter_factor,
+        let clearance = Unit::max(height.scale(config.ctx.constants.delimiter_factor),
                             height - config.ctx.constants.delimiter_short_fall * config.font_size);
 
         if let Some(left) = array.left_delimiter {

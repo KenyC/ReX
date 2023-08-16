@@ -27,9 +27,9 @@ use crate::parser::color::RGBA;
 use crate::font::FontContext;
 use std::ops::Deref;
 use std::fmt;
-use std::cmp::{max, min};
 use std::collections::BTreeMap;
-use crate::dimensions::*;
+use crate::dimensions::Unit;
+use crate::dimensions::units::{Px, Em, FontSize, Ratio};
 
 /// Contains a set of [`LayoutNode`s](crate::layout::LayoutNode) that defines the position of glyphs and rules (i.e. filled rectangles) and certain measurements useful for rendering.
 /// It serves as input to [`Renderer::render`](crate::render::Renderer::render).
@@ -39,14 +39,14 @@ pub struct Layout<'f, F> {
     /// By default, they are laid out, horizontally as a horizontal box.
     pub contents:  Vec<LayoutNode<'f, F>>,
     /// Width of content
-    pub width:     Length<Px>,
+    pub width:     Unit<Px>,
     /// Height of content ; distance from baseline to the top of the layout
-    pub height:    Length<Px>,
+    pub height:    Unit<Px>,
     /// Depth of content ; distance from baseline to the bottom of the layout
-    pub depth:     Length<Px>,
+    pub depth:     Unit<Px>,
     /// Offset from the baseline 
     // (NB: does not seem used at the moment)
-    pub offset:    Length<Px>,
+    pub offset:    Unit<Px>,
     /// How to horizontally lay out children nodes
     pub alignment: Alignment,
 }
@@ -55,10 +55,10 @@ impl<'f, F> Default for Layout<'f, F> {
     fn default() -> Self {
         Self { 
             contents:  Vec::default(),
-            width:     Length::default(),
-            height:    Length::default(),
-            depth:     Length::default(),
-            offset:    Length::default(),
+            width:     Unit::ZERO,
+            height:    Unit::ZERO,
+            depth:     Unit::ZERO,
+            offset:    Unit::ZERO,
             alignment: Alignment::default(),
         }
     }
@@ -89,14 +89,14 @@ impl<'f, F> Layout<'f, F> {
     /// Append node at end of layout (i.e. right of layout)
     pub fn add_node(&mut self, node: LayoutNode<'f, F>) {
         self.width += node.width;
-        self.height = max(self.height, node.height);
-        self.depth = min(self.depth, node.depth);
+        self.height = Unit::max(self.height, node.height);
+        self.depth  = Unit::min(self.depth, node.depth);
         self.contents.push(node);
     }
 
     /// Sets offset of layout
     // TODO: not used at the moment figure out why (perhaps lack of alignement in array?)
-    pub fn set_offset(&mut self, offset: Length<Px>) {
+    pub fn set_offset(&mut self, offset: Unit<Px>) {
         self.offset = offset;
     }
 
@@ -108,7 +108,7 @@ impl<'f, F> Layout<'f, F> {
     }
 
     /// Makes layout's width equal to given arguments, and centers children within that width
-    pub fn centered(mut self, new_width: Length<Px>) -> Layout<'f, F> {
+    pub fn centered(mut self, new_width: Unit<Px>) -> Layout<'f, F> {
         self.alignment = Alignment::Centered(self.width);
         self.width = new_width;
         self
@@ -117,9 +117,9 @@ impl<'f, F> Layout<'f, F> {
     /// Returns [`LayoutDimensions`] dimensions for the given layout. 
     pub fn size(&self) -> LayoutDimensions {
         LayoutDimensions {
-            width  : self.width  / Px,
-            height : self.height / Px,
-            depth  : self.depth  / Px,
+            width  : self.width.unitless(Px),
+            height : self.height.unitless(Px),
+            depth  : self.depth.unitless(Px),
         }
     }
 
@@ -152,11 +152,11 @@ pub struct LayoutNode<'f, F> {
     /// Type of node
     pub node: LayoutVariant<'f, F>,
     /// Width
-    pub width: Length<Px>,
+    pub width: Unit<Px>,
     /// Height: distance from base line to top of the node
-    pub height: Length<Px>,
+    pub height: Unit<Px>,
     /// Height: distance from base line to bottom of the node
-    pub depth: Length<Px>,
+    pub depth: Unit<Px>,
 }
 
 impl<'f, F> Clone for LayoutNode<'f, F> {
@@ -225,9 +225,9 @@ pub struct Grid<'f, F> {
     /// Children nodes and their position in the grid
     pub contents: BTreeMap<(usize, usize), LayoutNode<'f, F>>,
     /// max length of each column
-    pub columns: Vec<Length<Px>>,
+    pub columns: Vec<Unit<Px>>,
     /// (max height, max depth) of each row
-    pub rows: Vec<(Length<Px>, Length<Px>)>,
+    pub rows: Vec<(Unit<Px>, Unit<Px>)>,
 }
 
 impl<'f, F> Clone for Grid<'f, F> {
@@ -246,7 +246,7 @@ pub struct HorizontalBox<'f, F> {
     pub contents: Vec<LayoutNode<'f, F>>,
     /// Offset
     // Unclear what this does
-    pub offset: Length<Px>,
+    pub offset: Unit<Px>,
     /// How to align Children nodes
     pub alignment: Alignment,
 }
@@ -268,7 +268,7 @@ impl<'f, F> Default for HorizontalBox<'f, F> {
     fn default() -> Self {
         Self { 
             contents:  Vec::default(), 
-            offset:    Length::default(), 
+            offset:    Unit::ZERO, 
             alignment: Alignment::default(), 
         }
     }
@@ -279,7 +279,7 @@ pub struct VerticalBox<'f, F> {
     /// Children nodes
     pub contents: Vec<LayoutNode<'f, F>>,
     /// Offset from baseline
-    pub offset: Length<Px>,
+    pub offset: Unit<Px>,
     /// Horizontal alignment
     pub alignment: Alignment,
 }
@@ -300,7 +300,7 @@ impl<'f, F> Default for VerticalBox<'f, F> {
     fn default() -> Self {
         Self { 
             contents:  Vec::default(), 
-            offset:    Length::default(), 
+            offset:    Unit::ZERO, 
             alignment: Alignment::default(), 
         }
     }
@@ -312,14 +312,14 @@ pub struct LayoutGlyph<'f, F> {
     /// glyph id
     pub gid: GlyphId,
     /// width of the symbol
-    pub size: Length<Px>,
+    pub size: Unit<Px>,
     /// offset from baseline
-    pub offset: Length<Px>,
+    pub offset: Unit<Px>,
     /// where to place accents
-    pub attachment: Length<Px>,
+    pub attachment: Unit<Px>,
     /// italic correction: italic symbols, who lean, may come out of the bounding box towards the top ; when the next glyph is not as slanted (i.e. is not italic), the italic glyph may collide with next glyph.
     /// The "italic correction" tells one how much wider the glyph needs to be in order to avoid any collisions with subsequent glyphs.
-    pub italics: Length<Px>,
+    pub italics: Unit<Px>,
     /// font to render glyph with
     pub font: &'f F,
 }
@@ -348,9 +348,9 @@ impl<'f, F> Copy for LayoutGlyph<'f, F> {}
 /// How to horizontally align certain elements
 pub enum Alignment {
     /// Centered within the argument width
-    Centered(Length<Px>),
+    Centered(Unit<Px>),
     /// Right-aligned within the argument width
-    Right(Length<Px>),
+    Right(Unit<Px>),
     /// Placed left to right, one after the other ; width is determined automatically
     Left,
     /// inherit from previous
@@ -432,8 +432,8 @@ impl<'f, F> LayoutNode<'f, F> {
     /// Center the vertical about the axis.
     /// For now this ignores offsets if already applied,
     /// and will break if there already are offsets.
-    fn centered(mut self, axis: Length<Px>) -> LayoutNode<'f, F> {
-        let shift = (self.height + self.depth) * 0.5 - axis;
+    fn centered(mut self, axis: Unit<Px>) -> LayoutNode<'f, F> {
+        let shift = (self.height + self.depth).scale(0.5) - axis;
 
         match self.node {
             LayoutVariant::VerticalBox(ref mut vb) => {
@@ -534,7 +534,7 @@ impl Style {
         }
     }
 
-    fn sup_shift_up<F>(self, config: LayoutSettings<F>) -> Length<Em> {
+    fn sup_shift_up<F>(self, config: LayoutSettings<F>) -> Unit<Em> {
         match self {
             Style::Display | Style::Text | Style::Script | Style::ScriptScript => {
                 config.ctx.constants.superscript_shift_up
@@ -573,8 +573,9 @@ impl Style {
 pub struct LayoutSettings<'a, 'f, F> {
     /// Maths font
     pub ctx: &'a FontContext<'f, F>,
+    // TODO: that's not conventional ; font size should be in pt . em-1.
     /// Font size in (in pixels per em)
-    pub font_size: Scale<Px, Em>,
+    pub font_size: Unit<Ratio<Px, Em>>,
     /// TODO
     pub style: Style,
 }
@@ -599,7 +600,7 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
     pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
         LayoutSettings {
             ctx,
-            font_size: Scale::<Px, Em>::new(font_size),
+            font_size: Unit::<Ratio<Px, Em>>::new(font_size),
             style,
         }
     }

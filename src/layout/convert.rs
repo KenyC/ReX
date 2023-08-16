@@ -1,7 +1,8 @@
 //! This is a collection of tools used for converting ParseNodes into LayoutNodes.
 
 use crate::font::{Glyph, Direction, VariantGlyph, MathFont};
-use crate::dimensions::*;
+use crate::dimensions::{Unit, AnyUnit};
+use crate::dimensions::units::{Px, Em, FUnit, Ratio};
 use crate::layout::LayoutSettings;
 
 use super::Style;
@@ -23,10 +24,10 @@ impl<'f, F> AsLayoutNode<'f, F> for Glyph<'f, F> {
             node:   LayoutVariant::Glyph(LayoutGlyph {
                 font: self.font,
                 gid: self.gid,
-                size: Length::<Em>::new(1.0).scaled(config),
+                size: Unit::<Em>::new(1.0).scaled(config),
                 attachment: self.attachment.scaled(config),
                 italics: self.italics.scaled(config),
-                offset:  Length::zero(),
+                offset:  Unit::ZERO,
             })
         })
     }
@@ -38,7 +39,7 @@ impl<'f, F> AsLayoutNode<'f, F> for Rule {
             node:   LayoutVariant::Rule,
             width:  self.width .scaled(config),
             height: self.height.scaled(config),
-            depth:  Length::zero(),
+            depth:  Unit::ZERO,
         })
     }
 }
@@ -59,7 +60,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                             let glyph = config.ctx.glyph_from_gid(instr.gid)?;
                             contents.add_node(glyph.as_layout(config)?);
                             if instr.overlap != 0 {
-                                let overlap = Length::<Font>::new(instr.overlap.into());
+                                let overlap = Unit::<FUnit>::new(instr.overlap.into());
                                 let kern = -(overlap + glyph.depth()).scaled(config);
                                 contents.add_node(kern!(vert: kern));
                             }
@@ -73,7 +74,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                         for instr in parts {
                             let glyph = config.ctx.glyph_from_gid(instr.gid)?;
                             if instr.overlap != 0 {
-                                let kern = -Length::<Font>::new(instr.overlap.into()).scaled(config);
+                                let kern = -Unit::<FUnit>::new(instr.overlap.into()).scaled(config);
                                 contents.add_node(kern!(horz: kern));
                             }
                             contents.add_node(glyph.as_layout(config)?);
@@ -105,41 +106,41 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
                 => self.ctx.constants.script_script_percent_scale_down,
         }
     }
-    fn scale_font_unit(&self, length: Length<Font>) -> Length<Px> {
-        length / self.ctx.units_per_em * self.font_size
+    fn scale_font_unit(&self, length: Unit<FUnit>) -> Unit<Px> {
+        length * (self.font_size / self.ctx.units_per_em).unlift()
     }
 
     /// Convert a length given in pixels to a length in font units. The resulting value depends on the selected font size.
-    pub fn to_font(&self, length: Length<Px>) -> Length<Font> {
-        length / self.font_size * self.ctx.units_per_em
+    pub fn to_font(&self, length: Unit<Px>) -> Unit<FUnit> {
+        length  * (self.ctx.units_per_em / self.font_size).unlift()
     }
 }
 pub trait Scaled {
-    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px>;
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Unit<Px>;
 }
 
-impl Scaled for Length<Font> {
-    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
-        config.scale_font_unit(self) * config.scale_factor()
+impl Scaled for Unit<FUnit> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Unit<Px> {
+        config.scale_font_unit(self).scale(config.scale_factor())
     }
 }
 
-impl Scaled for Length<Px> {
-    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
-        self * config.scale_factor()
+impl Scaled for Unit<Px> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Unit<Px> {
+        self.scale(config.scale_factor())
     }
 }
-impl Scaled for Length<Em> {
-    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
-        self * config.font_size * config.scale_factor()
+impl Scaled for Unit<Em> {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Unit<Px> {
+        (self * config.font_size).scale(config.scale_factor())
     }
 }
-impl Scaled for Unit {
-    fn scaled<F>(self, config: LayoutSettings<F>) -> Length<Px> {
+impl Scaled for AnyUnit {
+    fn scaled<F>(self, config: LayoutSettings<F>) -> Unit<Px> {
         let length = match self {
-            Unit::Em(em) => Length::<Em>::new(em) * config.font_size,
-            Unit::Px(px) => Length::<Px>::new(px)
+            AnyUnit::Em(em) => Unit::<Em>::new(em) * config.font_size,
+            AnyUnit::Px(px) => Unit::<Px>::new(px)
         };
-        length * config.scale_factor()
+        length.scale(config.scale_factor())
     }
 }

@@ -1,7 +1,7 @@
 use super::{Glyph, MathFont};
-use std::cmp::{max, min};
 
-use crate::dimensions::{Length, Font};
+
+use crate::dimensions::{units::{FUnit}, Unit};
 
 /// Corners of a glyph's bounding box
 #[derive(Debug)]
@@ -43,7 +43,7 @@ pub enum Corner {
 // the following functions. 
 
 /// Computes the amount of kerning between a base glyph and its superscript
-pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
+pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Unit<FUnit>) -> Unit<FUnit> {
     let base_height = base.bbox.3;
     let script_depth = script.bbox.1 + shift;
 
@@ -53,11 +53,14 @@ pub fn superscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift:
     let value2 = kern_from(base, script_depth, Corner::TopRight) +
     kern_from(script, script_depth, Corner::BottomLeft);
 
-    max(value1, value2)
+    if value1 > value2 
+    { value1 }
+    else 
+    { value2 }
 }
 
 /// Computes the amount of kerning between a base glyph and its subscript
-pub fn subscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Length<Font>) -> Length<Font> {
+pub fn subscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: Unit<FUnit>) -> Unit<FUnit> {
     let base_depth = base.bbox.1;
     let script_height = script.bbox.3 - shift;
 
@@ -67,9 +70,12 @@ pub fn subscript_kern<F : MathFont>(base: &Glyph<F>, script: &Glyph<F>, shift: L
     let value2 = kern_from(base, script_height, Corner::BottomRight) +
     kern_from(script, script_height, Corner::TopLeft);
 
-    min(value1, value2)
+    if value1 < value2 
+    { value1 }
+    else 
+    { value2 }
 }
 
-fn kern_from<F : MathFont>(glyph: &Glyph<F>, height: Length<Font>, side: Corner) -> Length<Font> {
-    glyph.font.kern_for(glyph.gid, height, side).unwrap_or_default()
+fn kern_from<F : MathFont>(glyph: &Glyph<F>, height: Unit<FUnit>, side: Corner) -> Unit<FUnit> {
+    glyph.font.kern_for(glyph.gid, height, side).unwrap_or(Unit::ZERO)
 }

@@ -3,7 +3,10 @@ use std::convert::TryInto;
 
 use ttf_parser::{math::GlyphPart, LazyArray16};
 
-use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, dimensions::{Scale, Font, Em, Length}, error::FontError};
+use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, error::FontError, dimensions::units::Ratio};
+use crate::dimensions::Unit;
+use crate::dimensions::units::{Em, FUnit};
+
 
 /// A wrapper around 'ttf_parser::Face' which caches some of the needed values.
 /// This wrapper implements the 'MathFont' trait needed to do the layout and rendering o
@@ -70,10 +73,10 @@ impl<'a> TtfMathFont<'a> {
         Some(value)
     }
 
-    fn safe_constants(&self, font_units_to_em : Scale<Em, Font>) -> Option<Constants> {
+    fn safe_constants(&self, font_units_to_em : Unit<Ratio<Em, FUnit>>) -> Option<Constants> {
         // perhaps cache : GlyphInfo table
         let math_constants = self.math.constants?;
-        let em = |v: f64| -> Length<Em> { Length::<Font>::new(v) * font_units_to_em };
+        let em = |v: f64| -> Unit<Em> { Unit::<FUnit>::new(v) * font_units_to_em };
 
 
         Some(Constants {
@@ -121,8 +124,8 @@ impl<'a> TtfMathFont<'a> {
             stack_gap_min:                    em(math_constants.stack_gap_min().value.into()),
 
             delimiter_factor: 0.901,
-            delimiter_short_fall: Length::<Em>::new(0.1),
-            null_delimiter_space: Length::<Em>::new(0.1),
+            delimiter_short_fall: Unit::<Em>::new(0.1),
+            null_delimiter_space: Unit::<Em>::new(0.1),
 
 
             script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down()),
@@ -143,11 +146,11 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         self.safe_attachment(glyph_id).unwrap_or_default()
     }
 
-    fn constants(&self, font_units_to_em: Scale<Em, Font>) -> Constants {
+    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> Constants {
         self.safe_constants(font_units_to_em).unwrap()
     }
 
-    fn horz_variant(&self, gid: GlyphId, width: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
+    fn horz_variant(&self, gid: GlyphId, width: crate::dimensions::Unit<FUnit>) -> crate::font::common::VariantGlyph {
         // NOTE: The following is an adaptation of the corresponding code in the crate "font"
         // NOTE: bizarrely, the code for horizontal variant is not isomorphic to the code for vertical variant ; here, I've simply adapted the vertical variant code
         // TODO: figure out why horiz_variant uses 'greatest_lower_bound' and vert_variant uses 'smallest_lowerè_bound'
@@ -165,7 +168,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
 
         // Otherwise, check if any replacement glyphs are larger than the demanded size: we use them if they exist.
         for record in construction.variants {
-            if record.advance_measurement >= (width / Font) as u16 {
+            if record.advance_measurement >= (width.unitless(FUnit)) as u16 {
                 return VariantGlyph::Replacement(GlyphId::from(record.variant_glyph));
             }
         }
@@ -182,14 +185,14 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             Some(ref assembly) => assembly,
         };
 
-        let size = (width / Font).ceil() as u32;
+        let size = (width.unitless(FUnit)).ceil() as u32;
 
         let instructions = construct_glyphs(variants.min_connector_overlap.into(), assembly.parts, size);
         VariantGlyph::Constructable(Direction::Horizontal, instructions)
     }
 
 
-    fn vert_variant(&self, gid: GlyphId, height: crate::dimensions::Length<Font>) -> crate::font::common::VariantGlyph {
+    fn vert_variant(&self, gid: GlyphId, height: crate::dimensions::Unit<FUnit>) -> crate::font::common::VariantGlyph {
         // NOTE: The following is an adaptation of the corresponding code in the crate "font"
 
         let variants = match self.math.variants {
@@ -206,7 +209,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
 
         // Otherwise, check if any replacement glyphs are larger than the demanded size: we use them if they exist.
         for record in construction.variants {
-            if record.advance_measurement >= (height / Font) as u16 {
+            if record.advance_measurement >= (height.unitless(FUnit)) as u16 {
                 return VariantGlyph::Replacement(GlyphId::from(record.variant_glyph));
             }
         }
@@ -223,7 +226,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             Some(ref assembly) => assembly,
         };
 
-        let size = (height / Font).ceil() as u32;
+        let size = (height.unitless(FUnit)).ceil() as u32;
 
         // We aim for a construction where overlap between adjacent segment is the same
         // We take inspiration from [https://frederic-wang.fr/opentype-math-in-harfbuzz.html]
@@ -248,20 +251,20 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             font: self,
             gid,
             bbox: (
-                Length::<Font>::new(bbox.x_min.into()), 
-                Length::<Font>::new(bbox.y_min.into()), 
-                Length::<Font>::new(bbox.x_max.into()), 
-                Length::<Font>::new(bbox.y_max.into()),
+                Unit::<FUnit>::new(bbox.x_min.into()), 
+                Unit::<FUnit>::new(bbox.y_min.into()), 
+                Unit::<FUnit>::new(bbox.x_max.into()), 
+                Unit::<FUnit>::new(bbox.y_max.into()),
             ),
-            advance:    Length::<Font>::new(advance.into()),
-            lsb:        Length::<Font>::new(lsb.into()),
-            italics:    Length::<Font>::new(italics.into()),
-            attachment: Length::<Font>::new(attachment.into()),
+            advance:    Unit::<FUnit>::new(advance.into()),
+            lsb:        Unit::<FUnit>::new(lsb.into()),
+            italics:    Unit::<FUnit>::new(italics.into()),
+            attachment: Unit::<FUnit>::new(attachment.into()),
 
         })
     }
 
-    fn kern_for(&self, glyph_id : GlyphId, height : Length<Font>, side : crate::font::kerning::Corner) -> Option<Length<Font>> {
+    fn kern_for(&self, glyph_id : GlyphId, height : Unit<FUnit>, side : crate::font::kerning::Corner) -> Option<Unit<FUnit>> {
         let record = self.math.glyph_info?.kern_infos?.get(glyph_id.into())?;
 
         let table = match side {
@@ -288,16 +291,16 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
             let h    = table.height(i)?.value; 
             let kern = table.kern(i)?.value;   
 
-            if height < Length::<Font>::new(h.into()) {
-                return Some(Length::<Font>::new(kern.into()));
+            if height < Unit::<FUnit>::new(h.into()) {
+                return Some(Unit::<FUnit>::new(kern.into()));
             }
         }
 
-        Some(Length::<Font>::new(table.kern(count)?.value.into()))
+        Some(Unit::<FUnit>::new(table.kern(count)?.value.into()))
     }
 
-    fn font_units_to_em(&self) -> Scale<Em, Font> {
-        Scale::<Em, Font>::new(self.font_matrix.sx as f64)
+    fn font_units_to_em(&self) -> Unit<Ratio<Em, FUnit>> {
+        Unit::<Ratio<Em, FUnit>>::new(self.font_matrix.sx as f64)
     }
 
 

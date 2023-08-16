@@ -100,7 +100,7 @@ macro_rules! min {
     ($x: expr) => ($x);
     ($x: expr, $($xs: expr), +) => {
         {
-            std::cmp::min($x, min!($($xs), +))
+            Unit::min($x, min!($($xs), +))
         }
     }
 }
@@ -109,7 +109,7 @@ macro_rules! max {
     ($x: expr) => ($x);
     ($x: expr, $($xs: expr), +) => {
         {
-            std::cmp::max($x, max!($($xs), +))
+            Unit::max($x, max!($($xs), +))
         }
     }
 }

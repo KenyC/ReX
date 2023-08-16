@@ -1,5 +1,5 @@
 use std::fmt;
-use crate::dimensions::Unit;
+use crate::dimensions::AnyUnit;
 use super::color::RGBA;
 use crate::error::{ParseError, ParseResult};
 
@@ -165,7 +165,7 @@ impl<'a> Lexer<'a> {
     /// that the lexer is currently pointed to the first valid
     /// character in a dimension.  So it may be necessary to
     /// consume_whitespace() prior to using this method.
-    pub fn dimension(&mut self) -> ParseResult<'a, Option<Unit>> {
+    pub fn dimension(&mut self) -> ParseResult<'a, Option<AnyUnit>> {
         // utter crap, rewrite.
         unimplemented!()
     }

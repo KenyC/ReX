@@ -3,11 +3,10 @@
 //!   - [`ParseError`] : syntax error in the formula provided (mismatching brackets, unknown command).
 //!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
-use crate::parser::environments::Environment;
 use crate::font::common::GlyphId;
 use crate::parser::lexer::Token;
 use std::fmt;
-use crate::font::{AtomType};
+use crate::font::AtomType;
 use crate::parser::symbols::Symbol;
 
 /// Result type for the [`LayoutError`]
