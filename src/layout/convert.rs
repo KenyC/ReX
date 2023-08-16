@@ -2,7 +2,7 @@
 
 use crate::font::{Glyph, Direction, VariantGlyph, MathFont};
 use crate::dimensions::{Unit, AnyUnit};
-use crate::dimensions::units::{Px, Em, FUnit, Ratio};
+use crate::dimensions::units::{Px, Em, FUnit};
 use crate::layout::LayoutSettings;
 
 use super::Style;

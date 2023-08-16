@@ -114,7 +114,7 @@ impl<'f, F> Layout<'f, F> {
         self
     }
 
-    /// Returns [`LayoutDimensions`] dimensions for the given layout. 
+    /// Returns [`LayoutDimensions`] dimensions for the given layout, in pixels. 
     pub fn size(&self) -> LayoutDimensions {
         LayoutDimensions {
             width  : self.width.unitless(Px),
@@ -573,11 +573,10 @@ impl Style {
 pub struct LayoutSettings<'a, 'f, F> {
     /// Maths font
     pub ctx: &'a FontContext<'f, F>,
-    // TODO: that's not conventional ; font size should be in pt . em-1.
-    /// Font size in (in pixels per em)
-    pub font_size: Unit<Ratio<Px, Em>>,
-    /// TODO
+    /// Sizes of glyphs : normal, subscript size, superscript size
     pub style: Style,
+    /// Font size in pixels per em (this is private: all user-facing interfaces should use a more conventional pt . em-1 unit)
+    font_size: Unit<Ratio<Px, Em>>,
 }
 
 
@@ -600,7 +599,7 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
     pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
         LayoutSettings {
             ctx,
-            font_size: Unit::<Ratio<Px, Em>>::new(font_size),
+            font_size: Unit::<FontSize>::new(font_size) * Unit::standard_pt_to_px().lift(),
             style,
         }
     }
@@ -652,5 +651,52 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
             style: Style::Text,
             ..self
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{dimensions::{Unit, units::{FUnit, Ratio, FontSize, Px, Em}}, parser::parse, font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{LayoutSettings, engine::layout, Style}};
+
+
+    #[test]
+    fn dimension_size_px_character() {
+        const XITS_FONT_BYTES : &[u8] = include_bytes!("../../resources/XITS_Math.otf");
+        // Making sure the file is the same the measures below were taken from
+        let signature = XITS_FONT_BYTES.iter().cloned().fold(0_u8, |a, b| a.wrapping_add(b));
+        assert_eq!(signature, 198);
+
+        // Measures taken from fontforge
+        const XITS_HIGHEST_POINT_ONE : Unit<FUnit> = Unit::new(676.);
+        const XITS_FUNIT_PER_EM      : Unit<Ratio<FUnit, Em>> = Unit::new(1000.);
+
+        // we
+        let nodes = parse("1").unwrap();
+        let font = ttf_parser::Face::parse(XITS_FONT_BYTES, 0).unwrap();
+        let font = TtfMathFont::new(font).unwrap();
+        let ctx = FontContext::new(&font).unwrap();
+
+        // 10pt layout
+        let font_size = Unit::<FontSize>::new(10.);
+        let config = LayoutSettings::new(&ctx, font_size.unitless(FontSize::new()), Style::default());
+        let result_layout = layout(&nodes, config).unwrap();
+        let height = Unit::<Px>::new(result_layout.size().height);
+        assert_close!(
+            height, 
+            XITS_HIGHEST_POINT_ONE * XITS_FUNIT_PER_EM.recip() * font_size * Unit::standard_pt_to_px(),
+            Unit::<Px>::new(1e-5)
+        );
+
+        // 12pt layout
+        let font_size = Unit::<FontSize>::new(12.);
+        let config = LayoutSettings::new(&ctx, font_size.unitless(FontSize::new()), Style::default());
+        let result_layout = layout(&nodes, config).unwrap();
+        let height = Unit::<Px>::new(result_layout.size().height);
+        assert_close!(
+            height, 
+            XITS_HIGHEST_POINT_ONE * XITS_FUNIT_PER_EM.recip() * font_size * Unit::standard_pt_to_px(),
+            Unit::<Px>::new(1e-5)
+        );
+
     }
 }

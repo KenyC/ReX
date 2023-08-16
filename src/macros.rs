@@ -36,6 +36,21 @@ macro_rules! alt {
 // Testing related Macros
 // ----------------------
 
+macro_rules! assert_close {
+    ($x:expr, $y:expr, $epsilon:expr) => {
+        {
+            let (x, y, epsilon) = ($x, $y, $epsilon);
+            assert!(
+                (x - y).abs() <= epsilon,
+                "Assertion failed: `abs(left - right) <= epsilon`, with `left` = {:?}, `right` = {:?}, `epsilon` = {:?}",
+                x,
+                y,
+                epsilon
+            );
+        }
+    };
+}
+
 macro_rules! should_fail {
     ($errs:ident, $func:ident, $iter:expr) => ({
         for item in $iter.iter() {
