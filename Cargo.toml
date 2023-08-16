@@ -37,8 +37,11 @@ pathfinder_geometry = { git = "https://github.com/servo/pathfinder/", optional =
 pathfinder_color    = { git = "https://github.com/servo/pathfinder/", optional = true }
 pathfinder_content  = { git = "https://github.com/servo/pathfinder/", optional = true }
 pathfinder_export   = { git = "https://github.com/servo/pathfinder/", optional = true }
-cairo-rs = {version = "0.17.0", optional = true}
-raqote   = {version = "0.8.2",  optional = true}
+# we should not pin any of these to a specific version
+# b/c the types there appear in our public interfaces
+# Users of their library should be maximally unconstrained
+cairo-rs = {version = ">= 0.14.0", optional = true}
+raqote   = {version = ">= 0.8.2",  optional = true}
 unicode-math = { path = "deps/unicode-math" }
 serde_derive = "1.0"
 serde = "1.0"
@@ -60,6 +63,8 @@ optional = true
 version = "*"
 optional = true
 
+[dependencies.log]
+version="0.4.8"
 
 [dev-dependencies]
 sdl2 = "*"
@@ -72,5 +77,3 @@ cairo-rs = {version = "*", features = ["svg", "png"]}
 base64 = "0.21.0"
 rand = "0.8.5"
 
-[dependencies.log]
-version="0.4.8"
