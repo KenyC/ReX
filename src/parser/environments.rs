@@ -1,7 +1,7 @@
 use super::lexer::{Lexer, Token};
 use super::macros::CommandCollection;
 use crate::font::{Style, AtomType};
-use crate::parser::{self, optional_argument_with, required_argument_with, ParseNode, symbols::Symbol};
+use crate::parser::{self, ParseNode, symbols::Symbol};
 use crate::error::{ParseResult, ParseError};
 
 /// An enumeration of recognized enviornmnets.
@@ -16,47 +16,6 @@ pub enum Environment {
     VvMatrix,
 }
 
-impl Environment {
-    /// Attempt to parse an `&str` type into a an `Enviornment`.
-    pub fn try_from_str(name: &str) -> Option<Environment> {
-        match name {
-            "array" => Some(Environment::Array),
-            "matrix" => Some(Environment::Matrix),
-            "pmatrix" => Some(Environment::PMatrix),
-            "bmatrix" => Some(Environment::BMatrix),
-            "Bmatrix" => Some(Environment::BbMatrix),
-            "vmatrix" => Some(Environment::VMatrix),
-            "Vmatrix" => Some(Environment::VvMatrix),
-            _ => None,
-        }
-    }
-
-    pub fn name(&self) -> & 'static str {
-        match self {
-            Environment::Array    => "array",
-            Environment::Matrix   => "matrix",
-            Environment::PMatrix  => "pmatrix",
-            Environment::BMatrix  => "bmatrix",
-            Environment::BbMatrix => "Bmatrix",
-            Environment::VMatrix  => "vmatrix",
-            Environment::VvMatrix => "Vmatrix",
-        }
-    }
-
-    /// Parse the enviornment for a given `Environment`.  This can be thought
-    /// of as a parsing primitive.
-    pub fn parse<'a>(&self, lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-        match *self {
-            Environment::Array    => array(lex, local, command_collection),
-            Environment::Matrix   => matrix(lex, local, command_collection),
-            Environment::PMatrix  => matrix_with(lex, local, command_collection, '(', ')'),
-            Environment::BMatrix  => matrix_with(lex, local, command_collection, '[', ']'),
-            Environment::BbMatrix => matrix_with(lex, local, command_collection, '{', '}'),
-            Environment::VMatrix  => matrix_with(lex, local, command_collection, '|', '|'),
-            Environment::VvMatrix => matrix_with(lex, local, command_collection, '\u{2016}', '\u{2016}'),
-        }
-    }
-}
 
 /// The horizontal positioning of an array.  These are parsed as an optional
 /// argument for the Array environment. The default value is `Centered` along
@@ -148,190 +107,12 @@ pub struct Array {
     pub right_delimiter: Option<Symbol>,
 }
 
-
-fn matrix<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, command_collection, None, None)
-}
-
-fn matrix_with<'a>(
-    lex: &mut Lexer<'a>,
-    style: Style,
-    command_collection : &CommandCollection,
-    left_delimiter:  char,
-    right_delimiter: char
-) -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, command_collection, Some(left_delimiter), Some(right_delimiter))
-}
-
-fn matrix_common<'a>(
-    lex: &mut Lexer<'a>,
-    style: Style,
-    command_collection : &CommandCollection,
-    left_delimiter:  Option<char>,
-    right_delimiter: Option<char>
-) -> ParseResult<'a, ParseNode> {
-    // matrix bodies are paresed like arrays.
-    let body = array_body(lex, style, command_collection)?;
-    let left_delimiter = left_delimiter.map(|code| {
-                                                Symbol {
-                                                    codepoint: code,
-                                                    atom_type: AtomType::Inner,
-                                                }
-                                            });
-
-    let right_delimiter = right_delimiter.map(|code| {
-                                                  Symbol {
-                                                      codepoint: code,
-                                                      atom_type: AtomType::Inner,
-                                                  }
-                                              });
-
-
-    let n_cols = body.get(0).map_or(0, |v| v.len());
-    Ok(ParseNode::Array(
-        Array {
-            col_format: ArrayColumnsFormatting::default_for(n_cols),
-            rows: body,
-            left_delimiter,
-            right_delimiter,
-        }
-    ))
-}
-
-/// Parse the column alignments for arrays.  The currently supported formats are:
-///   - `c` center the column
-///   - `r` right align the column
-///   - `l` left align the column
-///   - `|` insert a vertical bar at position.
-///
-/// For example: `\begin{array}{c|c|c}\end{array}`.
-fn array_col<'a>(lex: &mut Lexer<'a>, _: Style, _ : &CommandCollection) -> ParseResult<'a, ArrayColumnsFormatting> {
-    let mut cols = Vec::new();
-
-    lex.consume_whitespace();
-
-    let mut n_vertical_bars_before : u8 = 0;
-    while let Token::Symbol('|') = lex.current() {
-        lex.next();
-        lex.consume_whitespace();
-        n_vertical_bars_before += 1;
-    }
-
-    loop {
-        let alignment;
-
-        match lex.current() {
-            Token::Symbol('c') => alignment = ArrayColumnAlign::Centered,
-            Token::Symbol('r') => alignment = ArrayColumnAlign::Right,
-            Token::Symbol('l') => alignment = ArrayColumnAlign::Left,
-            Token::Symbol('}') => {
-                break;
-            }
-            token => return Err(ParseError::UnrecognizedColumnFormat(token)),
-        }
-        
-        lex.next();
-        lex.consume_whitespace();
-
-        let mut n_vertical_bars_after = 0_u8;
-        while let Token::Symbol('|') = lex.current() {
-            lex.next();
-            lex.consume_whitespace();
-            n_vertical_bars_after += 1;
-        }
-
-
-        cols.push(ArraySingleColumnFormatting { 
-            alignment, 
-            n_vertical_bars_after,
-        });
-
-        // lex.next();
-        // lex.consume_whitespace();
-    }
-
-    Ok(ArrayColumnsFormatting {
-       columns: cols,
-       n_vertical_bars_before,
-    })
-}
-
-/// Parse the optional argument in an array environment.  This dictates the
-/// vertical positioning of the array.  The recognized values are `t` to
-/// align the top of the array with the baseline, and `b` to aligne the bottom
-/// of the array to the baseline.
-///
-/// For example: `\begin{array}[t]{cc}..\end{array}`.
-fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayVerticalAlign>> {
-    let ret = match lex.current() {
-        Token::Symbol('t') => Ok(Some(ArrayVerticalAlign::Top)),
-        Token::Symbol('b') => Ok(Some(ArrayVerticalAlign::Bottom)),
-        token => return Err(ParseError::UnrecognizedVerticalAlignmentArg(token)),
-    };
-
-    lex.next();
-    ret
-}
-
-/// Array contents are the body of the enviornment.  Columns are seperated
-/// by `&` and a newline is terminated by either:
-///   - `\\[unit]`
-///   - `\cr[unit]`
-/// where a `[unit]` is any recognized dimension which will add (or subtract)
-/// space between the rows.  Note, the last line termination is ignored
-/// if the a line is empty.
 type Expression = Vec<ParseNode>;
-fn array_body<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, Vec<Vec<Expression>>> {
-    let mut rows: Vec<Vec<Expression>> = Vec::new();
-    let mut current: Vec<Expression> = Vec::new();
-    loop {
-        let expr = parser::expression_until(lex, style, command_collection, Token::Symbol('&'))?;
-        if lex.current() == Token::Command(r"end") {
-            // If the last line is empty, ignore it.
-            if expr.is_empty() && current.is_empty() {
-                break;
-            }
 
-            current.push(expr);
-            rows.push(current);
-            break;
-        }
-
-        current.push(expr);
-        match lex.current() {
-            Token::Symbol('&') => { /* no-op, carry on */ }
-            Token::Command(r"\") |
-            Token::Command(r"cr") => {
-                // TODO: Handle space arguments here.
-                rows.push(current);
-                current = Vec::new();
-            }
-            _ => return Err(ParseError::UnexpectedEof),
-        }
-        lex.next();
-    }
-    Ok(rows)
-}
-
-/// Parse an array environment.  This method assumes that the lexer is currently
-/// positioned after the `\begin{array}` declaration.
-fn array<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-    let pos = optional_argument_with(lex, local, array_pos)?;
-    let cols = required_argument_with(lex, local, command_collection, array_col)?;
-    let contents = array_body(lex, local, command_collection)?;
-    debug!("Array, pos: {:?}, cols: {:?}", pos, cols);
-    debug!("Contents: {:#?}", contents);
-    Ok(ParseNode::Array(Array {
-                            col_format: cols,
-                            rows: contents,
-                            left_delimiter: None,
-                            right_delimiter: None,
-                        }))
-}
 
 #[cfg(test)]
 mod tests {
-    use super::{*, array_col};
+    use super::*;
 
     #[test]
     fn array_col_test() {
@@ -385,10 +166,11 @@ mod tests {
             let mut lexer  = Lexer::new(&string);
             let style = Style::new();
 
-            assert_eq!(
-                array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
-                col_format,
-            );
+            todo!()
+            // assert_eq!(
+            //     array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
+            //     col_format,
+            // );
 
         }
         

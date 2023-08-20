@@ -35,69 +35,6 @@ impl CommandCollection {
         }
     }
 
-    /// Parse a series of `\newcommand{...}[]{fezefzezf}` into a command collection
-    pub fn parse(command_definitions : &str) -> Result<Self, ParseError> {
-        let mut lexer = Lexer::new(command_definitions);
-        let mut to_return = CommandCollection::default();
-
-
-        while lexer.current() != Token::EOF {
-            match lexer.current() {
-                Token::Command("newcommand") => (),
-                Token::Symbol(_) | Token::Command(_) => 
-                    return Err(ParseError::ExpectedNewCommand(lexer.current())),
-                Token::WhiteSpace => {
-                    lexer.consume_whitespace();
-                    continue;
-                },
-                Token::EOF => unreachable!("already checked above"),
-            };
-
-
-            // -- parse command name
-            lexer.consume_whitespace();
-            lexer.next();
-            let token_command_name;
-            if let Ok(inner) = lexer.group() {
-                let mut lexer = Lexer::new(inner);
-                lexer.consume_whitespace();
-                token_command_name = lexer.current();
-            }
-            else {
-                token_command_name = lexer.current();
-            }
-
-            let command_name = match token_command_name {
-                Token::Command(name) => name,
-                tok => return Err(ParseError::ExpectedCommandName(tok)),
-            };
-
-            // -- parse number of arguments
-            lexer.next().expect_symbol('[')?;
-            lexer.next();
-            let alphanumeric = lexer.alphanumeric();
-            let n_args = alphanumeric.parse::<usize>().ok().ok_or(ParseError::ExpectedNumber(alphanumeric))?;
-            lexer.current().expect_symbol(']')?;
-
-
-            // -- parse definition body
-            lexer.next();
-            let definition = lexer.group()?;
-
-            // TODO : more specific error message?
-            let custom_command = CustomCommand::parse(definition).ok_or(ParseError::CannotParseCommandDefinition(definition))?;
-
-            if custom_command.n_args != n_args {
-                return Err(ParseError::IncorrectNumberOfArguments(custom_command.n_args, n_args));
-            }
-            to_return.insert(command_name, custom_command);
-
-
-            lexer.next();
-        }
-
-        Ok(to_return)
-    }
 }
 
 
@@ -297,7 +234,8 @@ mod tests {
                 Text(r" = 0".to_string()),
             ]})
         ]);
-        let got = CommandCollection::parse(file).unwrap();
+        // let got = CommandCollection::parse(file).unwrap();
+        let got = todo!();
         assert_eq!(expected, got);
 
 
@@ -318,7 +256,8 @@ mod tests {
                 Text(r" = 0".to_string()),
             ]}),
         ]);
-        let got = CommandCollection::parse(file).unwrap();
+        // let got = CommandCollection::parse(file).unwrap();
+        let got = todo!();
         assert_eq!(expected, got);
 
 
