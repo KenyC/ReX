@@ -294,3 +294,23 @@ pub enum AnyUnit {
     /// pixels
     Px(f64)
 }
+
+impl AnyUnit {
+    /// Check if the length represented is negative. 
+    /// (We implicitly assume that all units represented within this type are *positive* multiples of each other)
+    pub fn is_negative(&self) -> bool {
+        match self {
+            AnyUnit::Em(val) => val.is_sign_negative(),
+            AnyUnit::Px(val) => val.is_sign_negative(),
+        }
+    }
+}
+
+impl Display for AnyUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AnyUnit::Em(value) => write!(f, "{}em", value),
+            AnyUnit::Px(value) => write!(f, "{}px", value),
+        }
+    }
+}

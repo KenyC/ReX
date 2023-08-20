@@ -1,5 +1,3 @@
-use std::process::Output;
-
 use rex::{
     render::Renderer,
     layout::{LayoutSettings, Style},

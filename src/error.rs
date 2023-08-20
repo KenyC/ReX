@@ -3,6 +3,7 @@
 //!   - [`ParseError`] : syntax error in the formula provided (mismatching brackets, unknown command).
 //!   - [`LayoutError`] : errors during the layout phase ; currently, these can only be font errors.
 
+use crate::dimensions::AnyUnit;
 use crate::font::common::GlyphId;
 use crate::parser::lexer::Token;
 use std::fmt;
@@ -66,6 +67,8 @@ pub enum ParseError<'a> {
     ExpectedClose(Symbol),
     /// The symbol after '\middle' was not in the "fence" category.
     ExpectedMiddle(Symbol),
+    /// After `\rule`, a number followed by a dimension was expected
+    ExpectedDimension,
     /// The first token represents the expected atom type and the second the atom type that was obtained.
     ExpectedAtomType(AtomType, AtomType),
     /// Error thrown if after '\left' and '\right', a token that is not a symbol is found
@@ -120,6 +123,9 @@ pub enum ParseError<'a> {
     /// Error thrown when parsing a command definition file (cf [`CommandCollection::parse`]), 
     /// when the command definition (i.e. the ... in \newcommand{\mycommand}[n]{...}) refers to a `#i` with i > n.
     IncorrectNumberOfArguments(usize, usize),
+    /// Error thrown when user is requesting a rule with one or both its dimensions negative,
+    /// e.g. `\rule{-1em}{2em}`
+    RuleWithNegativeDimension(AnyUnit),
 
     /// EOF appeared while a group or an array was incomplete
     UnexpectedEof,
@@ -196,6 +202,8 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "'{}' cannot be parsed as the body of a command definition", command_definition),
             IncorrectNumberOfArguments(declared, got) =>
                 write!(f, "command was declared with {} arguments, but needs at least {} arguments", declared, got),
+            RuleWithNegativeDimension(dimension) => 
+                write!(f, "rule has one of its dimensions negative {}", dimension),
             LimitsMustFollowOperator =>
                 write!(f, "limit commands must follow an operator"),
             ExpectedMathField(ref field) =>
@@ -226,6 +234,8 @@ impl<'a> fmt::Display for ParseError<'a> {
                 write!(f, "expected Close, Fence, or period after '\\right', found `{:?}`", sym),
             ExpectedMiddle(sym) =>
                 write!(f, "expected Fence, or period after '\\middle', found `{:?}`", sym),
+            ExpectedDimension => 
+                write!(f, "expected dimension"),
             ExpectedOpenGroup =>
                 write!(f, "expected an open group symbol"),
             NoClosingBracket =>

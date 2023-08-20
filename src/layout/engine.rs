@@ -167,9 +167,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 }
             },
 
-            // TODO: understand whether these are needed anywhere
+            // TODO: understand whether this is needed anywhere
             ParseNode::Style(_)     => unimplemented!(),
-            ParseNode::Extend(_, _) => unimplemented!(),
         }
         Ok(())
     }

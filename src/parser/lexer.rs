@@ -1,5 +1,5 @@
 use std::fmt;
-use crate::dimensions::AnyUnit;
+use crate::dimensions::{AnyUnit, Unit};
 use super::color::RGBA;
 use crate::error::{ParseError, ParseResult};
 
@@ -165,9 +165,44 @@ impl<'a> Lexer<'a> {
     /// that the lexer is currently pointed to the first valid
     /// character in a dimension.  So it may be necessary to
     /// consume_whitespace() prior to using this method.
-    pub fn dimension(&mut self) -> ParseResult<'a, Option<AnyUnit>> {
-        // utter crap, rewrite.
-        unimplemented!()
+    pub fn dimension(&mut self) -> Option<AnyUnit> {
+        fn is_float_char(character : char) -> bool {
+            character.is_ascii_digit()
+            || character == '-'
+            || character == '+'
+            || character == ' '
+            || character == '.'
+        }
+        let mut number_to_parse = String::with_capacity(3);
+        match self.current {
+            Token::Symbol(c) if is_float_char(c) => number_to_parse.push(c),
+            _ => return None,
+        };
+
+        loop {
+            if let Some(c) = self.current_char() {
+                if is_float_char(c) {
+                    number_to_parse.push(c);
+                    self.next_char();
+                    continue;
+                }
+            }
+            break;
+        }
+        let number = number_to_parse.replace(' ', "").parse::<f64>().ok()?;
+
+        self.consume_whitespace();
+
+        // expecting 2 ASCII characters representing the dimension
+        let dim = self.input.get(.. 2)?;
+        self.advance_by(2);
+        self.next();
+
+        match dim {
+            "em" => Some(AnyUnit::Em(number)),
+            "px" => Some(AnyUnit::Px(number)),
+            _ => None
+        }
     }
 
     // Expects to find an {<inner>}, and return <inner>
@@ -306,6 +341,8 @@ impl<'a> fmt::Display for Token<'a> {
 mod tests {
     use rand::Rng;
 
+    use crate::dimensions::AnyUnit;
+
     use super::{Lexer, Token};
 
 
@@ -386,13 +423,6 @@ mod tests {
 
     #[test]
     fn lex_group() {
-        macro_rules! assert_group {
-            ($input:expr, $result:expr) => {
-                let mut l = Lexer::new($input);
-                assert_eq!(l.group(), $result);
-                assert!(!(l.current == Token::Symbol('}')));
-            }
-        }
         let mut l = Lexer::new("{1}");
         assert_eq!(l.group(), Ok("1"));
         assert!(!(l.current() == Token::EOF));
@@ -445,24 +475,27 @@ mod tests {
         assert_alphanumeric!("abc!", "abc");
     }
 
-    // #[test]
-    // fn lex_dimension() {
-    //     use dimensions::Unit;
-    //     macro_rules! assert_dim {
-    //         ($input:expr, $result:expr) => (
-    //             let mut _l = Lexer::new($input);
-    //             assert_eq!(_l.dimension().unwrap(), Some(Unit::Px($result)));
-    //         )
-    //     }
+    #[test]
+    fn lex_dimension() {
+        fn parse_dim(input : &str) -> Option<AnyUnit> {
+            let mut lexer = Lexer::new(input);
+            lexer.dimension()  
+        }
 
-    //     assert_dim!(r"123 abc", 123.0);
-    //     assert_dim!(r"1.23 abc", 1.23);
-    //     assert_dim!(r"- 1.23 123", -1.23);
-    //     assert_dim!(r"+1.34 134", 1.34);
-    //     assert_dim!("-   12", -12.0);
-    //     assert_dim!("+   12", 12.0);
-    //     assert_dim!("-  .12", -0.12);
-    //     assert_dim!("00.123000", 0.123);
-    //     assert_dim!("001.10000", 1.1);
-    // }
+
+        assert_eq!(parse_dim(r"123px abc"),    Some(AnyUnit::Px(123.0)));
+        assert_eq!(parse_dim(r"1.23em abc"),   Some(AnyUnit::Em(1.23)));
+        assert_eq!(parse_dim(r"- 1.23em 123"), Some(AnyUnit::Em(-1.23)));
+        assert_eq!(parse_dim(r"+1.34px 134"),  Some(AnyUnit::Px(1.34)));
+        assert_eq!(parse_dim("-   12em"),      Some(AnyUnit::Em(-12.0)));
+        assert_eq!(parse_dim("+   12px"),      Some(AnyUnit::Px(12.0)));
+        assert_eq!(parse_dim("-  .12em"),      Some(AnyUnit::Em(-0.12)));
+        assert_eq!(parse_dim("00.123000em"),   Some(AnyUnit::Em(0.123)));
+        assert_eq!(parse_dim("001.10000em"),   Some(AnyUnit::Em(1.1)));
+
+        assert_eq!(parse_dim(r"px"),       None);
+        assert_eq!(parse_dim(r"..em"),     None);
+        assert_eq!(parse_dim(r"1.4.1em"),  None);
+
+    }
 }
