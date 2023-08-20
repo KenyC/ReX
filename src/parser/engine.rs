@@ -1,3 +1,7 @@
+//! Defines `parse` function to parse TeX into renderable `ParseNode` and the `Parser` struct, which contains various settings and the state of the parser.
+
+use std::borrow::Cow;
+
 use crate::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
 use crate::parser::{
@@ -12,25 +16,45 @@ use super::macros::CommandCollection;
 use crate::dimensions::AnyUnit;
 
 
+struct Parser<'c> {
+    input : String,
+    local_style : Style,
+    custom_commands : Option<& 'c CommandCollection>,
+    result : Vec<ParseNode>,
+}
+
+impl<'c> Parser<'c> {
+    pub fn new(input : &str) -> Self {
+        Self { 
+            input: input.to_string(), 
+            local_style: Style::default(), 
+            custom_commands: None,
+            result : Vec::new(),
+        }
+    }
+
+    pub fn with_style(mut self, style : Style) -> Self {
+        self.local_style = style;
+        self
+    }
+
+    pub fn with_custom_commands(mut self, custom_commands : & 'c CommandCollection) -> Self {
+        self.custom_commands = Some(custom_commands);
+        self
+    }
+
+    pub fn parse<'a>(self) -> ParseResult<'a, Vec<ParseNode>> {
+        todo!();
+        Ok(self.result)
+    }
+}
 
 
 /// This function is the API entry point for parsing tex.
 pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
-    parse_with_custom_commands(input, &CommandCollection::default())
+    Parser::new(input).parse()
 }
 
-/// This function is the API entry point for parsing tex.
-pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &CommandCollection) -> ParseResult<'a, Vec<ParseNode>> {
-    let mut lexer = Lexer::new(input);
-    let local = Style::new();
-    // let parse_result = expression(&mut lexer, local, custom_commands)?;
-    let parse_result = todo!();
-    if lexer.current() != Token::EOF {
-        return Err(ParseError::ExpectedEof(lexer.current()));
-    }
-
-    Ok(parse_result)
-}
 
 /// Helper function for determining an atomtype based on a given codepoint.
 /// This is primarily used for characters while processing, so may give false
@@ -55,9 +79,8 @@ fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{engine::parse, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText};
+    use crate::parser::{engine::{parse, Parser}, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText};
 
-    use super::parse_with_custom_commands;
 
     #[test]
     fn planck_h() {
@@ -189,32 +212,32 @@ mod tests {
         command_collection.insert("wrap", command).unwrap();
 
         let expected = parse("45 + 68");
-        let got      = parse_with_custom_commands(r"\add{45}{68}", &command_collection);
+        let got      = Parser::new(r"\add{45}{68}").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
 
         // something before and after macros
         let expected = parse("145 + 681");
-        let got      = parse_with_custom_commands(r"1\add{45}{68}1", &command_collection);
+        let got      = Parser::new(r"1\add{45}{68}1").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
 
         // commands in macro expansion
         let expected = parse(r"\frac{1}{2} + \frac{3}{4}");
-        let got      = parse_with_custom_commands(r"\add{\frac{1}{2}}{\frac{3}{4}}", &command_collection);
+        let got      = Parser::new(r"\add{\frac{1}{2}}{\frac{3}{4}}").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
 
         // recursive macros
         let expected = parse("1 + 2 + 34");
-        let got      = parse_with_custom_commands(r"\add{1}{\add{2}{3}}4", &command_collection);
+        let got      = Parser::new(r"\add{1}{\add{2}{3}}4").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
 
         // check that macro arg can't complete commands inside macro definition
         let expected = parse(r"\lbrace{}a\rbrace");
-        let got      = parse_with_custom_commands(r"\wrap{a}", &command_collection);
+        let got      = Parser::new(r"\wrap{a}").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
 
         // check that subsequent text can't complete commands inside macro def
         let expected = parse(r"\lbrace\rbrace{}a");
-        let got      = parse_with_custom_commands(r"\wrap{}a", &command_collection);
+        let got      = Parser::new(r"\wrap{}a").with_custom_commands(&command_collection).parse();
         assert_eq!(expected, got);   
     }
 

@@ -1,3 +1,5 @@
+//! Defines structs and parses TeX environments, e.g. `\begin{center}..\end{center}`
+
 use super::lexer::{Lexer, Token};
 use super::macros::CommandCollection;
 use crate::font::{Style, AtomType};
@@ -7,12 +9,19 @@ use crate::error::{ParseResult, ParseError};
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Environment {
+    /// `\begin{array} ... \end{array}`
     Array,
+    /// `\begin{matrix} ... \end{matrix}`
     Matrix,
+    /// `\begin{pmatrix} ... \end{pmatrix}`
     PMatrix,
+    /// `\begin{bmatrix} ... \end{bmatrix}`
     BMatrix,
+    /// `\begin{bbmatrix} ... \end{bbmatrix}`
     BbMatrix,
+    /// `\begin{vmatrix} ... \end{vmatrix}`
     VMatrix,
+    /// `\begin{vvmatrix} ... \end{vvmatrix}`
     VvMatrix,
 }
 
@@ -92,6 +101,7 @@ impl ArrayColumnsFormatting {
     }
 }
 
+/// A structure representing a TeX array `\begin{array}...\end{array}` and similar array like environments like `matrix`, `pmatrix` and the like
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array {
     /// The formatting arguments (clr) for each row.  Default: center.

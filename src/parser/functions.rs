@@ -1,3 +1,5 @@
+//! Defines structs and parses TeX command with `\sqrt`
+
 use crate::dimensions::AnyUnit;
 use crate::font::{Weight, Family, AtomType, Style, style_symbol};
 use crate::layout::Style as LayoutStyle;
@@ -26,19 +28,35 @@ macro_rules! sym {
     });
 }
 
+/// Recognized TeX commands
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Command {
+    /// A square root, as created by `\sqrt{..}`
     Radical,
+    /// A filled rectangle, or 'rule', as created by `\rule{..}`
     Rule,
+    /// A color command as created by `\color{red}`
     Color,
+    /// A named color command, as created by one of `\red{..}`, `\blue{..}`, `\gray{..}`, `\phantom{..}`.
+    /// These are  fake commands that only exist in ReX.
+    // TODO: why do we have this if we have custom commands?
     ColorLit(RGBA),
+    /// A fraction as created by `\frac{..}{..}`
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
+    /// Create delimiter of a given size, as created by `\bigl` or `\big`
     DelimiterSize(u8, AtomType),
+    /// Add space between nodes like `\hspace`
     Kerning(AnyUnit),
+    /// Any command affecting style like `\scriptstyle`, `\textstyle`
     Style(LayoutStyle),
+    /// Any command changing the atom type of a node, like `\mathop` or `\mathbin`.
+    /// The atom type decides how much gap to leave between elements.
     AtomChange(AtomType),
+    /// A mathematical operator, like `\lim`, `\det`
     TextOperator(&'static str, bool),
+    /// `\substack{..}{..}`
     SubStack(AtomType),
+    /// `\text{..}`
     Text,
     // // DEPRECATED
     // VExtend,
@@ -68,6 +86,7 @@ impl Command {
 }
 
 
+/// Creates the `Command` corresponding to `\name`
 pub fn get_command(name: &str) -> Option<Command> {
     let command = match name {
         "frac"   => Command::Fraction(None, None, BarThickness::Default, MathStyle::NoChange),

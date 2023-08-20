@@ -1,13 +1,20 @@
+//! Producing tokens for the parser
 use std::fmt;
 use crate::dimensions::{AnyUnit, Unit};
 use super::color::RGBA;
 use crate::error::{ParseError, ParseResult};
 
+
+/// A token for LateX
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Token<'a> {
+    /// A TeX command or macro, e.g. `\begin` or `\sqrt`
     Command(&'a str),
-    Symbol(char),
+    /// A series of whitespaces
     WhiteSpace,
+    /// A symbol, anything not covered by the above
+    Symbol(char),
+    /// End of file token
     EOF,
 }
 
@@ -23,7 +30,7 @@ impl<'a> fmt::Display for Token<'a> {
     }
 }
 
-
+/// The main structure for producing tokens from an input string
 #[derive(Clone, Debug)]
 pub struct Lexer<'a> {
     input : & 'a str,
