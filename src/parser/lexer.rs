@@ -2,7 +2,7 @@
 use std::fmt;
 use crate::dimensions::{AnyUnit, Unit};
 use super::color::RGBA;
-use crate::error::{ParseError, ParseResult};
+use crate::parser::error::{ParseError, ParseResult};
 
 
 /// A token for LateX

@@ -4,7 +4,7 @@ use super::lexer::{Lexer, Token};
 use super::macros::CommandCollection;
 use crate::font::{Style, AtomType};
 use crate::parser::{self, ParseNode, symbols::Symbol};
-use crate::error::{ParseResult, ParseError};
+use crate::parser::error::{ParseResult, ParseError};
 
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -1,4 +1,4 @@
-//! Defines structs and parses TeX command with `\sqrt`
+//! Defines structs and parses TeX command, e.g. `\sqrt`
 
 use crate::dimensions::AnyUnit;
 use crate::font::{Weight, Family, AtomType, Style, style_symbol};
@@ -9,7 +9,7 @@ use crate::parser as parse;
 use crate::parser::nodes::{ParseNode, Radical, MathStyle, GenFraction, Rule, BarThickness, AtomChange,
                     Color, Stack};
 use crate::parser::color::RGBA;
-use crate::error::{ParseError, ParseResult};
+use crate::parser::error::{ParseError, ParseResult};
 use crate::parser::symbols::Symbol;
 
 

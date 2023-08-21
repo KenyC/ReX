@@ -1,8 +1,6 @@
 //! Defines `parse` function to parse TeX into renderable `ParseNode` and the `Parser` struct, which contains various settings and the state of the parser.
 
-use std::borrow::Cow;
-
-use crate::error::{ParseError, ParseResult};
+use crate::parser::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
 use crate::parser::{
     nodes::{Delimited, ParseNode, Accent, Scripts},
@@ -43,7 +41,10 @@ impl<'c> Parser<'c> {
         self
     }
 
-    pub fn parse<'a>(self) -> ParseResult<'a, Vec<ParseNode>> {
+    pub fn parse<'a>(self) -> ParseResult<Vec<ParseNode>> {
+        // let test =
+        //     None
+        //     .or_else(f)
         todo!();
         Ok(self.result)
     }

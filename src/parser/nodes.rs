@@ -2,7 +2,7 @@
 
 use crate::dimensions::AnyUnit;
 use crate::layout::Style;
-use crate::error::{ParseResult, ParseError};
+use crate::parser::error::{ParseResult, ParseError};
 use super::color::RGBA;
 use super::environments::Array;
 use crate::font::AtomType;
@@ -187,48 +187,6 @@ pub enum MathStyle {
 }
 
 impl ParseNode {
-    /// expected a left delimiter
-    pub fn expect_left(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Open || sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedOpen(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
-    /// expected a right delimiter
-    pub fn expect_right(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Close || sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedClose(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
-    /// expected a middle delimiter
-    pub fn expect_middle(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedMiddle(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
     /// sets atom type
     pub fn set_atom_type(&mut self, at: AtomType) {
         match *self {

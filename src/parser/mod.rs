@@ -14,6 +14,7 @@ pub mod macros;
 pub mod environments;
 pub mod functions;
 pub mod lexer;
+pub mod error;
 
 pub use self::engine::*;
 pub use self::nodes::ParseNode;
