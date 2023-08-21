@@ -1,16 +1,10 @@
 //! Defines structs and parses TeX command, e.g. `\sqrt`
 
 use crate::dimensions::AnyUnit;
-use crate::font::{Weight, Family, AtomType, Style, style_symbol};
+use crate::font::{AtomType};
 use crate::layout::Style as LayoutStyle;
-use super::Parser;
-use super::lexer::{Lexer, Token};
-use super::macros::CommandCollection;
-use crate::parser as parse;
-use crate::parser::nodes::{ParseNode, Radical, MathStyle, GenFraction, Rule, BarThickness, AtomChange,
-                    Color, Stack};
+use crate::parser::nodes::{MathStyle, BarThickness};
 use crate::parser::color::RGBA;
-use crate::parser::error::{ParseError, ParseResult};
 use crate::parser::symbols::Symbol;
 
 
@@ -202,7 +196,6 @@ impl Command {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::lexer::Lexer;
 
 
     #[test]

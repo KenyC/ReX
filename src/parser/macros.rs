@@ -1,8 +1,8 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
-use std::unreachable;
 
-use crate::{parser::error::ParseError, parser::lexer::{Lexer, Token}};
+
+
 
 
 /// A collection of custom commands. You can find a macro with the given name using [`CommandCollection::query`].

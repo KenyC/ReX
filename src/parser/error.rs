@@ -2,12 +2,6 @@
 
 use std::fmt;
 
-use unicode_math::AtomType;
-
-use crate::dimensions::AnyUnit;
-
-use super::{lexer::Token, symbols::Symbol};
-
 
 /// Result type for the [`ParseError`]
 pub type ParseResult<T> = ::std::result::Result<T, ParseError>;

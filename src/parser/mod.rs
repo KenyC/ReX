@@ -34,7 +34,6 @@ use crate::parser::{
     color::RGBA,
     environments::Environment,
 };
-use crate::parser::lexer::{Lexer, Token};
 use crate::parser::functions::{Command};
 use crate::parser::macros::CommandCollection;
 use crate::dimensions::AnyUnit;
@@ -99,14 +98,15 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     fn parse_control_sequence(&mut self) -> Option<ParseResult<()>> {
         let Self { input, result, .. } = self;
-        let mut lexer = Lexer::new(input);
-        let control_seq_name = lexer.control_sequence()?;
-        let command = Command::from_name(control_seq_name)?;
+        let control_seq_name = self.control_sequence()?;
 
         // When the command name has been recognized, we are sure this is a command
         // Any failure from now on must be a parsing error (misformed input)
-        // We can in particular advance the input
-        *input = lexer.input();
+        let command = 
+            Command::from_name(control_seq_name)
+            .unwrap_or_else(|| todo!()); // TODO: recognize custom commands
+            
+
         Some(match command {
             Command::Radical => todo!(),
             Command::Rule => todo!(),

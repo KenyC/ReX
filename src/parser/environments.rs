@@ -1,10 +1,7 @@
 //! Defines structs and parses TeX environments, e.g. `\begin{center}..\end{center}`
 
-use super::lexer::{Lexer, Token};
-use super::macros::CommandCollection;
-use crate::font::{Style, AtomType};
-use crate::parser::{self, ParseNode, symbols::Symbol};
-use crate::parser::error::{ParseResult, ParseError};
+use crate::parser::{ParseNode, symbols::Symbol};
+
 
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -173,10 +170,10 @@ mod tests {
             let mut string = string.to_string();
             string.push('}');
 
-            let mut lexer  = Lexer::new(&string);
-            let style = Style::new();
-
             todo!()
+            // let mut lexer  = Lexer::new(&string);
+            // let style = Style::new();
+
             // assert_eq!(
             //     array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
             //     col_format,

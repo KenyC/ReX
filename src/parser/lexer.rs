@@ -1,62 +1,31 @@
 //! Producing tokens for the parser
-use std::{fmt, todo};
-use crate::dimensions::{AnyUnit, Unit};
-use super::color::RGBA;
-use crate::parser::error::{ParseError, ParseResult};
 
 
-/// A token for LateX
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Token<'a> {
-    /// A TeX command or macro, e.g. `\begin` or `\sqrt`
-    Command(&'a str),
-    /// A series of whitespaces
-    WhiteSpace,
-    /// A symbol, anything not covered by the above
-    Symbol(char),
-    /// End of file token
-    EOF,
-}
+use super::Parser;
 
 
-impl<'a> fmt::Display for Token<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Token::Command(cmd) => write!(f, r#""\{}""#, cmd),
-            Token::Symbol(c) => write!(f, r"'{}'", c),
-            Token::WhiteSpace => write!(f, r"' '"),
-            Token::EOF => write!(f, "EOF"),
-        }
-    }
-}
 
-/// The main structure for producing tokens from an input string
-#[derive(Clone, Debug)]
-pub struct Lexer<'a> {
-    input : & 'a str,
-}
 
-impl<'a> Lexer<'a> {
-    /// Create a new lexer, whose current token is the first token
-    /// to be processed.
-    pub fn new(input: &'a str) -> Lexer<'a> {
-        Self { input }
-    }
 
+
+
+impl<'i, 'c> Parser<'i, 'c> {
     /// Advances through the input so that the first character pointed to
     /// is not a whitespace
     pub fn consume_whitespace(&mut self) {
         let mut chars = self.input.chars();
 
-        while chars.next().map_or(false, |c| c.is_whitespace()) 
-        {}
+        let mut remainder = self.input;
+        while chars.next().map_or(false, |c| c.is_whitespace()) {
+            remainder = chars.as_str();
+        }
 
-        self.input = chars.as_str();
+        self.input = remainder;
     }
 
 
     /// Attempts parsing a control sequence like `\bla`, returning `bla`.
-    pub fn control_sequence(&mut self) -> Option<& 'a str> {
+    pub fn control_sequence<'a>(& 'a mut self) -> Option<& 'a str> {
         let mut chars = self.input.chars();
         if chars.next() != Some('\\') {
             return None;
@@ -87,10 +56,6 @@ impl<'a> Lexer<'a> {
         return Some(diff_slices(start_command, end_command));
     }
 
-    /// Returns wrapped input
-    pub fn input(&self) -> & 'a str {
-        self.input 
-    }
 }
 
 /// Assuming `slice2` is a suffix of `slice1`, 
@@ -106,39 +71,39 @@ mod tests {
 
     use rand::Rng;
 
-    use crate::dimensions::AnyUnit;
+    use crate::{dimensions::AnyUnit, parser::Parser};
 
-    use super::{Lexer, Token};
 
 
 
     #[test]
     fn lex_primes() {
-        let mut lexer  = Lexer::new("a'b''c'''d");
-        let mut tokens = Vec::new();
+        todo!()
+        // let mut lexer  = Lexer::new("a'b''c'''d");
+        // let mut tokens = Vec::new();
 
-        loop {
-            let token : Token = todo!();
-            // let token = lexer.current();
-            if token == Token::EOF {break;}
-            tokens.push(token);
-            todo!();
-            // lexer.next();
-        }
+        // loop {
+        //     let token : Token = todo!();
+        //     // let token = lexer.current();
+        //     if token == Token::EOF {break;}
+        //     tokens.push(token);
+        //     todo!();
+        //     // lexer.next();
+        // }
 
-        let expected = [
-            Token::Symbol('a'), 
-            Token::Command("prime"),
-            Token::Symbol('b'), 
-            Token::Command("dprime"),
-            Token::Symbol('c'), 
-            Token::Command("trprime"),
-            Token::Symbol('d'), 
-        ];
-        assert_eq!(
-            tokens,
-            expected.to_vec(),
-        )
+        // let expected = [
+        //     Token::Symbol('a'), 
+        //     Token::Command("prime"),
+        //     Token::Symbol('b'), 
+        //     Token::Command("dprime"),
+        //     Token::Symbol('c'), 
+        //     Token::Command("trprime"),
+        //     Token::Symbol('d'), 
+        // ];
+        // assert_eq!(
+        //     tokens,
+        //     expected.to_vec(),
+        // )
     }
 
     #[test]
@@ -155,41 +120,42 @@ mod tests {
 
         for (input, name, remainder) in tests {
             eprintln!("Input: {:?}", input);
-            let mut lexer : Lexer = Lexer::new(input);
-            let control_sequence = lexer.control_sequence();
+            let mut parser : Parser = Parser::new(input);
+            let control_sequence = parser.control_sequence();
             assert_eq!(control_sequence, name);
-            assert_eq!(lexer.input(), remainder);
+            assert_eq!(parser.input, remainder);
         }
     }
 
 
     #[test]
     fn lex_tokens() {
-        macro_rules! assert_eq_token_stream {
-            ($left:expr, $right:expr) => {{
-                let mut left  = Lexer::new($left);
-                let mut right = Lexer::new($right);
+        todo!()
+        // macro_rules! assert_eq_token_stream {
+        //     ($left:expr, $right:expr) => {{
+        //         let mut left  = Lexer::new($left);
+        //         let mut right = Lexer::new($right);
 
-                loop {
-                    let l_tok : Token = todo!();
-                    let r_tok : Token = todo!();
-                    // let l_tok = left.next();
-                    // let r_tok = right.next();
+        //         loop {
+        //             let l_tok : Token = todo!();
+        //             let r_tok : Token = todo!();
+        //             // let l_tok = left.next();
+        //             // let r_tok = right.next();
 
-                    assert_eq!(l_tok, r_tok);
-                    if l_tok == Token::EOF {
-                        break
-                    }
-                }
-            }}
-        }
+        //             assert_eq!(l_tok, r_tok);
+        //             if l_tok == Token::EOF {
+        //                 break
+        //             }
+        //         }
+        //     }}
+        // }
 
-        assert_eq_token_stream!(r"\cs1", r"\cs 1");
-        assert_eq_token_stream!(r"\cs1", r"\cs    1");
-        assert_eq_token_stream!(r"\cs?", "\\cs\n\n\t?");
-        assert_eq_token_stream!(r"\test\test", r"\test   \test");
-        assert_eq_token_stream!(r"1     +       2", r"1 + 2");
-        assert_eq_token_stream!(r"123\", "123");
+        // assert_eq_token_stream!(r"\cs1", r"\cs 1");
+        // assert_eq_token_stream!(r"\cs1", r"\cs    1");
+        // assert_eq_token_stream!(r"\cs?", "\\cs\n\n\t?");
+        // assert_eq_token_stream!(r"\test\test", r"\test   \test");
+        // assert_eq_token_stream!(r"1     +       2", r"1 + 2");
+        // assert_eq_token_stream!(r"123\", "123");
     }
 
     #[test]
@@ -226,8 +192,8 @@ mod tests {
     fn lex_alphanumeric() {
         macro_rules! assert_alphanumeric {
             ($input:expr, $result:expr) => {
-                let mut lex = Lexer::new($input);
                 todo!()
+                // let mut lex = Lexer::new($input);
                 // assert_eq!(lex.alphanumeric(), $result);
             }
         }
@@ -252,8 +218,8 @@ mod tests {
     #[test]
     fn lex_dimension() {
         fn parse_dim(input : &str) -> Option<AnyUnit> {
-            let mut lexer = Lexer::new(input);
             todo!();
+            // let mut lexer = Lexer::new(input);
             // lexer.dimension()  
         }
 
@@ -272,5 +238,20 @@ mod tests {
         assert_eq!(parse_dim(r"..em"),     None);
         assert_eq!(parse_dim(r"1.4.1em"),  None);
 
+    }
+
+    #[test]
+    fn lex_consume_whitespace() {
+        fn remainder_after_consume_whitespace(input : &str) -> &str {
+            let mut lexer = Parser::new(input);
+            lexer.consume_whitespace();
+            lexer.input
+        }
+
+        assert_eq!(remainder_after_consume_whitespace("   2"),    "2");
+        assert_eq!(remainder_after_consume_whitespace(" \t ç  "), "ç  ");
+        assert_eq!(remainder_after_consume_whitespace("  \t  "),  "");
+        assert_eq!(remainder_after_consume_whitespace(""),        "");
+        assert_eq!(remainder_after_consume_whitespace("abc "),    "abc ");
     }
 }

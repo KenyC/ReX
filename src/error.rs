@@ -6,7 +6,6 @@
 use crate::dimensions::AnyUnit;
 use crate::font::common::GlyphId;
 use crate::parser::error::ParseError;
-use crate::parser::lexer::Token;
 use std::fmt;
 use crate::font::AtomType;
 use crate::parser::symbols::Symbol;
