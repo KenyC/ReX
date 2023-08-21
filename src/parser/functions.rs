@@ -3,6 +3,7 @@
 use crate::dimensions::AnyUnit;
 use crate::font::{Weight, Family, AtomType, Style, style_symbol};
 use crate::layout::Style as LayoutStyle;
+use super::Parser;
 use super::lexer::{Lexer, Token};
 use super::macros::CommandCollection;
 use crate::parser as parse;
@@ -83,115 +84,117 @@ impl Command {
     //         // VExtend              => v_extend(lex, local, command_collection),
     //     }
     // }
-}
 
 
-/// Creates the `Command` corresponding to `\name`
-pub fn get_command(name: &str) -> Option<Command> {
-    let command = match name {
-        "frac"   => Command::Fraction(None, None, BarThickness::Default, MathStyle::NoChange),
-        "tfrac"  => Command::Fraction(None, None, BarThickness::Default, MathStyle::Text),
-        "dfrac"  => Command::Fraction(None, None, BarThickness::Default, MathStyle::Display),
-        "binom"  => Command::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::NoChange),
-        "tbinom" => Command::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::Text),
-        "dbinom" => Command::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::Display),
+    /// Creates the `Command` corresponding to `\name`
+    pub fn from_name(name: &str) -> Option<Self> {
+        let command = match name {
+            "frac"   => Self::Fraction(None, None, BarThickness::Default, MathStyle::NoChange),
+            "tfrac"  => Self::Fraction(None, None, BarThickness::Default, MathStyle::Text),
+            "dfrac"  => Self::Fraction(None, None, BarThickness::Default, MathStyle::Display),
+            "binom"  => Self::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::NoChange),
+            "tbinom" => Self::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::Text),
+            "dbinom" => Self::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::Display),
 
-        // Stacking commands
-        "substack" => Command::SubStack(AtomType::Inner),
+            // Stacking commands
+            "substack" => Self::SubStack(AtomType::Inner),
 
-        // Radical commands
-        "sqrt" => Command::Radical,
+            // Radical commands
+            "sqrt" => Self::Radical,
 
-        // Delimiter size commands
-        "bigl"  => Command::DelimiterSize(1, AtomType::Open),
-        "Bigl"  => Command::DelimiterSize(2, AtomType::Open),
-        "biggl" => Command::DelimiterSize(3, AtomType::Open),
-        "Biggl" => Command::DelimiterSize(4, AtomType::Open),
-        "bigr"  => Command::DelimiterSize(1, AtomType::Close),
-        "Bigr"  => Command::DelimiterSize(2, AtomType::Close),
-        "biggr" => Command::DelimiterSize(3, AtomType::Close),
-        "Biggr" => Command::DelimiterSize(4, AtomType::Close),
-        "bigm"  => Command::DelimiterSize(1, AtomType::Relation),
-        "Bigm"  => Command::DelimiterSize(2, AtomType::Relation),
-        "biggm" => Command::DelimiterSize(3, AtomType::Relation),
-        "Biggm" => Command::DelimiterSize(4, AtomType::Relation),
-        "big"   => Command::DelimiterSize(1, AtomType::Ordinary),
-        "Big"   => Command::DelimiterSize(2, AtomType::Ordinary),
-        "bigg"  => Command::DelimiterSize(3, AtomType::Ordinary),
-        "Bigg"  => Command::DelimiterSize(4, AtomType::Ordinary),
+            // Delimiter size commands
+            "bigl"  => Self::DelimiterSize(1, AtomType::Open),
+            "Bigl"  => Self::DelimiterSize(2, AtomType::Open),
+            "biggl" => Self::DelimiterSize(3, AtomType::Open),
+            "Biggl" => Self::DelimiterSize(4, AtomType::Open),
+            "bigr"  => Self::DelimiterSize(1, AtomType::Close),
+            "Bigr"  => Self::DelimiterSize(2, AtomType::Close),
+            "biggr" => Self::DelimiterSize(3, AtomType::Close),
+            "Biggr" => Self::DelimiterSize(4, AtomType::Close),
+            "bigm"  => Self::DelimiterSize(1, AtomType::Relation),
+            "Bigm"  => Self::DelimiterSize(2, AtomType::Relation),
+            "biggm" => Self::DelimiterSize(3, AtomType::Relation),
+            "Biggm" => Self::DelimiterSize(4, AtomType::Relation),
+            "big"   => Self::DelimiterSize(1, AtomType::Ordinary),
+            "Big"   => Self::DelimiterSize(2, AtomType::Ordinary),
+            "bigg"  => Self::DelimiterSize(3, AtomType::Ordinary),
+            "Bigg"  => Self::DelimiterSize(4, AtomType::Ordinary),
 
-        // Spacing related commands
-        "!"     => Command::Kerning(AnyUnit::Em(-3f64/18f64)),
-        ","     => Command::Kerning(AnyUnit::Em(3f64/18f64)),
-        ":"     => Command::Kerning(AnyUnit::Em(4f64/18f64)),
-        ";"     => Command::Kerning(AnyUnit::Em(5f64/18f64)),
-        " "     => Command::Kerning(AnyUnit::Em(1f64/4f64)),
-        "quad"  => Command::Kerning(AnyUnit::Em(1.0f64)),
-        "qquad" => Command::Kerning(AnyUnit::Em(2.0f64)),
-        "rule"  => Command::Rule,
+            // Spacing related commands
+            "!"     => Self::Kerning(AnyUnit::Em(-3f64/18f64)),
+            ","     => Self::Kerning(AnyUnit::Em(3f64/18f64)),
+            ":"     => Self::Kerning(AnyUnit::Em(4f64/18f64)),
+            ";"     => Self::Kerning(AnyUnit::Em(5f64/18f64)),
+            " "     => Self::Kerning(AnyUnit::Em(1f64/4f64)),
+            "quad"  => Self::Kerning(AnyUnit::Em(1.0f64)),
+            "qquad" => Self::Kerning(AnyUnit::Em(2.0f64)),
+            "rule"  => Self::Rule,
 
-        // // Useful other than debugging?
-        // // DEPRECATED
-        // "vextend" => Command::VExtend,
+            // // Useful other than debugging?
+            // // DEPRECATED
+            // "vextend" => Self::VExtend,
 
-        // Display style changes
-        "textstyle"         => Command::Style(LayoutStyle::Text),
-        "displaystyle"      => Command::Style(LayoutStyle::Display),
-        "scriptstyle"       => Command::Style(LayoutStyle::Script),
-        "scriptscriptstyle" => Command::Style(LayoutStyle::ScriptScript),
-        "text"              => Command::Text,
+            // Display style changes
+            "textstyle"         => Self::Style(LayoutStyle::Text),
+            "displaystyle"      => Self::Style(LayoutStyle::Display),
+            "scriptstyle"       => Self::Style(LayoutStyle::Script),
+            "scriptscriptstyle" => Self::Style(LayoutStyle::ScriptScript),
+            "text"              => Self::Text,
 
-        // Atom-type changes
-        "mathop"  => Command::AtomChange(AtomType::Operator(false)),
-        "mathrel" => Command::AtomChange(AtomType::Relation),
-        "mathord" => Command::AtomChange(AtomType::Alpha),
+            // Atom-type changes
+            "mathop"  => Self::AtomChange(AtomType::Operator(false)),
+            "mathrel" => Self::AtomChange(AtomType::Relation),
+            "mathord" => Self::AtomChange(AtomType::Alpha),
 
-        // Color related
-        "color"   => Command::Color,
-        "blue"    => Command::ColorLit(RGBA(0,0,0xff,0xff)),
-        "red"     => Command::ColorLit(RGBA(0xff,0,0,0xff)),
-        "gray"    => Command::ColorLit(RGBA(0x80,0x80,0x80,0xff)),
-        "phantom" => Command::ColorLit(RGBA(0,0,0,0)),
+            // Color related
+            "color"   => Self::Color,
+            "blue"    => Self::ColorLit(RGBA(0,0,0xff,0xff)),
+            "red"     => Self::ColorLit(RGBA(0xff,0,0,0xff)),
+            "gray"    => Self::ColorLit(RGBA(0x80,0x80,0x80,0xff)),
+            "phantom" => Self::ColorLit(RGBA(0,0,0,0)),
 
-        // Operators with limits
-        "det"     => Command::TextOperator("det", true),
-        "gcd"     => Command::TextOperator("gcd", true),
-        "lim"     => Command::TextOperator("lim", true),
-        "limsup"  => Command::TextOperator("lim,sup", true),
-        "liminf"  => Command::TextOperator("lim,inf", true),
-        "sup"     => Command::TextOperator("sup", true),
-        "supp"    => Command::TextOperator("supp", true),
-        "inf"     => Command::TextOperator("inf", true),
-        "max"     => Command::TextOperator("max", true),
-        "min"     => Command::TextOperator("min", true),
-        "Pr"      => Command::TextOperator("Pr", true),
+            // Operators with limits
+            "det"     => Self::TextOperator("det", true),
+            "gcd"     => Self::TextOperator("gcd", true),
+            "lim"     => Self::TextOperator("lim", true),
+            "limsup"  => Self::TextOperator("lim,sup", true),
+            "liminf"  => Self::TextOperator("lim,inf", true),
+            "sup"     => Self::TextOperator("sup", true),
+            "supp"    => Self::TextOperator("supp", true),
+            "inf"     => Self::TextOperator("inf", true),
+            "max"     => Self::TextOperator("max", true),
+            "min"     => Self::TextOperator("min", true),
+            "Pr"      => Self::TextOperator("Pr", true),
 
-        // Operators without limits
-        "sin"     => Command::TextOperator("sin", false),
-        "cos"     => Command::TextOperator("cos", false),
-        "tan"     => Command::TextOperator("tan", false),
-        "cot"     => Command::TextOperator("cot", false),
-        "csc"     => Command::TextOperator("csc", false),
-        "sec"     => Command::TextOperator("sec", false),
-        "arcsin"  => Command::TextOperator("arcsin", false),
-        "arccos"  => Command::TextOperator("arccos", false),
-        "arctan"  => Command::TextOperator("arctan", false),
-        "sinh"    => Command::TextOperator("sinh", false),
-        "cosh"    => Command::TextOperator("cosh", false),
-        "tanh"    => Command::TextOperator("tanh", false),
-        "arg"     => Command::TextOperator("arg", false),
-        "deg"     => Command::TextOperator("deg", false),
-        "dim"     => Command::TextOperator("dim", false),
-        "exp"     => Command::TextOperator("exp", false),
-        "hom"     => Command::TextOperator("hom", false),
-        "Hom"     => Command::TextOperator("Hom", false),
-        "ker"     => Command::TextOperator("ker", false),
-        "Ker"     => Command::TextOperator("Ker", false),
-        "ln"      => Command::TextOperator("ln", false),
-        "log"     => Command::TextOperator("log", false),
-        _ => return None
-    };
-    Some(command)
+            // Operators without limits
+            "sin"     => Self::TextOperator("sin", false),
+            "cos"     => Self::TextOperator("cos", false),
+            "tan"     => Self::TextOperator("tan", false),
+            "cot"     => Self::TextOperator("cot", false),
+            "csc"     => Self::TextOperator("csc", false),
+            "sec"     => Self::TextOperator("sec", false),
+            "arcsin"  => Self::TextOperator("arcsin", false),
+            "arccos"  => Self::TextOperator("arccos", false),
+            "arctan"  => Self::TextOperator("arctan", false),
+            "sinh"    => Self::TextOperator("sinh", false),
+            "cosh"    => Self::TextOperator("cosh", false),
+            "tanh"    => Self::TextOperator("tanh", false),
+            "arg"     => Self::TextOperator("arg", false),
+            "deg"     => Self::TextOperator("deg", false),
+            "dim"     => Self::TextOperator("dim", false),
+            "exp"     => Self::TextOperator("exp", false),
+            "hom"     => Self::TextOperator("hom", false),
+            "Hom"     => Self::TextOperator("Hom", false),
+            "ker"     => Self::TextOperator("ker", false),
+            "Ker"     => Self::TextOperator("Ker", false),
+            "ln"      => Self::TextOperator("ln", false),
+            "log"     => Self::TextOperator("log", false),
+            _ => return None
+        };
+        Some(command)
+    }
+
+
 }
 
 

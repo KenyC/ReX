@@ -1,5 +1,5 @@
 //! Producing tokens for the parser
-use std::fmt;
+use std::{fmt, todo};
 use crate::dimensions::{AnyUnit, Unit};
 use super::color::RGBA;
 use crate::parser::error::{ParseError, ParseResult};
@@ -40,18 +40,70 @@ impl<'a> Lexer<'a> {
     /// Create a new lexer, whose current token is the first token
     /// to be processed.
     pub fn new(input: &'a str) -> Lexer<'a> {
-        todo!()
+        Self { input }
     }
 
-    /// The token currently being processed.
-    #[inline]
-    pub fn current(&self) -> Token<'a> {
-        todo!()
+    /// Advances through the input so that the first character pointed to
+    /// is not a whitespace
+    pub fn consume_whitespace(&mut self) {
+        let mut chars = self.input.chars();
+
+        while chars.next().map_or(false, |c| c.is_whitespace()) 
+        {}
+
+        self.input = chars.as_str();
+    }
+
+
+    /// Attempts parsing a control sequence like `\bla`, returning `bla`.
+    pub fn control_sequence(&mut self) -> Option<& 'a str> {
+        let mut chars = self.input.chars();
+        if chars.next() != Some('\\') {
+            return None;
+        }
+
+        let start_command = chars.as_str();
+
+        // TODO: problem with next condition
+        // A \ at the end of input is considered the same as a slash followed by a space
+        let character = chars.next().unwrap_or(' ');
+
+
+        // If the first character is non-alphabetic, that is the command and we return it
+        if !character.is_ascii_alphabetic() {
+            let suffix = chars.as_str();
+            self.input = suffix;
+            return Some(diff_slices(start_command, suffix));
+        }
+
+        // Otherwise, we keep looping while characters are ASCII alphabetic
+        let mut end_command = chars.as_str();
+        while chars.next().map_or(false, |c| c.is_ascii_alphabetic()) {
+            end_command = chars.as_str();
+        }
+
+        self.input = end_command;
+
+        return Some(diff_slices(start_command, end_command));
+    }
+
+    /// Returns wrapped input
+    pub fn input(&self) -> & 'a str {
+        self.input 
     }
 }
 
+/// Assuming `slice2` is a suffix of `slice1`, 
+/// returns the prefix of `slice1` that ends just before the first character of `slice2`
+fn diff_slices<'a>(slice : & 'a str, suffix : & 'a str) -> & 'a str {
+    &slice[.. (slice.len() - suffix.len())]
+}
+
+
 #[cfg(test)]
 mod tests {
+    use std::todo;
+
     use rand::Rng;
 
     use crate::dimensions::AnyUnit;
@@ -66,7 +118,8 @@ mod tests {
         let mut tokens = Vec::new();
 
         loop {
-            let token = lexer.current();
+            let token : Token = todo!();
+            // let token = lexer.current();
             if token == Token::EOF {break;}
             tokens.push(token);
             todo!();
@@ -91,21 +144,21 @@ mod tests {
     #[test]
     fn lex_control_sequence() {
         let tests = [
-            (r"cal 0",     Token::Command("cal"), "0"),
-            (r"$ 0",       Token::Command("$"),   "0"),
-            (r"cal{} 0",   Token::Command("cal"), "{} 0"),
-            (r"c{} 0",     Token::Command("c"),   "{} 0"),
+            (r"\cal 0",     Some("cal"), " 0"),
+            (r"\$ 0",       Some("$"),   " 0"),
+            (r"\cal{} 0",   Some("cal"), "{} 0"),
+            (r"\c{} 0",     Some("c"),   "{} 0"),
+            (r"\",          Some(""),    ""),
+            (r"\ +1",       Some(" "),   "+1"),
+            (r"_1",         None,        "_1"),
         ];
 
-        for (input, token, remainder) in tests {
-            let mut lexer : Lexer = todo!();
-            // let mut lexer = Lexer {
-            //     input,
-            //     current: Token::EOF,
-            // };
-            todo!();
-            // assert_eq!(lexer.control_sequence(), token);
-            assert_eq!(lexer.input, remainder);
+        for (input, name, remainder) in tests {
+            eprintln!("Input: {:?}", input);
+            let mut lexer : Lexer = Lexer::new(input);
+            let control_sequence = lexer.control_sequence();
+            assert_eq!(control_sequence, name);
+            assert_eq!(lexer.input(), remainder);
         }
     }
 

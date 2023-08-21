@@ -1,5 +1,7 @@
 //! Defines `parse` function to parse TeX into renderable `ParseNode` and the `Parser` struct, which contains various settings and the state of the parser.
 
+use std::todo;
+
 use crate::parser::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
 use crate::parser::{
@@ -9,45 +11,95 @@ use crate::parser::{
     environments::Environment,
 };
 use super::lexer::{Lexer, Token};
-use super::functions::get_command;
+use super::functions::{Command};
 use super::macros::CommandCollection;
 use crate::dimensions::AnyUnit;
 
 
-struct Parser<'c> {
-    input : String,
+/// A parser, contains some input, some parameters of parsing such as custom commands and some parser state info.  
+/// The lifetime `'i` is for the borrow of the input.
+/// The lifetime `'c` is for the borrow of the custom command collection (cf [`CommandCollection`]).
+pub struct Parser<'i, 'c> {
+    input : & 'i str,
     local_style : Style,
     custom_commands : Option<& 'c CommandCollection>,
     result : Vec<ParseNode>,
 }
 
-impl<'c> Parser<'c> {
-    pub fn new(input : &str) -> Self {
+impl<'i, 'c> Parser<'i, 'c> {
+    /// Creates a new parser from an input string.
+    pub fn new(input : & 'i str) -> Self {
         Self { 
-            input: input.to_string(), 
+            input, 
             local_style: Style::default(), 
             custom_commands: None,
             result : Vec::new(),
         }
     }
 
+    /// Sets the [`Style`] for the parser.
     pub fn with_style(mut self, style : Style) -> Self {
         self.local_style = style;
         self
     }
 
+    /// Sets a library of custom commands for the parser
     pub fn with_custom_commands(mut self, custom_commands : & 'c CommandCollection) -> Self {
         self.custom_commands = Some(custom_commands);
         self
     }
 
-    pub fn parse<'a>(self) -> ParseResult<Vec<ParseNode>> {
-        // let test =
-        //     None
-        //     .or_else(f)
-        todo!();
+    /// Parses the input provided into [`ParseNode`]s. This is the main API entry point for parsing.
+    pub fn parse<'a>(mut self) -> ParseResult<Vec<ParseNode>> {
+        while !self.input.is_empty() {
+
+            // We try to parse the first things that comes along
+            let node = 
+                self.parse_control_sequence()
+            ;
+
+
+            // We attach sub- super-scripts to it if we can
+
+
+
+            // Nothing was recognized
+            if node.is_none() {
+                return todo!()
+            }
+        }
+        // todo!();
         Ok(self.result)
     }
+
+
+    fn parse_control_sequence(&mut self) -> Option<ParseResult<()>> {
+        let Self { input, result, .. } = self;
+        let mut lexer = Lexer::new(input);
+        let control_seq_name = lexer.control_sequence()?;
+        let command = Command::from_name(control_seq_name)?;
+
+        // When the command name has been recognized, we are sure this is a command
+        // Any failure from now on must be a parsing error (misformed input)
+        // We can in particular advance the input
+        *input = lexer.input();
+        Some(match command {
+            Command::Radical => todo!(),
+            Command::Rule => todo!(),
+            Command::Color => todo!(),
+            Command::ColorLit(_) => todo!(),
+            Command::Fraction(_, _, _, _) => todo!(),
+            Command::DelimiterSize(_, _) => todo!(),
+            Command::Kerning(_) => todo!(),
+            Command::Style(_) => todo!(),
+            Command::AtomChange(_) => todo!(),
+            Command::TextOperator(_, _) => todo!(),
+            Command::SubStack(_) => todo!(),
+            Command::Text => todo!(),
+        })
+    }
+
+
 }
 
 
