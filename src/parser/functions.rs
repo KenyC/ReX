@@ -200,11 +200,16 @@ impl<'i, 'c> Parser<'i, 'c> {
         
         self.consume_whitespace();
 
+        fn lift(node : Option<ParseResult<ParseNode>>) -> Option<ParseResult<Vec<ParseNode>>> {
+            node.map(|maybe_node| maybe_node.map(|node| vec![node]))
+        }
 
-        self.parse_control_sequence().map(|maybe_node| maybe_node.map(|node| vec![node])) // really clunky
+        lift(self.parse_control_sequence()) // really clunky
             .or_else(|| self.parse_group())
+            .or_else(|| lift(self.parse_symbol()))
             .ok_or(ParseError::RequiredMacroArg)?
     }
+
 
     /// After parsing `\sqrt`, we expect to parse a group
     pub fn parse_radical(&mut self) -> ParseResult<Radical> {

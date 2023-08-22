@@ -95,16 +95,13 @@ impl<'i, 'c> Parser<'i, 'c> {
                 self.parse_control_sequence()
                 .or_else(|| self.parse_symbol())
             ;
-
+            let node = node.ok_or_else(|| todo!())??;
 
             // We attach sub- super-scripts to it if we can
 
 
-
-            // Nothing was recognized
-            if node.is_none() {
-                return todo!()
-            }
+            // We add the result to our nodes
+            self.result.push(node);
         }
         // todo!();
         Ok(())
@@ -138,6 +135,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         // When the command name has been recognized, we are sure this is a command
         // Any failure from now on must be a parsing error (misformed input)
         Some(
+            // TODO: think of best ordering of these cases
             // First case, a TeX command
             if let Some(command) = Command::from_name(control_seq_name) {
                 match command {
@@ -232,9 +230,7 @@ mod tests {
 
     #[test]
     fn planck_h() {
-        let mut errs: Vec<String> = Vec::new();
-        should_pass!(errs, parse, [r"h"]);
-        display_errors!(errs);
+        parse("h").unwrap();
     }
 
     #[test]
