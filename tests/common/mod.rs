@@ -35,7 +35,7 @@ pub fn equation_diffs(old: &[Equation], new: &[Equation]) -> Result<Vec<(Equatio
     Ok(diff)
 }
 
-pub fn render<'a, 'f, 'b,>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str,) -> Result<Equation, rex::error::Error<'b>> {
+pub fn render<'a, 'f, 'b,>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str,) -> Result<Equation, rex::error::Error> {
     // parsing
     let parse_nodes = parse(string)?;
 

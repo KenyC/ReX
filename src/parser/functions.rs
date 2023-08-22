@@ -7,6 +7,10 @@ use crate::parser::nodes::{MathStyle, BarThickness};
 use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
+use super::nodes::Radical;
+use super::{ParseNode, Parser};
+use super::error::{ParseResult, ParseError};
+
 
 macro_rules! sym {
     (@at ord) => { AtomType::Ordinary };
@@ -187,8 +191,26 @@ impl Command {
         };
         Some(command)
     }
+}
 
 
+impl<'i, 'c> Parser<'i, 'c> {
+    fn parse_required_argument(&mut self) -> ParseResult<Vec<ParseNode>> {
+        let Self { input, result, .. } = self;
+        
+        self.consume_whitespace();
+
+
+        self.parse_control_sequence().map(|maybe_node| maybe_node.map(|node| vec![node])) // really clunky
+            .or_else(|| self.parse_group())
+            .ok_or(ParseError::RequiredMacroArg)?
+    }
+
+    /// After parsing `\sqrt`, we expect to parse a group
+    pub fn parse_radical(&mut self) -> ParseResult<Radical> {
+        let inner = self.parse_required_argument()?;
+        Ok(Radical { inner })
+    }
 }
 
 

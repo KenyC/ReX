@@ -56,6 +56,25 @@ impl<'i, 'c> Parser<'i, 'c> {
         return Some(diff_slices(start_command, end_command));
     }
 
+
+    /// If next char is equal to the argument, advance the input by that character
+    /// If not, does nothing.
+    pub fn try_parse_char(&mut self, character : char) -> Option<()> {
+        let mut chars = self.input.chars();
+        if chars.next() == Some(character) {
+            self.input = chars.as_str();
+            return Some(())
+        }
+        None
+    }
+
+    /// Gets the next char from the input string (if not empty) and advances the input
+    pub fn parse_char(&mut self) -> Option<char> {
+        let mut chars = self.input.chars();
+        let result = chars.next();
+        self.input = chars.as_str();
+        result
+    }
 }
 
 /// Assuming `slice2` is a suffix of `slice1`, 
@@ -71,9 +90,21 @@ mod tests {
 
     use rand::Rng;
 
-    use crate::{dimensions::AnyUnit, parser::Parser};
+    use crate::{dimensions::AnyUnit, parser::{Parser, self}};
 
 
+    #[test]
+    fn lex_try_char() {
+        fn remaining_input(input : &str, character : char) -> (Option<()>, &str) {
+            let mut parser = Parser::new(input);
+            let outcome = parser.try_parse_char(character);
+            (outcome, parser.input)
+        }
+
+        assert_eq!(remaining_input("{ rere", '{'), (Some(()), " rere"));
+        assert_eq!(remaining_input("} rere", '{'), (None,     "} rere"));
+        assert_eq!(remaining_input("", '{'),       (None,     ""));
+    }
 
 
     #[test]

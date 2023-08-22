@@ -28,6 +28,7 @@ use std::todo;
 
 use crate::parser::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
+use crate::parser::symbols::codepoint_atom_type;
 use crate::parser::{
     nodes::{Delimited, Accent, Scripts},
     symbols::Symbol,
@@ -39,12 +40,18 @@ use crate::parser::macros::CommandCollection;
 use crate::dimensions::AnyUnit;
 
 
+#[derive(Debug, Clone, Copy)]
+enum ParseDelimiter {
+    CloseBracket
+}
+
 /// A parser, contains some input, some parameters of parsing such as custom commands and some parser state info.  
 /// The lifetime `'i` is for the borrow of the input.
 /// The lifetime `'c` is for the borrow of the custom command collection (cf [`CommandCollection`]).
 pub struct Parser<'i, 'c> {
     input : & 'i str,
     local_style : Style,
+    stop_parsing_at : Option<ParseDelimiter>,
     custom_commands : Option<& 'c CommandCollection>,
     result : Vec<ParseNode>,
 }
@@ -56,6 +63,7 @@ impl<'i, 'c> Parser<'i, 'c> {
             input, 
             local_style: Style::default(), 
             custom_commands: None,
+            stop_parsing_at: None,
             result : Vec::new(),
         }
     }
@@ -73,12 +81,19 @@ impl<'i, 'c> Parser<'i, 'c> {
     }
 
     /// Parses the input provided into [`ParseNode`]s. This is the main API entry point for parsing.
-    pub fn parse<'a>(mut self) -> ParseResult<Vec<ParseNode>> {
-        while !self.input.is_empty() {
+    pub fn parse(mut self) -> ParseResult<Vec<ParseNode>> {
+        self.parse_expression()?;
+        Ok(self.result)
+    }
+
+    fn parse_expression(&mut self) -> ParseResult<()> {
+        while !self.end_of_parse()? {
+            self.consume_whitespace();
 
             // We try to parse the first things that comes along
             let node = 
                 self.parse_control_sequence()
+                .or_else(|| self.parse_symbol())
             ;
 
 
@@ -92,38 +107,108 @@ impl<'i, 'c> Parser<'i, 'c> {
             }
         }
         // todo!();
-        Ok(self.result)
+        Ok(())
+    }
+
+    /// Recovers the nodes that have been parsed yet, without running any more parsing
+    pub fn to_results(self) -> Vec<ParseNode> {
+        self.result
     }
 
 
-    fn parse_control_sequence(&mut self) -> Option<ParseResult<()>> {
-        let Self { input, result, .. } = self;
-        let control_seq_name = self.control_sequence()?;
-
-        // When the command name has been recognized, we are sure this is a command
-        // Any failure from now on must be a parsing error (misformed input)
-        let command = 
-            Command::from_name(control_seq_name)
-            .unwrap_or_else(|| todo!()); // TODO: recognize custom commands
-            
-
-        Some(match command {
-            Command::Radical => todo!(),
-            Command::Rule => todo!(),
-            Command::Color => todo!(),
-            Command::ColorLit(_) => todo!(),
-            Command::Fraction(_, _, _, _) => todo!(),
-            Command::DelimiterSize(_, _) => todo!(),
-            Command::Kerning(_) => todo!(),
-            Command::Style(_) => todo!(),
-            Command::AtomChange(_) => todo!(),
-            Command::TextOperator(_, _) => todo!(),
-            Command::SubStack(_) => todo!(),
-            Command::Text => todo!(),
+    /// Check if parser has reached end of parse.   
+    /// This maybe because we've hit end of input or if `Parser::stop_parsing_at` is set, because we've reached a delimiter. 
+    fn end_of_parse(&mut self) -> ParseResult<bool> {
+        let is_empty = self.input.is_empty();
+        Ok(match self.stop_parsing_at {
+            None => is_empty,
+            _ if is_empty => return Err(ParseError::UnexpectedEof),
+            Some(ParseDelimiter::CloseBracket) => self.try_parse_char('}').is_some(),
         })
     }
 
 
+    /// Expects to parse something of the form `\foo[..]{..}` with correct number of arguments and well-typed arguments
+    /// If unable to, it does not advance input.
+    fn parse_control_sequence(&mut self) -> Option<ParseResult<ParseNode>> {
+        let Self { input, result, .. } = self;
+        let control_seq_name = self.control_sequence()?;
+
+            
+        // When the command name has been recognized, we are sure this is a command
+        // Any failure from now on must be a parsing error (misformed input)
+        Some(
+            // First case, a TeX command
+            if let Some(command) = Command::from_name(control_seq_name) {
+                match command {
+                    Command::Radical => self.parse_radical().map(|radical| ParseNode::Radical(radical)),
+                    Command::Rule => todo!(),
+                    Command::Color => todo!(),
+                    Command::ColorLit(_) => todo!(),
+                    Command::Fraction(_, _, _, _) => todo!(),
+                    Command::DelimiterSize(_, _) => todo!(),
+                    Command::Kerning(_) => todo!(),
+                    Command::Style(_) => todo!(),
+                    Command::AtomChange(_) => todo!(),
+                    Command::TextOperator(_, _) => todo!(),
+                    Command::SubStack(_) => todo!(),
+                    Command::Text => todo!(),
+                }
+            }
+            // second case: a symbol with a name
+            else if let Some(symbol) = Symbol::from_name(control_seq_name) {
+                Ok(ParseNode::Symbol(symbol))
+            }
+            // third case: a custom macro
+            else if todo!() {
+                todo!()
+            }
+            else {
+                Err(todo!())
+            }
+        )
+
+    }
+
+
+    /// Parses a symbol
+    fn parse_symbol(&mut self) -> Option<ParseResult<ParseNode>> {
+        let codepoint = self.parse_char()?;
+        // This baroque closure construction allows us to use `?` to propagate an error to the ParseResult
+        // Otherwise, the `?` would propagate to `Option`.
+        Some((|| {
+            let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| todo!())?;
+            Ok(ParseNode::Symbol(Symbol { codepoint, atom_type, }))
+        })())
+    }
+
+    /// Creates a new parser in the same state, with no nodes
+    fn fork(&self) -> Self {
+    	let Self { input, local_style, custom_commands, stop_parsing_at, .. } = self;
+    	Self { 
+    		input, 
+    		local_style : local_style.clone(), 
+    		custom_commands : *custom_commands, 
+            stop_parsing_at : *stop_parsing_at,
+    		result: Vec::new(),
+    	}
+    }
+
+    fn parse_group(&mut self) -> Option<ParseResult<Vec<ParseNode>>> {
+        let mut parser = self.fork();
+
+        parser.try_parse_char('{')?;
+
+        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
+        let result = parser.parse_expression();
+        if let Err(e) = result {
+            return Some(Err(e));
+        }
+
+        self.input = parser.input;
+
+        Some(Ok(parser.to_results()))
+    }
 }
 
 
@@ -133,22 +218,6 @@ pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
 }
 
 
-/// Helper function for determining an atomtype based on a given codepoint.
-/// This is primarily used for characters while processing, so may give false
-/// negatives when used for other things.
-fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
-    Some(match codepoint {
-             'a' ..= 'z' | 'A' ..= 'Z' | '0' ..= '9' | 'Α' ..= 'Ω' | 'α' ..= 'ω' => AtomType::Alpha,
-             '*' | '+' | '-' => AtomType::Binary,
-             '[' | '(' => AtomType::Open,
-             ']' | ')' | '?' | '!' => AtomType::Close,
-             '=' | '<' | '>' | ':' => AtomType::Relation,
-             ',' | ';' => AtomType::Punctuation,
-             '|' => AtomType::Fence,
-             '/' | '@' | '.' | '"' => AtomType::Alpha,
-             _ => return None,
-         })
-}
 
 // --------------
 //     TESTS
@@ -156,7 +225,9 @@ fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{parse, Parser, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText};
+    use std::eprintln;
+
+    use crate::parser::{parse, Parser, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText, error::{ParseResult, ParseError}, ParseDelimiter};
 
 
     #[test]
@@ -191,14 +262,20 @@ mod tests {
     fn radicals() {
         let mut errs: Vec<String> = Vec::new();
         // TODO: Add optional paramaters for radicals
-        should_pass!(errs,
-                     parse,
-                     [r"\sqrt{x}",
-                      r"\sqrt2",
-                      r"\sqrt\alpha",
-                      r"1^\sqrt2",
-                      r"\alpha_\sqrt{1+2}",
-                      r"\sqrt\sqrt2"]);
+        let cases = vec![
+            r"\sqrt{x}",
+            r"\sqrt2",
+            r"\sqrt\alpha",
+            r"1^\sqrt2",
+            r"\alpha_\sqrt{1+2}",
+            r"\sqrt\sqrt2"
+        ];
+        for case in cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            result.unwrap();
+        }
+
         should_fail!(errs, parse, [r"\sqrt", r"\sqrt_2", r"\sqrt^2"]);
         should_equate!(errs, parse, [(r"\sqrt2", r"\sqrt{2}")]);
         should_differ!(errs, parse, [(r"\sqrt2_3", r"\sqrt{2_3}")]);
@@ -323,6 +400,44 @@ mod tests {
         let got = parse(r"\text{re + 43}").unwrap();
         let expected = vec![ParseNode::PlainText(PlainText {text : "re + 43".to_string()})];
         assert_eq!(expected, got);
+    }
+
+
+    #[test]
+    fn test_parse_group() {
+        fn generate_results(input : &str) -> (Option<ParseResult<Vec<ParseNode>>>, &str) {
+            let mut parser = Parser::new(input);
+            let result = parser.parse_group();
+            (result, parser.input)
+        }
+
+        assert_eq!(generate_results("{}"), (Some(Ok(Vec::new())), ""));
+    }
+
+    #[test]
+    fn test_end_of_parse() {
+        let input = "1+1";
+        let mut parser = Parser::new(input);
+        assert!(!parser.end_of_parse().unwrap());
+
+        let input = "";
+        let mut parser = Parser::new(input);
+        assert!(parser.end_of_parse().unwrap());
+
+        let input = "} 1+1";
+        let mut parser = Parser::new(input);
+        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
+        assert!(parser.end_of_parse().unwrap());
+
+        let input = " } 1";
+        let mut parser = Parser::new(input);
+        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
+        assert!(!parser.end_of_parse().unwrap());
+
+        let input = "";
+        let mut parser = Parser::new(input);
+        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
+        assert_eq!(parser.end_of_parse().unwrap_err(), ParseError::UnexpectedEof);
     }
 }
 

@@ -126,3 +126,20 @@ fn others(name: &str) -> Option<Symbol> {
     };
     Some(sym)
 }
+
+/// Helper function for determining an atomtype based on a given codepoint.
+/// This is primarily used for characters while processing, so may give false
+/// negatives when used for other things.
+pub fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
+    Some(match codepoint {
+             'a' ..= 'z' | 'A' ..= 'Z' | '0' ..= '9' | 'Α' ..= 'Ω' | 'α' ..= 'ω' => AtomType::Alpha,
+             '*' | '+' | '-' => AtomType::Binary,
+             '[' | '(' => AtomType::Open,
+             ']' | ')' | '?' | '!' => AtomType::Close,
+             '=' | '<' | '>' | ':' => AtomType::Relation,
+             ',' | ';' => AtomType::Punctuation,
+             '|' => AtomType::Fence,
+             '/' | '@' | '.' | '"' => AtomType::Alpha,
+             _ => return None,
+         })
+}
