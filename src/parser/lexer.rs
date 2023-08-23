@@ -59,11 +59,11 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// If next char is equal to the argument, advance the input by that character
     /// If not, does nothing.
-    pub fn try_parse_char(&mut self, character : char) -> Option<()> {
+    pub fn try_parse_char(&mut self, character : char) -> Option<char> {
         let mut chars = self.input.chars();
         if chars.next() == Some(character) {
             self.input = chars.as_str();
-            return Some(())
+            return Some(character)
         }
         None
     }
@@ -95,13 +95,13 @@ mod tests {
 
     #[test]
     fn lex_try_char() {
-        fn remaining_input(input : &str, character : char) -> (Option<()>, &str) {
+        fn remaining_input(input : &str, character : char) -> (Option<char>, &str) {
             let mut parser = Parser::new(input);
             let outcome = parser.try_parse_char(character);
             (outcome, parser.input)
         }
 
-        assert_eq!(remaining_input("{ rere", '{'), (Some(()), " rere"));
+        assert_eq!(remaining_input("{ rere", '{'), (Some('{'), " rere"));
         assert_eq!(remaining_input("} rere", '{'), (None,     "} rere"));
         assert_eq!(remaining_input("", '{'),       (None,     ""));
     }

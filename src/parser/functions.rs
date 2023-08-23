@@ -3,11 +3,11 @@
 use crate::dimensions::AnyUnit;
 use crate::font::{AtomType};
 use crate::layout::Style as LayoutStyle;
-use crate::parser::nodes::{MathStyle, BarThickness};
+use crate::parser::nodes::{MathStyle, BarThickness, GenFraction};
 use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
-use super::nodes::Radical;
+use super::nodes::{Radical, self};
 use super::{ParseNode, Parser};
 use super::error::{ParseResult, ParseError};
 
@@ -195,7 +195,8 @@ impl Command {
 
 
 impl<'i, 'c> Parser<'i, 'c> {
-    fn parse_required_argument(&mut self) -> ParseResult<Vec<ParseNode>> {
+    /// Parses the argument of a control sequence, or a '_' subscript or superscipt
+    pub fn parse_required_argument(&mut self) -> ParseResult<Vec<ParseNode>> {
         let Self { input, result, .. } = self;
         
         self.consume_whitespace();
@@ -215,6 +216,25 @@ impl<'i, 'c> Parser<'i, 'c> {
     pub fn parse_radical(&mut self) -> ParseResult<Radical> {
         let inner = self.parse_required_argument()?;
         Ok(Radical { inner })
+    }
+
+    /// After parsing `\frac`, we expect two arguments
+    pub fn parse_fraction(
+        &mut self, 
+        left_delimiter:  Option<Symbol>, 
+        right_delimiter: Option<Symbol>, 
+        bar_thickness: BarThickness, 
+        style: MathStyle
+    ) -> ParseResult<GenFraction> {
+        let numerator   = self.parse_required_argument()?;
+        let denominator = self.parse_required_argument()?;
+
+        Ok(GenFraction {
+            numerator, denominator,
+            left_delimiter, right_delimiter,
+            bar_thickness,
+            style,
+        })
     }
 }
 

@@ -15,6 +15,8 @@ pub enum ParseError {
     RequiredMacroArg,
     /// EOF appeared while a group or an array was incomplete
     UnexpectedEof,
+    /// The symbol is not one we have category info about.
+    UnrecognizedSymbol(char),
 }
 
 
@@ -25,7 +27,8 @@ impl fmt::Display for ParseError {
                 write!(f, "missing required macro argument"),
             ParseError::UnexpectedEof =>
                 write!(f, "unexpected end of input; unmatched end of array? unfinished group?"),
-            
+            ParseError::UnrecognizedSymbol(c) =>
+                write!(f, "unrecognized symbol '{}'", c),        
         }
     }
 }

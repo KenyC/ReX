@@ -25,6 +25,7 @@ pub use self::nodes::is_symbol;
 
 
 use std::todo;
+use std::unreachable;
 
 use crate::parser::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
@@ -97,8 +98,23 @@ impl<'i, 'c> Parser<'i, 'c> {
             ;
             let node = node.ok_or_else(|| todo!())??;
 
-            // We attach sub- super-scripts to it if we can
+            // Take the result of `parse_script` and shift it from `Option<Result<..>>` to `Result<Option<..>>`
+            let mut subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
+            let mut superscript = self.parse_script(true).map_or(Ok(None),  |maybe_arg| maybe_arg.map(Some))?;
+            // scripts may be in any order ; so we try to parse a subscript again (just in case superscript came first)
+            if subscript.is_none() {
+                subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
+            }
 
+            let node =
+                if subscript.is_some() || superscript.is_some() {
+                    ParseNode::Scripts(Scripts { 
+                        base: Some(Box::new(node)), 
+                        superscript, subscript,
+                    })
+                }
+                else 
+                { node };
 
             // We add the result to our nodes
             self.result.push(node);
@@ -125,6 +141,14 @@ impl<'i, 'c> Parser<'i, 'c> {
     }
 
 
+    /// Parses a sub- or a super-script
+    #[inline]
+    fn parse_script(&mut self, superscript : bool) -> Option<ParseResult<Vec<ParseNode>>> {
+        let symbol = if superscript { '_' } else { '^' };
+        self.try_parse_char(symbol)?;
+        Some(self.parse_required_argument())
+    }
+
     /// Expects to parse something of the form `\foo[..]{..}` with correct number of arguments and well-typed arguments
     /// If unable to, it does not advance input.
     fn parse_control_sequence(&mut self) -> Option<ParseResult<ParseNode>> {
@@ -143,7 +167,7 @@ impl<'i, 'c> Parser<'i, 'c> {
                     Command::Rule => todo!(),
                     Command::Color => todo!(),
                     Command::ColorLit(_) => todo!(),
-                    Command::Fraction(_, _, _, _) => todo!(),
+                    Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
                     Command::DelimiterSize(_, _) => todo!(),
                     Command::Kerning(_) => todo!(),
                     Command::Style(_) => todo!(),
@@ -175,7 +199,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         // This baroque closure construction allows us to use `?` to propagate an error to the ParseResult
         // Otherwise, the `?` would propagate to `Option`.
         Some((|| {
-            let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| todo!())?;
+            let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
             Ok(ParseNode::Symbol(Symbol { codepoint, atom_type, }))
         })())
     }
@@ -242,23 +266,37 @@ mod tests {
 
     #[test]
     fn fractions() {
-        let mut errs: Vec<String> = Vec::new();
-        should_pass!(errs, parse, [r"\frac\alpha\beta", r"\frac\int2"]);
-        should_fail!(errs, parse, [r"\frac \left(1 + 2\right) 3"]);
-        should_equate!(errs,
-                       parse,
-                       [(r"\frac12", r"\frac{1}{2}"),
-                        (r"\frac \sqrt2 3", r"\frac{\sqrt2}{3}"),
-                        (r"\frac \frac 1 2 3", r"\frac{\frac12}{3}"),
-                        (r"\frac 1 \sqrt2", r"\frac{1}{\sqrt2}")]);
-        display_errors!(errs);
+        let success_cases = vec![r"\frac\alpha\beta", r"\frac\int2"];
+        for case in success_cases {
+            eprintln!("{} should pass", case);
+            let result = parse(case);
+            result.unwrap();
+        }
+
+        let failure_cases = vec![r"\frac \left(1 + 2\right) 3"];
+        for case in failure_cases {
+            eprintln!("{} should fail", case);
+            let result = parse(case);
+            assert!(result.is_err());
+        }
+
+        let equality_cases = vec![
+            (r"\frac12", r"\frac{1}{2}"),
+            (r"\frac \sqrt2 3", r"\frac{\sqrt2}{3}"),
+            (r"\frac \frac 1 2 3", r"\frac{\frac12}{3}"),
+            (r"\frac 1 \sqrt2", r"\frac{1}{\sqrt2}")
+        ];
+        for (case1, case2) in equality_cases {
+            eprintln!("{} == {}", case1, case2);
+            assert_eq!(parse(case1), parse(case2));
+        }
     }
 
     #[test]
     fn radicals() {
         let mut errs: Vec<String> = Vec::new();
         // TODO: Add optional paramaters for radicals
-        let cases = vec![
+        let success_cases = vec![
             r"\sqrt{x}",
             r"\sqrt2",
             r"\sqrt\alpha",
@@ -266,16 +304,34 @@ mod tests {
             r"\alpha_\sqrt{1+2}",
             r"\sqrt\sqrt2"
         ];
-        for case in cases {
+        for case in success_cases {
             eprintln!("{}", case);
             let result = parse(case);
             result.unwrap();
         }
 
-        should_fail!(errs, parse, [r"\sqrt", r"\sqrt_2", r"\sqrt^2"]);
-        should_equate!(errs, parse, [(r"\sqrt2", r"\sqrt{2}")]);
-        should_differ!(errs, parse, [(r"\sqrt2_3", r"\sqrt{2_3}")]);
-        display_errors!(errs);
+        let failure_cases = vec![r"\sqrt", r"\sqrt_2", r"\sqrt^2"];
+        for case in failure_cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            assert!(result.is_err());
+        }
+
+        let equality_cases = vec![
+            (r"\sqrt2", r"\sqrt{2}"),
+        ];
+        for (case1, case2) in equality_cases {
+            eprintln!("{} == {}", case1, case2);
+            assert_eq!(parse(case1), parse(case2));
+        }
+
+        let inequality_cases = vec![
+            (r"\sqrt2_3", r"\sqrt{2_3}"),
+        ];
+        for (case1, case2) in inequality_cases {
+            eprintln!("{} != {}", case1, case2);
+            assert!(parse(case1) != parse(case2));
+        }
     }
 
     #[test]
@@ -434,6 +490,11 @@ mod tests {
         let mut parser = Parser::new(input);
         parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
         assert_eq!(parser.end_of_parse().unwrap_err(), ParseError::UnexpectedEof);
+    }
+
+    #[test]
+    fn test_escape_character() {
+        todo!()
     }
 }
 
