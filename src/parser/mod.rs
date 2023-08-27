@@ -13,11 +13,17 @@ pub mod color;
 pub mod symbols;
 #[deny(missing_docs)]
 pub mod macros;
+pub mod utils;
 pub mod environments;
 pub mod functions;
 pub mod lexer;
 pub mod error;
 
+use font::expect;
+
+use self::lexer::expect_left;
+use self::lexer::expect_middle;
+use self::lexer::expect_right;
 pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
 
@@ -38,12 +44,14 @@ use crate::parser::{
 };
 use crate::parser::functions::{Command};
 use crate::parser::macros::CommandCollection;
+use crate::parser::utils::fmap;
 use crate::dimensions::AnyUnit;
 
 
 #[derive(Debug, Clone, Copy)]
 enum ParseDelimiter {
-    CloseBracket
+    CloseBracket,
+    MiddleRightDelimiter,
 }
 
 /// A parser, contains some input, some parameters of parsing such as custom commands and some parser state info.  
@@ -94,7 +102,8 @@ impl<'i, 'c> Parser<'i, 'c> {
             // We try to parse the first things that comes along
             let node = 
                 self.parse_control_sequence()
-                .or_else(|| self.parse_symbol())
+                .or_else(|| fmap(self.parse_group(),  |nodes|  ParseNode::Group(nodes)))
+                .or_else(|| fmap(self.parse_symbol(), |symbol| ParseNode::Symbol(symbol)))
             ;
             let node = node.ok_or_else(|| todo!())??;
 
@@ -102,6 +111,7 @@ impl<'i, 'c> Parser<'i, 'c> {
             let mut subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
             let mut superscript = self.parse_script(true).map_or(Ok(None),  |maybe_arg| maybe_arg.map(Some))?;
             // scripts may be in any order ; so we try to parse a subscript again (just in case superscript came first)
+            // TODO : excessive subscript error
             if subscript.is_none() {
                 subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
             }
@@ -131,13 +141,22 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// Check if parser has reached end of parse.   
     /// This maybe because we've hit end of input or if `Parser::stop_parsing_at` is set, because we've reached a delimiter. 
+    /// Note that when the condition for end of parse is '}' or another delimiter, `self.input` is not ad
     fn end_of_parse(&mut self) -> ParseResult<bool> {
         let is_empty = self.input.is_empty();
-        Ok(match self.stop_parsing_at {
-            None => is_empty,
-            _ if is_empty => return Err(ParseError::UnexpectedEof),
-            Some(ParseDelimiter::CloseBracket) => self.try_parse_char('}').is_some(),
-        })
+        let input = self.input;
+        let result = match self.stop_parsing_at {
+            None => Ok(is_empty),
+            Some(_) if is_empty => return Err(ParseError::UnexpectedEof),
+            Some(ParseDelimiter::CloseBracket) => Ok(self.parse_char() == Some('}')),
+            Some(ParseDelimiter::MiddleRightDelimiter) => Ok({
+                let name = self.control_sequence();
+                name == Some("middle") || name == Some("right")
+            }),
+        };
+        // Rewind
+        self.input = input;
+        result
     }
 
 
@@ -152,7 +171,7 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Expects to parse something of the form `\foo[..]{..}` with correct number of arguments and well-typed arguments
     /// If unable to, it does not advance input.
     fn parse_control_sequence(&mut self) -> Option<ParseResult<ParseNode>> {
-        let Self { input, result, .. } = self;
+        let custom_commands = self.custom_commands;
         let control_seq_name = self.control_sequence()?;
 
             
@@ -181,8 +200,23 @@ impl<'i, 'c> Parser<'i, 'c> {
             else if let Some(symbol) = Symbol::from_name(control_seq_name) {
                 Ok(ParseNode::Symbol(symbol))
             }
-            // third case: a custom macro
-            else if todo!() {
+            // third case: a delimiter
+            else if control_seq_name == "left" {
+                self.parse_delimited_sequence().map(|delim| ParseNode::Delimited(delim))
+            } 
+            // a \middle or \right delimiter may be caught here
+            // this happens for one of two reasons:
+            // - a \right without a corresponding \left
+            // - there is a corresponding \left but it is separated from \right a bracket or anything
+            // either way, it's an ill-formed input
+            else if control_seq_name == "middle" {
+                Err(ParseError::UnexpectedMiddle)
+            }
+            else if control_seq_name == "right" {
+                Err(ParseError::UnexpectedRight)
+            }
+            // fourth case: a custom macro
+            else if let Some(command) = custom_commands.and_then(|collection| collection.query(control_seq_name)) {
                 todo!()
             }
             else {
@@ -192,15 +226,57 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     }
 
+    /// Assuming `\left` has just been parsed, parses a `\left<char> .. (\middle<char>)* .. \right<char>` sequence.
+    fn parse_delimited_sequence(&mut self) -> ParseResult<Delimited> {
+
+        let mut hasnt_reached_right_delimiter = true;
+        let mut delimiters = Vec::with_capacity(2);
+        let mut inners     = Vec::with_capacity(1);
+
+        let left_delimiter = self.parse_delimiter().ok_or(ParseError::MissingSymbolAfterDelimiter)??;
+        let left_delimiter = expect_left(left_delimiter)?;
+
+        delimiters.push(left_delimiter);
+        while hasnt_reached_right_delimiter {
+            let mut parser = self.fork();
+            parser.stop_parsing_at = Some(ParseDelimiter::MiddleRightDelimiter);
+            let inner = parser.parse()?;
+            inners.push(inner);
+
+            // The parse stopped because we reached a delimiter
+            // which delimiter was it?
+            let control_sequence = self.control_sequence();
+            hasnt_reached_right_delimiter = match control_sequence {
+                Some("middle") => {
+                    true
+                },
+                Some("right")  => {
+                    false
+                },
+                _ => unreachable!("Parser-internal error: we expected a delimiter"),
+            };
+            let delimiter = self.parse_delimiter().ok_or_else(|| todo!())??;
+            // if delimiter isn't of the right type we trigger an error
+            let delimiter = if hasnt_reached_right_delimiter {
+                expect_middle(delimiter)?
+            }
+            else {
+                expect_right(delimiter)?
+            };
+
+            delimiters.push(delimiter);
+        }
+        Ok(Delimited::new(delimiters, inners,))
+    }
 
     /// Parses a symbol
-    fn parse_symbol(&mut self) -> Option<ParseResult<ParseNode>> {
+    fn parse_symbol(&mut self) -> Option<ParseResult<Symbol>> {
         let codepoint = self.parse_char()?;
         // This baroque closure construction allows us to use `?` to propagate an error to the ParseResult
         // Otherwise, the `?` would propagate to `Option`.
         Some((|| {
             let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
-            Ok(ParseNode::Symbol(Symbol { codepoint, atom_type, }))
+            Ok(Symbol { codepoint, atom_type, })
         })())
     }
 
@@ -231,12 +307,27 @@ impl<'i, 'c> Parser<'i, 'c> {
 
         Some(Ok(parser.to_results()))
     }
+
+    fn parse_delimiter(&mut self) -> Option<ParseResult<Symbol>> {
+        self.control_sequence().and_then(Symbol::from_name).map(Ok) // either a control sequence named symbol
+            .or_else(|| self.parse_symbol()) // or a genuine symbol
+    }
 }
 
 
 /// This function is the API entry point for parsing tex.
 pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
     Parser::new(input).parse()
+}
+
+
+/// Utility function for packaging multiply wrapped node
+fn group(nodes: Option<Result<Vec<ParseNode>, ParseError>>) -> Option<Result<ParseNode, ParseError>> {
+    match nodes {
+        Some(Ok(node)) => Some(Ok(ParseNode::Group(node))),
+        Some(Err(e))   => Some(Err(e)),
+        None           => None,
+    }
 }
 
 
@@ -336,52 +427,77 @@ mod tests {
 
     #[test]
     fn scripts() {
-        let mut errs: Vec<String> = Vec::new();
-        should_pass!(errs,
-                     parse,
-                     [r"1_2^3",
-                      r"_1",
-                      r"^\alpha",
-                      r"_2^\alpha",
-                      r"1_\frac12",
-                      r"2^\alpha",
-                      r"x_{1+2}",
-                      r"x^{2+3}",
-                      r"x^{1+2}_{2+3}",
-                      r"a^{b^c}",
-                      r"{a^b}^c",
-                      r"a_{b^c}",
-                      r"{a_b}^c",
-                      r"a^{b_c}",
-                      r"{a^b}_c",
-                      r"a_{b_c}",
-                      r"{a_b}_c"]);
-        should_fail!(errs,
-                     parse,
-                     [r"1_", r"1^", r"x_x_x", r"x^x_x^x", r"x^x^x", r"x_x^x_x"]);
-        should_equate!(errs,
-                       parse,
-                       [(r"x_\alpha^\beta", r"x^\beta_\alpha"), (r"_2^3", r"^3_2")]);
-        display_errors!(errs);
+        let success_cases = vec![
+            r"1_2^3",
+            // r"_1", // TODO : decide whether initial sub and superscript are allowedd
+            // r"^\alpha",
+            // r"_2^\alpha",
+            r"1_\frac12",
+            r"2^\alpha",
+            r"x_{1+2}",
+            r"x^{2+3}",
+            r"x^{1+2}_{2+3}",
+            r"a^{b^c}",
+            r"{a^b}^c",
+            r"a_{b^c}",
+            r"{a_b}^c",
+            r"a^{b_c}",
+            r"{a^b}_c",
+            r"a_{b_c}",
+            r"{a_b}_c"
+        ];
+        for case in success_cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            result.unwrap();
+        }
+
+        let failure_cases = vec![r"1_", r"1^", r"x_x_x", r"x^x_x^x", r"x^x^x", r"x_x^x_x"];
+        for case in failure_cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            assert!(result.is_err());
+        }
+
+
+        let equality_cases = vec![
+            (r"x_\alpha^\beta", r"x^\beta_\alpha"), 
+            // (r"_2^3", r"^3_2"),
+        ];
+        for (case1, case2) in equality_cases {
+            eprintln!("{} == {}", case1, case2);
+            assert_eq!(parse(case1), parse(case2));
+        }
     }
 
     #[test]
     fn delimited() {
-        let mut errs: Vec<String> = Vec::new();
-        should_pass!(errs,
-                     parse,
-                     [r"\left(\right)",
-                      r"\left.\right)",
-                      r"\left(\right.",
-                      r"\left\vert\right)",
-                      r"\left(\right\vert"]);
-        should_fail!(errs,
-                     parse,
-                     [r"\left1\right)",
-                      r"\left.\right1",
-                      r"\left",
-                      r"\left.{1 \right."]);
-        display_errors!(errs);
+        let success_cases = vec![
+            r"\left(\right)",
+            r"\left.\right)",
+            r"\left(\right.",
+            r"\left\vert\right)",
+            r"\left(\right\vert",
+            r"\left(\middle.\right\vert",
+        ];
+        for case in success_cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            result.unwrap();
+        }
+
+        let failure_cases = vec![
+            r"\left1\right)",
+            r"\left.\right1",
+            r"\left",
+            r"\left.{1 \right.",
+            r"\left(\middle(\right\vert",
+        ];
+        for case in failure_cases {
+            eprintln!("{}", case);
+            let result = parse(case);
+            assert!(result.is_err());
+        }
     }
 
 

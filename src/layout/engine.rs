@@ -296,24 +296,24 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         #[inline]
         fn make_delimiter<'a, 'f, F : MathFont>(
-            symbol : Symbol, 
+            symbol : Option<Symbol>, 
             extension_metrics: &Option<ExtensionMetrics>, 
             null_delimiter_space: Unit<Px>,
             config: LayoutSettings<'a, 'f, F>
         ) -> Result<LayoutNode<'f, F>, LayoutError> {
-            if symbol.codepoint == '.' {
-                Ok(kern!(horz: null_delimiter_space))
-            }
-            else if let Some(metrics) = extension_metrics {
-                Ok(config.ctx
-                    .vert_variant(symbol.codepoint, metrics.clearance)?
-                    .as_layout(config)?
-                    .centered(metrics.axis))
-            }
-            else {
-                config.ctx
-                    .glyph(symbol.codepoint)?
-                    .as_layout(config)
+            match (symbol, extension_metrics) {
+                (None, _) => Ok(kern!(horz: null_delimiter_space)),
+                (Some(symbol), Some(metrics)) => {
+                    Ok(config.ctx
+                        .vert_variant(symbol.codepoint, metrics.clearance)?
+                        .as_layout(config)?
+                        .centered(metrics.axis))
+                }
+                (Some(symbol), None) => {
+                    config.ctx
+                        .glyph(symbol.codepoint)?
+                        .as_layout(config)
+                    }
             }
         }
 

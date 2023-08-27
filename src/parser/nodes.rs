@@ -64,19 +64,20 @@ pub struct Stack {
 /// Cf [`ParseNode::Delimited`]
 #[derive(Debug, PartialEq, Clone)]
 pub struct Delimited {
-    /// Symbols after \left, \middle and \right in the order that they appear
-    delimiters : Vec<Symbol>,
+    /// Symbols after \left, \middle and \right in the order that they appear.
+    /// None is used to represent the '.'
+    delimiters : Vec<Option<Symbol>>,
     /// Nodes delimited by left, middle and right in the order that they appear
     inners:      Vec<Vec<ParseNode>>,
 }
 
 impl Delimited {
     /// Creates new [`Delimited`] from the given symbols and the given delimited group.
-    pub fn new(delimiters: Vec<Symbol>, inners: Vec<Vec<ParseNode>>) -> Self 
+    pub fn new(delimiters: Vec<Option<Symbol>>, inners: Vec<Vec<ParseNode>>) -> Self 
     { Self { delimiters, inners } }
 
     /// Symbols after \left, \middle and \right in the order that they appear.
-    pub fn delimiters(&self) -> &[Symbol] 
+    pub fn delimiters(&self) -> &[Option<Symbol>] 
     { self.delimiters.as_ref() }
 
     /// Nodes delimited by left, middle and right in the order that they appear.

@@ -8,6 +8,7 @@ use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
 use super::nodes::{Radical, self};
+use super::utils::fmap;
 use super::{ParseNode, Parser};
 use super::error::{ParseResult, ParseError};
 
@@ -194,6 +195,7 @@ impl Command {
 }
 
 
+
 impl<'i, 'c> Parser<'i, 'c> {
     /// Parses the argument of a control sequence, or a '_' subscript or superscipt
     pub fn parse_required_argument(&mut self) -> ParseResult<Vec<ParseNode>> {
@@ -201,13 +203,10 @@ impl<'i, 'c> Parser<'i, 'c> {
         
         self.consume_whitespace();
 
-        fn lift(node : Option<ParseResult<ParseNode>>) -> Option<ParseResult<Vec<ParseNode>>> {
-            node.map(|maybe_node| maybe_node.map(|node| vec![node]))
-        }
 
-        lift(self.parse_control_sequence()) // really clunky
+        fmap(self.parse_control_sequence(), |node| vec![node]) // really clunky
             .or_else(|| self.parse_group())
-            .or_else(|| lift(self.parse_symbol()))
+            .or_else(|| fmap(self.parse_symbol(), |symbol| vec![ParseNode::Symbol(symbol)]))
             .ok_or(ParseError::RequiredMacroArg)?
     }
 

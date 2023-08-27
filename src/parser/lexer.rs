@@ -1,7 +1,10 @@
 //! Producing tokens for the parser
 
 
-use super::Parser;
+
+use unicode_math::AtomType;
+
+use super::{Parser, symbols::Symbol, error::{ParseResult, ParseError}};
 
 
 
@@ -76,6 +79,50 @@ impl<'i, 'c> Parser<'i, 'c> {
         result
     }
 }
+
+/// Expects an Open or Fence category or a dot
+#[inline]
+pub fn expect_left(symbol : Symbol) -> ParseResult<Option<Symbol>> {
+    if symbol.codepoint == '.' {
+        Ok(None)
+    }
+    else if symbol.atom_type == AtomType::Open || symbol.atom_type == AtomType::Fence {
+        Ok(Some(symbol))
+    }
+    else {
+        Err(ParseError::ExpectedOpen(symbol))
+    }
+}
+
+/// Expects a Fence category or a dot
+#[inline]
+pub fn expect_middle(symbol : Symbol) -> ParseResult<Option<Symbol>> {
+    if symbol.codepoint == '.' {
+        Ok(None)
+    }
+    else if symbol.atom_type == AtomType::Fence {
+        Ok(Some(symbol))
+    }
+    else {
+        Err(ParseError::ExpectedMiddle(symbol))
+    }
+}
+
+
+/// Expects a Fence or Close category or a dot
+#[inline]
+pub fn expect_right(symbol : Symbol) -> ParseResult<Option<Symbol>> {
+    if symbol.codepoint == '.' {
+        Ok(None)
+    }
+    else if symbol.atom_type == AtomType::Close || symbol.atom_type == AtomType::Fence {
+        Ok(Some(symbol))
+    }
+    else {
+        Err(ParseError::ExpectedClose(symbol))
+    }
+}
+
 
 /// Assuming `slice2` is a suffix of `slice1`, 
 /// returns the prefix of `slice1` that ends just before the first character of `slice2`
