@@ -1,6 +1,9 @@
 //! Defines structs and parses TeX environments, e.g. `\begin{center}..\end{center}`
 
-use crate::parser::{ParseNode, symbols::Symbol};
+
+use crate::parser::{ParseNode, symbols::Symbol, error::ParseError};
+
+use super::{Parser, error::ParseResult};
 
 
 /// An enumeration of recognized enviornmnets.
@@ -117,6 +120,52 @@ pub struct Array {
 type Expression = Vec<ParseNode>;
 
 
+impl<'i, 'c> Parser<'i, 'c> {
+    /// In `\begin{array}{l|c||}, parses the content of the first argument of the array environment, 
+    /// which contains alignment information for columns and number of bars
+    pub fn parse_col_format(&mut self) -> ParseResult<ArrayColumnsFormatting> {
+        let mut columns = Vec::new();
+
+        let mut n_vertical_bars_before = 0;
+        self.consume_whitespace();
+        while let Some(_) = self.try_parse_char('|') {
+            n_vertical_bars_before += 1;
+            self.consume_whitespace();
+        }
+
+        loop {
+            let alignment;
+            match self.parse_char() {
+                Some('c')   => alignment = ArrayColumnAlign::Centered,
+                Some('r')   => alignment = ArrayColumnAlign::Right,
+                Some('l')   => alignment = ArrayColumnAlign::Left,
+                Some('}')   => { break; }
+                Some(token) => return Err(ParseError::UnrecognizedColumnFormat(token)),
+                None => return Err(ParseError::UnexpectedEof),
+            }
+            
+            self.consume_whitespace();
+
+
+            let mut n_vertical_bars_after = 0_u8;
+            while self.try_parse_char('|').is_some() {
+                self.consume_whitespace();
+                n_vertical_bars_after += 1;
+            }
+
+
+            columns.push(ArraySingleColumnFormatting { 
+                alignment, 
+                n_vertical_bars_after,
+            });
+
+        }
+
+        Ok(ArrayColumnsFormatting { columns, n_vertical_bars_before, })
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,14 +219,14 @@ mod tests {
             let mut string = string.to_string();
             string.push('}');
 
-            todo!()
+            let mut parser = Parser::new(&string);
             // let mut lexer  = Lexer::new(&string);
             // let style = Style::new();
 
-            // assert_eq!(
-            //     array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
-            //     col_format,
-            // );
+            assert_eq!(
+                parser.parse_col_format().unwrap(),
+                col_format,
+            );
 
         }
         

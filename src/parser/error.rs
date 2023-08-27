@@ -33,6 +33,9 @@ pub enum ParseError {
     UnexpectedRight,
     /// `\middle` not preceded by `\left`, or separated from it by an open group bracket that isn't closed before
     UnexpectedMiddle,
+
+    /// Unknown column specifier \begin{array}{xxx}
+    UnrecognizedColumnFormat(char),
 }
 
 
@@ -58,6 +61,8 @@ impl fmt::Display for ParseError {
                 write!(f, "unexpected \\right"),
             ParseError::UnexpectedMiddle => 
                 write!(f, "unexpected \\middle"),
+            ParseError::UnrecognizedColumnFormat(token) => 
+                write!(f, "unrecognized column format: {}`", token),
         }
     }
 }

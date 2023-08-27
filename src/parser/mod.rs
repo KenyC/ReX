@@ -240,7 +240,9 @@ impl<'i, 'c> Parser<'i, 'c> {
         while hasnt_reached_right_delimiter {
             let mut parser = self.fork();
             parser.stop_parsing_at = Some(ParseDelimiter::MiddleRightDelimiter);
-            let inner = parser.parse()?;
+            parser.parse_expression()?;
+            self.input = parser.input;
+            let inner = parser.result;
             inners.push(inner);
 
             // The parse stopped because we reached a delimiter
@@ -304,6 +306,8 @@ impl<'i, 'c> Parser<'i, 'c> {
         }
 
         self.input = parser.input;
+
+        self.try_parse_char('}').expect("Parser internal error: parsing the inner part of a group should not parse the closing bracket");
 
         Some(Ok(parser.to_results()))
     }
@@ -507,6 +511,7 @@ mod tests {
             r"\begin{array}{c}\end{array}",
             r"\begin{array}{c}1\\2\end{array}",
             r"\begin{array}{c}1\\\end{array}",
+            r"\begin{array}{cl}1&3\\2&4\end{array}",
         ];
 
         for formula in CORRECT_FORMULAS.iter().cloned() {
