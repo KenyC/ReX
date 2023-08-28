@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::symbols::Symbol;
+use super::{symbols::Symbol, ParseDelimiter};
 
 
 /// Result type for the [`ParseError`]
@@ -36,6 +36,8 @@ pub enum ParseError {
 
     /// Unknown column specifier \begin{array}{xxx}
     UnrecognizedColumnFormat(char),
+    /// Expected a delimiter, found another ; for instance, `\right` not preceded by `\left`
+    ExpectedDelimiter { found: ParseDelimiter, expected: ParseDelimiter },
 }
 
 
@@ -63,6 +65,9 @@ impl fmt::Display for ParseError {
                 write!(f, "unexpected \\middle"),
             ParseError::UnrecognizedColumnFormat(token) => 
                 write!(f, "unrecognized column format: {}`", token),
+            ParseError::ExpectedDelimiter { found, expected } => 
+                write!(f, "`{}` was expected but `{}` was found instead", expected, found),
+
         }
     }
 }

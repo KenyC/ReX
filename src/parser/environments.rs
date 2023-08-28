@@ -1,6 +1,8 @@
 //! Defines structs and parses TeX environments, e.g. `\begin{center}..\end{center}`
 
 
+use std::fmt::Display;
+
 use crate::parser::{ParseNode, symbols::Symbol, error::ParseError};
 
 use super::{Parser, error::ParseResult};
@@ -23,6 +25,20 @@ pub enum Environment {
     VMatrix,
     /// `\begin{vvmatrix} ... \end{vvmatrix}`
     VvMatrix,
+}
+
+impl Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Environment::Array    => f.write_str("array"),
+            Environment::Matrix   => f.write_str("matrix"),
+            Environment::PMatrix  => f.write_str("pmatrix"),
+            Environment::BMatrix  => f.write_str("bmatrix"),
+            Environment::BbMatrix => f.write_str("bbmatrix"),
+            Environment::VMatrix  => f.write_str("vmatrix"),
+            Environment::VvMatrix => f.write_str("vvmatrix"),
+        }
+    }
 }
 
 

@@ -30,6 +30,7 @@ pub use self::nodes::is_symbol;
 
 
 
+use std::fmt::Display;
 use std::todo;
 use std::unreachable;
 
@@ -48,10 +49,43 @@ use crate::parser::utils::fmap;
 use crate::dimensions::AnyUnit;
 
 
-#[derive(Debug, Clone, Copy)]
-enum ParseDelimiter {
+/// Any sequence of characters that marks the end of something, a command (e.g. closing bracket), an environment (e.g. `\end{array}`) or delimiters
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParseDelimiter {
+    /// A closing bracket `}`
     CloseBracket,
-    MiddleRightDelimiter,
+    /// A middle delimiter `\middle`
+    MiddleDelimiter,
+    /// A middle delimiter `\right`
+    RightDelimiter,
+    /// An end of environment, e.g. `\end{array}`
+    EndEnv(Environment),
+    /// End of input
+    Eof
+}
+
+impl ParseDelimiter {
+    fn expect(&self, expected: ParseDelimiter) -> ParseResult<()> {
+        if *self == expected {
+            Ok(())
+        }
+        else {
+            Err(ParseError::ExpectedDelimiter { found: *self, expected })
+        }
+    }
+
+}
+
+impl Display for ParseDelimiter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParseDelimiter::CloseBracket    => f.write_str("}"),
+            ParseDelimiter::MiddleDelimiter => f.write_str(r"\middle"),
+            ParseDelimiter::RightDelimiter  => f.write_str(r"\right"),
+            ParseDelimiter::EndEnv(name)    => write!(f, r"\end{{{}}}", name),
+            ParseDelimiter::Eof             => f.write_str(r"end of input"),
+        }
+    }
 }
 
 /// A parser, contains some input, some parameters of parsing such as custom commands and some parser state info.  
@@ -60,7 +94,6 @@ enum ParseDelimiter {
 pub struct Parser<'i, 'c> {
     input : & 'i str,
     local_style : Style,
-    stop_parsing_at : Option<ParseDelimiter>,
     custom_commands : Option<& 'c CommandCollection>,
     result : Vec<ParseNode>,
 }
@@ -72,7 +105,6 @@ impl<'i, 'c> Parser<'i, 'c> {
             input, 
             local_style: Style::default(), 
             custom_commands: None,
-            stop_parsing_at: None,
             result : Vec::new(),
         }
     }
@@ -95,9 +127,13 @@ impl<'i, 'c> Parser<'i, 'c> {
         Ok(self.result)
     }
 
-    fn parse_expression(&mut self) -> ParseResult<()> {
-        while !self.end_of_parse()? {
+    fn parse_expression(&mut self) -> ParseResult<ParseDelimiter> {
+        loop {
             self.consume_whitespace();
+            if let Some(parse_delimiter) = self.end_of_parse() {
+                return Ok(parse_delimiter);
+            }
+
 
             // We try to parse the first things that comes along
             let node = 
@@ -129,8 +165,6 @@ impl<'i, 'c> Parser<'i, 'c> {
             // We add the result to our nodes
             self.result.push(node);
         }
-        // todo!();
-        Ok(())
     }
 
     /// Recovers the nodes that have been parsed yet, without running any more parsing
@@ -142,21 +176,28 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Check if parser has reached end of parse.   
     /// This maybe because we've hit end of input or if `Parser::stop_parsing_at` is set, because we've reached a delimiter. 
     /// Note that when the condition for end of parse is '}' or another delimiter, `self.input` is not ad
-    fn end_of_parse(&mut self) -> ParseResult<bool> {
-        let is_empty = self.input.is_empty();
+    fn end_of_parse(&mut self) -> Option<ParseDelimiter> {
         let input = self.input;
-        let result = match self.stop_parsing_at {
-            None => Ok(is_empty),
-            Some(_) if is_empty => return Err(ParseError::UnexpectedEof),
-            Some(ParseDelimiter::CloseBracket) => Ok(self.parse_char() == Some('}')),
-            Some(ParseDelimiter::MiddleRightDelimiter) => Ok({
-                let name = self.control_sequence();
-                name == Some("middle") || name == Some("right")
-            }),
-        };
-        // Rewind
-        self.input = input;
-        result
+        if input.is_empty() {
+            return Some(ParseDelimiter::Eof);
+        }
+
+        match self.control_sequence() {
+            Some("middle") => return Some(ParseDelimiter::MiddleDelimiter),
+            Some("right")  => return Some(ParseDelimiter::RightDelimiter),
+            Some("end")    => todo!(),
+            Some(_) => {
+                self.input = input; // rewind, the control sequence is useful
+                return None;
+            }
+            _ => ()
+        }
+
+        if self.try_parse_char('}').is_some() {
+            return Some(ParseDelimiter::CloseBracket);
+        }
+
+        None
     }
 
 
@@ -239,24 +280,18 @@ impl<'i, 'c> Parser<'i, 'c> {
         delimiters.push(left_delimiter);
         while hasnt_reached_right_delimiter {
             let mut parser = self.fork();
-            parser.stop_parsing_at = Some(ParseDelimiter::MiddleRightDelimiter);
-            parser.parse_expression()?;
+            let stopped_at = parser.parse_expression()?;
             self.input = parser.input;
             let inner = parser.result;
             inners.push(inner);
 
-            // The parse stopped because we reached a delimiter
-            // which delimiter was it?
-            let control_sequence = self.control_sequence();
-            hasnt_reached_right_delimiter = match control_sequence {
-                Some("middle") => {
-                    true
-                },
-                Some("right")  => {
-                    false
-                },
-                _ => unreachable!("Parser-internal error: we expected a delimiter"),
+            hasnt_reached_right_delimiter = match stopped_at {
+                ParseDelimiter::MiddleDelimiter => true,
+                ParseDelimiter::RightDelimiter  => false,
+                // TODO: report a more correct error that mentions `\middle` as another token to be expected
+                other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::RightDelimiter }),
             };
+
             let delimiter = self.parse_delimiter().ok_or_else(|| todo!())??;
             // if delimiter isn't of the right type we trigger an error
             let delimiter = if hasnt_reached_right_delimiter {
@@ -284,12 +319,11 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// Creates a new parser in the same state, with no nodes
     fn fork(&self) -> Self {
-    	let Self { input, local_style, custom_commands, stop_parsing_at, .. } = self;
+    	let Self { input, local_style, custom_commands, .. } = self;
     	Self { 
     		input, 
     		local_style : local_style.clone(), 
     		custom_commands : *custom_commands, 
-            stop_parsing_at : *stop_parsing_at,
     		result: Vec::new(),
     	}
     }
@@ -299,17 +333,16 @@ impl<'i, 'c> Parser<'i, 'c> {
 
         parser.try_parse_char('{')?;
 
-        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
-        let result = parser.parse_expression();
-        if let Err(e) = result {
-            return Some(Err(e));
-        }
+        // parser.stopped_parsing_at = Some(ParseDelimiter::CloseBracket);
+        Some((|| {
+            let result = parser.parse_expression()?;
+            self.input = parser.input;
+            result.expect(ParseDelimiter::CloseBracket)?;
 
-        self.input = parser.input;
 
-        self.try_parse_char('}').expect("Parser internal error: parsing the inner part of a group should not parse the closing bracket");
+            Ok(parser.to_results())
 
-        Some(Ok(parser.to_results()))
+        }) ())
     }
 
     fn parse_delimiter(&mut self) -> Option<ParseResult<Symbol>> {
@@ -591,26 +624,20 @@ mod tests {
     fn test_end_of_parse() {
         let input = "1+1";
         let mut parser = Parser::new(input);
-        assert!(!parser.end_of_parse().unwrap());
+        assert_eq!(parser.end_of_parse(), None);
 
         let input = "";
         let mut parser = Parser::new(input);
-        assert!(parser.end_of_parse().unwrap());
+        assert_eq!(parser.end_of_parse(), Some(ParseDelimiter::Eof));
 
         let input = "} 1+1";
         let mut parser = Parser::new(input);
-        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
-        assert!(parser.end_of_parse().unwrap());
+        assert_eq!(parser.end_of_parse(), Some(ParseDelimiter::CloseBracket));
 
         let input = " } 1";
         let mut parser = Parser::new(input);
-        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
-        assert!(!parser.end_of_parse().unwrap());
+        assert_eq!(parser.end_of_parse(), None);
 
-        let input = "";
-        let mut parser = Parser::new(input);
-        parser.stop_parsing_at = Some(ParseDelimiter::CloseBracket);
-        assert_eq!(parser.end_of_parse().unwrap_err(), ParseError::UnexpectedEof);
     }
 
     #[test]
