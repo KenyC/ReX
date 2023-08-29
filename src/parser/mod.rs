@@ -58,10 +58,14 @@ pub enum ParseDelimiter {
     MiddleDelimiter,
     /// A middle delimiter `\right`
     RightDelimiter,
+    /// An alignment character `&`
+    Alignment,
+    /// End of line `\\`
+    EndOfLine,
     /// An end of environment, e.g. `\end{array}`
     EndEnv(Environment),
     /// End of input
-    Eof
+    Eof,
 }
 
 impl ParseDelimiter {
@@ -82,6 +86,8 @@ impl Display for ParseDelimiter {
             ParseDelimiter::CloseBracket    => f.write_str("}"),
             ParseDelimiter::MiddleDelimiter => f.write_str(r"\middle"),
             ParseDelimiter::RightDelimiter  => f.write_str(r"\right"),
+            ParseDelimiter::Alignment       => f.write_str(r"&"),
+            ParseDelimiter::EndOfLine       => f.write_str(r"\\"),
             ParseDelimiter::EndEnv(name)    => write!(f, r"\end{{{}}}", name),
             ParseDelimiter::Eof             => f.write_str(r"end of input"),
         }
@@ -131,6 +137,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         loop {
             self.consume_whitespace();
             if let Some(parse_delimiter) = self.end_of_parse() {
+                let parse_delimiter = parse_delimiter?;
                 return Ok(parse_delimiter);
             }
 
@@ -176,16 +183,21 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Check if parser has reached end of parse.   
     /// This maybe because we've hit end of input or if `Parser::stop_parsing_at` is set, because we've reached a delimiter. 
     /// Note that when the condition for end of parse is '}' or another delimiter, `self.input` is not ad
-    fn end_of_parse(&mut self) -> Option<ParseDelimiter> {
+    // TODO: could we pre-parse what's coming next to avoid reading multiple times what's coming up
+    fn end_of_parse(&mut self) -> Option<ParseResult<ParseDelimiter>> {
         let input = self.input;
         if input.is_empty() {
-            return Some(ParseDelimiter::Eof);
+            return Some(Ok(ParseDelimiter::Eof));
         }
 
         match self.control_sequence() {
-            Some("middle") => return Some(ParseDelimiter::MiddleDelimiter),
-            Some("right")  => return Some(ParseDelimiter::RightDelimiter),
-            Some("end")    => todo!(),
+            Some("middle") => return Some(Ok(ParseDelimiter::MiddleDelimiter)),
+            Some("right")  => return Some(Ok(ParseDelimiter::RightDelimiter)),
+            Some("end")    => return Some((|| {
+                let env = self.parse_environment_name()?;
+                Ok(ParseDelimiter::EndEnv(env))
+            }) ()),
+            Some(r"\")     => return Some(Ok(ParseDelimiter::EndOfLine)),
             Some(_) => {
                 self.input = input; // rewind, the control sequence is useful
                 return None;
@@ -194,7 +206,11 @@ impl<'i, 'c> Parser<'i, 'c> {
         }
 
         if self.try_parse_char('}').is_some() {
-            return Some(ParseDelimiter::CloseBracket);
+            return Some(Ok(ParseDelimiter::CloseBracket));
+        }
+
+        if self.try_parse_char('&').is_some() {
+            return Some(Ok(ParseDelimiter::Alignment));
         }
 
         None
@@ -245,18 +261,11 @@ impl<'i, 'c> Parser<'i, 'c> {
             else if control_seq_name == "left" {
                 self.parse_delimited_sequence().map(|delim| ParseNode::Delimited(delim))
             } 
-            // a \middle or \right delimiter may be caught here
-            // this happens for one of two reasons:
-            // - a \right without a corresponding \left
-            // - there is a corresponding \left but it is separated from \right a bracket or anything
-            // either way, it's an ill-formed input
-            else if control_seq_name == "middle" {
-                Err(ParseError::UnexpectedMiddle)
+            // fourth case: an environment start, e.g. \begin{env}
+            else if control_seq_name == "begin" {
+                todo!()
             }
-            else if control_seq_name == "right" {
-                Err(ParseError::UnexpectedRight)
-            }
-            // fourth case: a custom macro
+            // fifth case: a custom macro
             else if let Some(command) = custom_commands.and_then(|collection| collection.query(control_seq_name)) {
                 todo!()
             }
@@ -378,6 +387,7 @@ mod tests {
     use std::eprintln;
 
     use crate::parser::{parse, Parser, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText, error::{ParseResult, ParseError}, ParseDelimiter};
+    use crate::parser::{environments::Environment,};
 
 
     #[test]
@@ -628,11 +638,23 @@ mod tests {
 
         let input = "";
         let mut parser = Parser::new(input);
-        assert_eq!(parser.end_of_parse(), Some(ParseDelimiter::Eof));
+        assert_eq!(parser.end_of_parse(), Some(Ok(ParseDelimiter::Eof)));
 
         let input = "} 1+1";
         let mut parser = Parser::new(input);
-        assert_eq!(parser.end_of_parse(), Some(ParseDelimiter::CloseBracket));
+        assert_eq!(parser.end_of_parse(), Some(Ok(ParseDelimiter::CloseBracket)));
+
+        let input = r"\end{bmatrix} 1+1";
+        let mut parser = Parser::new(input);
+        assert_eq!(parser.end_of_parse(), Some(Ok(ParseDelimiter::EndEnv(Environment::BMatrix))));
+
+        let input = r"& \end{bmatrix}";
+        let mut parser = Parser::new(input);
+        assert_eq!(parser.end_of_parse(), Some(Ok(ParseDelimiter::Alignment)));
+
+        let input = r"\\";
+        let mut parser = Parser::new(input);
+        assert_eq!(parser.end_of_parse(), Some(Ok(ParseDelimiter::EndOfLine)));
 
         let input = " } 1";
         let mut parser = Parser::new(input);

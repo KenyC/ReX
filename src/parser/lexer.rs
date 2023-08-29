@@ -1,4 +1,4 @@
-//! Producing tokens for the parser
+//! Low-level parsing, parsing character, strings, alphanumerics
 
 
 
@@ -77,6 +77,18 @@ impl<'i, 'c> Parser<'i, 'c> {
         let result = chars.next();
         self.input = chars.as_str();
         result
+    }
+
+    /// Gets the next char from the input string (if not empty) and advances the input
+    pub fn parse_string(&mut self, string : &str) -> Option<()> {
+        self.input.strip_prefix(string)?;
+        Some(())
+    }
+
+    /// Parses the content of {..} as a plain string
+    pub fn parse_group_as_string(&mut self) -> Option<&str> {
+        self.try_parse_char('{')?;
+        Some(self.input.split_once('}')?.0)
     }
 }
 

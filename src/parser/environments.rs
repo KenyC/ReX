@@ -5,7 +5,7 @@ use std::fmt::Display;
 
 use crate::parser::{ParseNode, symbols::Symbol, error::ParseError};
 
-use super::{Parser, error::ParseResult};
+use super::{Parser, error::ParseResult, ParseDelimiter};
 
 
 /// An enumeration of recognized enviornmnets.
@@ -179,6 +179,46 @@ impl<'i, 'c> Parser<'i, 'c> {
 
         Ok(ArrayColumnsFormatting { columns, n_vertical_bars_before, })
     }
+
+    /// Parses an environment name enclosed with braces, e.g. {envname}
+    pub fn parse_environment_name(&mut self) -> ParseResult<Environment> {
+        match self.parse_group_as_string() {
+            Some("array")    => Ok(Environment::Array),    
+            Some("matrix")   => Ok(Environment::Matrix),   
+            Some("pmatrix")  => Ok(Environment::PMatrix),  
+            Some("bmatrix")  => Ok(Environment::BMatrix),  
+            Some("bbmatrix") => Ok(Environment::BbMatrix), 
+            Some("vmatrix")  => Ok(Environment::VMatrix),  
+            Some("vvmatrix") => Ok(Environment::VvMatrix), 
+            Some(name)    => Err(ParseError::UnrecognizedEnvironment(name.to_string())),
+            // TODO: that isn't the right error to propagate : failure to parse a group could because we're missing the end delimiter
+            None => Err(ParseError::ExpectedOpenGroup),
+        }
+    }
+
+    fn parse_array_env_body(&mut self, env_name : Environment) -> ParseResult<Vec<Vec<Expression>>> {
+        let mut rows = Vec::new();
+        let mut row = Vec::new();
+        loop {
+            let mut new_parser = self.fork();
+            let delimiter = new_parser.parse_expression()?;
+            self.input = new_parser.input;
+            row.push(new_parser.to_results());
+            
+            match delimiter {
+                ParseDelimiter::Alignment => {},
+                ParseDelimiter::EndOfLine => {
+                    rows.push(std::mem::take(&mut row));
+                },
+                ParseDelimiter::EndEnv(name) if name == env_name => {
+                    rows.push(std::mem::take(&mut row));
+                    break;
+                },
+                _ => return Err(todo!()),
+            }
+        }
+        Ok(rows)
+    }
 }
 
 
@@ -246,5 +286,25 @@ mod tests {
 
         }
         
+    }
+
+
+    #[test]
+    fn test_parse_array_body() {
+        let successes = vec![
+            r"1&2\\3&4\end{array}",
+            r"1&2\\3&4\\\end{array}",
+            r"1&\end{array}",
+            r"1&\\\end{array}",
+            r"&\\&2\end{array}",
+            r"\\\end{array}",
+            r"\end{array}",
+        ];
+        
+        for success in successes {
+            eprintln!("{}", success);
+            let mut parser = Parser::new(success);
+            parser.parse_array_env_body(Environment::Array).unwrap();
+        }
     }
 }
