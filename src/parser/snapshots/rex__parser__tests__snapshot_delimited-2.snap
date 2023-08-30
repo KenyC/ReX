@@ -7,14 +7,13 @@ Ok(
         Delimited(
             Delimited {
                 delimiters: [
-                    Symbol {
-                        codepoint: '(',
-                        atom_type: Open,
-                    },
-                    Symbol {
-                        codepoint: '.',
-                        atom_type: Alpha,
-                    },
+                    Some(
+                        Symbol {
+                            codepoint: '(',
+                            atom_type: Open,
+                        },
+                    ),
+                    None,
                 ],
                 inners: [
                     [],

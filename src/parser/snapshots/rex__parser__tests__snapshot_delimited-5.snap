@@ -7,18 +7,24 @@ Ok(
         Delimited(
             Delimited {
                 delimiters: [
-                    Symbol {
-                        codepoint: '(',
-                        atom_type: Open,
-                    },
-                    Symbol {
-                        codepoint: '|',
-                        atom_type: Fence,
-                    },
-                    Symbol {
-                        codepoint: ')',
-                        atom_type: Close,
-                    },
+                    Some(
+                        Symbol {
+                            codepoint: '(',
+                            atom_type: Open,
+                        },
+                    ),
+                    Some(
+                        Symbol {
+                            codepoint: '|',
+                            atom_type: Fence,
+                        },
+                    ),
+                    Some(
+                        Symbol {
+                            codepoint: ')',
+                            atom_type: Close,
+                        },
+                    ),
                 ],
                 inners: [
                     [

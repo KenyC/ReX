@@ -129,8 +129,11 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// Parses the input provided into [`ParseNode`]s. This is the main API entry point for parsing.
     pub fn parse(mut self) -> ParseResult<Vec<ParseNode>> {
-        self.parse_expression()?;
-        Ok(self.result)
+        let final_delimiter = self.parse_expression()?;
+        match final_delimiter {
+            ParseDelimiter::Eof => Ok(self.result),
+            delim => Err(ParseError::ExpectedDelimiter { found: delim, expected: ParseDelimiter::Eof })
+        }
     }
 
     fn parse_expression(&mut self) -> ParseResult<ParseDelimiter> {
@@ -220,7 +223,7 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Parses a sub- or a super-script
     #[inline]
     fn parse_script(&mut self, superscript : bool) -> Option<ParseResult<Vec<ParseNode>>> {
-        let symbol = if superscript { '_' } else { '^' };
+        let symbol = if superscript { '^' } else { '_' };
         self.try_parse_char(symbol)?;
         Some(self.parse_required_argument())
     }
@@ -254,7 +257,9 @@ impl<'i, 'c> Parser<'i, 'c> {
                 }
             }
             // second case: a symbol with a name
-            else if let Some(symbol) = Symbol::from_name(control_seq_name) {
+            else if let Some(mut symbol) = Symbol::from_name(control_seq_name) {
+                // TODO: make this a method of symbol
+                symbol.codepoint = style_symbol(symbol.codepoint, self.local_style);
                 Ok(ParseNode::Symbol(symbol))
             }
             // third case: a delimiter
@@ -322,6 +327,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         // Otherwise, the `?` would propagate to `Option`.
         Some((|| {
             let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
+            let codepoint = style_symbol(codepoint, self.local_style);
             Ok(Symbol { codepoint, atom_type, })
         })())
     }

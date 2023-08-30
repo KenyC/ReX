@@ -3,9 +3,8 @@ source: src/parser/mod.rs
 expression: "parse(r\"\\right(1+1\")"
 ---
 Err(
-    ExpectedEof(
-        Command(
-            "right",
-        ),
-    ),
+    ExpectedDelimiter {
+        found: RightDelimiter,
+        expected: Eof,
+    },
 )
