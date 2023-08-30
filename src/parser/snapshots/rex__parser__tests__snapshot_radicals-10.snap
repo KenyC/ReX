@@ -1,0 +1,7 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\sqrt_2\")"
+---
+Err(
+    RequiredMacroArg,
+)

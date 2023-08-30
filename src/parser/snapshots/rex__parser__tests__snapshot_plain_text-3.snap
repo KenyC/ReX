@@ -1,0 +1,11 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\text{\\{\\}1}1}\")"
+---
+Err(
+    ExpectedEof(
+        Symbol(
+            '}',
+        ),
+    ),
+)
