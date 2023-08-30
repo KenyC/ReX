@@ -1,0 +1,20 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\sqrt\\alpha\")"
+---
+Ok(
+    [
+        Radical(
+            Radical {
+                inner: [
+                    Symbol(
+                        Symbol {
+                            codepoint: '𝛼',
+                            atom_type: Alpha,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+)

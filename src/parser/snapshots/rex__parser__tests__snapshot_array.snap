@@ -1,0 +1,24 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\begin{array}{c}\\end{array}\")"
+---
+Ok(
+    [
+        Array(
+            Array {
+                col_format: ArrayColumnsFormatting {
+                    columns: [
+                        ArraySingleColumnFormatting {
+                            alignment: Centered,
+                            n_vertical_bars_after: 0,
+                        },
+                    ],
+                    n_vertical_bars_before: 0,
+                },
+                rows: [],
+                left_delimiter: None,
+                right_delimiter: None,
+            },
+        ),
+    ],
+)

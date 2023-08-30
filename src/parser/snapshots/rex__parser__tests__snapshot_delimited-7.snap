@@ -1,0 +1,32 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\left\\lBrack{}x\\right\\rBrack\")"
+---
+Ok(
+    [
+        Delimited(
+            Delimited {
+                delimiters: [
+                    Symbol {
+                        codepoint: '⟦',
+                        atom_type: Open,
+                    },
+                    Symbol {
+                        codepoint: '⟧',
+                        atom_type: Close,
+                    },
+                ],
+                inners: [
+                    [
+                        Symbol(
+                            Symbol {
+                                codepoint: '𝑥',
+                                atom_type: Alpha,
+                            },
+                        ),
+                    ],
+                ],
+            },
+        ),
+    ],
+)
