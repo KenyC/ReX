@@ -137,9 +137,9 @@ type Expression = Vec<ParseNode>;
 
 
 impl<'i, 'c> Parser<'i, 'c> {
-    /// In `\begin{array}{l|c||}, parses the content of the first argument of the array environment, 
-    /// which contains alignment information for columns and number of bars
-    pub fn parse_col_format(&mut self) -> ParseResult<ArrayColumnsFormatting> {
+    /// Parses a column format string like `l|c||`, as found in e.g. `\begin{array}{l|c||}`. 
+    /// This method expects the whole input to be a column format string and will consume the parser.
+    pub fn parse_col_format(mut self) -> ParseResult<ArrayColumnsFormatting> {
         let mut columns = Vec::new();
 
         let mut n_vertical_bars_before = 0;
@@ -155,9 +155,8 @@ impl<'i, 'c> Parser<'i, 'c> {
                 Some('c')   => alignment = ArrayColumnAlign::Centered,
                 Some('r')   => alignment = ArrayColumnAlign::Right,
                 Some('l')   => alignment = ArrayColumnAlign::Left,
-                Some('}')   => { break; }
                 Some(token) => return Err(ParseError::UnrecognizedColumnFormat(token)),
-                None => return Err(ParseError::UnexpectedEof),
+                None        => { break; },
             }
             
             self.consume_whitespace();
@@ -196,7 +195,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         }
     }
 
-    fn parse_array_env_body(&mut self, env_name : Environment) -> ParseResult<Vec<Vec<Expression>>> {
+    fn parse_array_env_body(&mut self, env : Environment) -> ParseResult<Vec<Vec<Expression>>> {
         let mut rows = Vec::new();
         let mut row = Vec::new();
         loop {
@@ -210,14 +209,76 @@ impl<'i, 'c> Parser<'i, 'c> {
                 ParseDelimiter::EndOfLine => {
                     rows.push(std::mem::take(&mut row));
                 },
-                ParseDelimiter::EndEnv(name) if name == env_name => {
+                ParseDelimiter::EndEnv(name) if name == env => {
                     rows.push(std::mem::take(&mut row));
                     break;
                 },
-                _ => return Err(todo!()),
+                other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::EndEnv(env) }),
             }
         }
         Ok(rows)
+    }
+
+
+    /// Parses an environment from the name of the environment to its '\end{env}` command
+    pub fn parse_env(&mut self) -> ParseResult<Array> {
+        let env = self.parse_environment_name()?;
+
+        let left_delimiter;
+        let right_delimiter;
+        let mut col_format = None;
+
+        #[inline]
+        fn make_delim(character : char) -> Symbol {
+            Symbol { codepoint : character, atom_type : unicode_math::AtomType::Inner  }
+        }
+
+        match env {
+            Environment::Array    => {
+                left_delimiter  = None;
+                right_delimiter = None;
+                // FIXME: ad hoc, should rely on a group routine
+                // we're exploiting a particular fact about column format instead of mimicking the logic of the TeX notion of group
+                self.consume_whitespace();
+                let col_format_string = self.parse_group_as_string().ok_or_else(|| todo!())?; // if not followed by an open gruop we interpret the next char as a column format
+                let mut parser = Parser::new(col_format_string);
+                parser.input = col_format_string;
+                col_format = Some(parser.parse_col_format()?);
+            },
+            Environment::Matrix   => {
+                left_delimiter  = None;
+                right_delimiter = None;
+            },
+            Environment::PMatrix  => {
+                left_delimiter  = Some(make_delim('('));
+                right_delimiter = Some(make_delim(')'));
+            },
+            Environment::BMatrix  => {
+                left_delimiter  = Some(make_delim('['));
+                right_delimiter = Some(make_delim(']'));
+            },
+            Environment::BbMatrix => {
+                left_delimiter  = Some(make_delim('{'));
+                right_delimiter = Some(make_delim('}'));
+            },
+            Environment::VMatrix  => {
+                left_delimiter  = Some(make_delim('|'));
+                right_delimiter = Some(make_delim('|'));
+            },
+            Environment::VvMatrix => {
+                left_delimiter  = Some(make_delim('‖'));
+                right_delimiter = Some(make_delim('‖'));
+            },
+        }
+
+        let rows = self.parse_array_env_body(env)?;
+
+        let col_format = col_format.unwrap_or_else(|| {
+            let n_cols = rows.get(0).map_or(0, Vec::len);
+            ArrayColumnsFormatting::default_for(n_cols)
+        });
+
+        Ok(Array {col_format, rows, left_delimiter, right_delimiter,})
     }
 }
 
@@ -272,12 +333,7 @@ mod tests {
         ];
 
         for (string, col_format) in cols {
-            let mut string = string.to_string();
-            string.push('}');
-
-            let mut parser = Parser::new(&string);
-            // let mut lexer  = Lexer::new(&string);
-            // let style = Style::new();
+            let mut parser = Parser::new(string);
 
             assert_eq!(
                 parser.parse_col_format().unwrap(),

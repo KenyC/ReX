@@ -268,7 +268,7 @@ impl<'i, 'c> Parser<'i, 'c> {
             } 
             // fourth case: an environment start, e.g. \begin{env}
             else if control_seq_name == "begin" {
-                todo!()
+                self.parse_env().map(ParseNode::Array)
             }
             // fifth case: a custom macro
             else if let Some(command) = custom_commands.and_then(|collection| collection.query(control_seq_name)) {
@@ -560,6 +560,7 @@ mod tests {
             r"\begin{array}{c}1\\2\end{array}",
             r"\begin{array}{c}1\\\end{array}",
             r"\begin{array}{cl}1&3\\2&4\end{array}",
+            r"\begin{array}c1&3\\2&4\end{array}",
         ];
 
         for formula in CORRECT_FORMULAS.iter().cloned() {
@@ -570,11 +571,12 @@ mod tests {
         const INCORRECT_FORMULAS : &[&str] = &[
             r"\begin{array}{c}",
             r"\begin{array}1\\2\end{array}",
+            r"\begin{array}c}1&3\\2&4\end{array}",
         ];
 
         for formula in INCORRECT_FORMULAS.iter().cloned() {
             eprintln!("incorrect: {}", formula);
-            assert!(parse(formula).is_err());
+            parse(formula).unwrap_err();
         }
     }
 

@@ -87,8 +87,18 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// Parses the content of {..} as a plain string
     pub fn parse_group_as_string(&mut self) -> Option<&str> {
-        self.try_parse_char('{')?;
-        Some(self.input.split_once('}')?.0)
+        if self.try_parse_char('{').is_some() {
+            let (content, remainder) = self.input.split_once('}')?;
+            self.input = remainder;
+            Some(content)
+        }
+        else {
+            let mut chars = self.input.chars();
+            let first_character = chars.next()?;
+            let first_character_as_string_slice = &self.input[0 .. first_character.len_utf8()];
+            self.input = chars.as_str();
+            Some(first_character_as_string_slice)
+        }
     }
 }
 

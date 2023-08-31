@@ -3,5 +3,10 @@ source: src/parser/mod.rs
 expression: "parse(r\"\\begin{array}{cc}1 \\\\ 2\")"
 ---
 Err(
-    UnexpectedEof,
+    ExpectedDelimiter {
+        found: Eof,
+        expected: EndEnv(
+            Array,
+        ),
+    },
 )
