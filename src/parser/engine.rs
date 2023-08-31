@@ -489,6 +489,8 @@ fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_ne;
+
     use crate::parser::{engine::parse, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText};
 
     use super::parse_with_custom_commands;
@@ -657,5 +659,21 @@ mod tests {
         let got = parse(r"\text{re + 43}").unwrap();
         let expected = vec![ParseNode::PlainText(PlainText {text : "re + 43".to_string()})];
         assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_color_lit() {
+        const DIFFERENT_FORMULAS : &[(&str, &str)] = &[
+            (r"\color red{1}", r"\color {red}{1}"),
+        ];
+
+        for (formula1, formula2) in DIFFERENT_FORMULAS.iter() {
+            eprintln!("different: {} ≠ {}", formula1, formula2);
+            assert_ne!(
+                parse(formula1).unwrap(),
+                parse(formula2).unwrap(),
+            );
+        }
+
     }
 }
