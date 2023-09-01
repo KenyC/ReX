@@ -769,4 +769,67 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\text{\{\}1}1}"));
         insta::assert_debug_snapshot!(parse(r"\text{}}"));
     }
+
+    #[test]
+    fn snapshot_color() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"\color{cyan}{1+1}"));
+        insta::assert_debug_snapshot!(parse(r"\color{red}{1+1}"));
+        insta::assert_debug_snapshot!(parse(r"\red{1}"));
+        insta::assert_debug_snapshot!(parse(r"\blue{1}"));
+        insta::assert_debug_snapshot!(parse(r"\gray{1}"));
+        insta::assert_debug_snapshot!(parse(r"\color{chartreuse}\alpha"));
+        insta::assert_debug_snapshot!(parse(r"\color{chocolate}\alpha"));
+
+        // fail
+        insta::assert_debug_snapshot!(parse(r"\color{bred}{1+1}"));
+        insta::assert_debug_snapshot!(parse(r"\color{bred}1"));
+        insta::assert_debug_snapshot!(parse(r"\color red{1}"));
+    }
+
+    #[test]
+    fn snapshot_style() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"1\scriptstyle2"));
+        insta::assert_debug_snapshot!(parse(r"{1\scriptstyle}2"));
+        insta::assert_debug_snapshot!(parse(r"1\textstyle2"));
+        insta::assert_debug_snapshot!(parse(r"1\sqrt{\displaystyle s}1"));
+    }
+
+
+    #[test]
+    fn snapshot_atom_change() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"1\mathrel{R}2"));
+        insta::assert_debug_snapshot!(parse(r"1\mathrel{\frac{1}{2}} 2"));
+        insta::assert_debug_snapshot!(parse(r"\mathop{1}2"));
+    }
+
+
+    #[test]
+    fn snapshot_text_operators() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"\sin 1"));
+        insta::assert_debug_snapshot!(parse(r"\log (42 + 1)"));
+        insta::assert_debug_snapshot!(parse(r"\sin(a + b) = \sin a \cos b + \cos b \sin a"));
+        insta::assert_debug_snapshot!(parse(r"\det_{B} M"));
+        insta::assert_debug_snapshot!(parse(r"\lim_{h \to 0 } \frac{f(x+h)-f(x)}{h}"));
+    }
+
+
+    #[test]
+    fn snapshot_spacing() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"1\!2"));
+        insta::assert_debug_snapshot!(parse(r"2\quad 3"));
+        insta::assert_debug_snapshot!(parse(r"2\quad3"));
+        insta::assert_debug_snapshot!(parse(r"5\,2"));
+        insta::assert_debug_snapshot!(parse(r"5\;2"));
+        insta::assert_debug_snapshot!(parse(r"5\:2"));
+        insta::assert_debug_snapshot!(parse(r"1\qquad{}33"));
+
+        // failure
+        insta::assert_debug_snapshot!(parse(r"1\33"));
+    }
+
 }
