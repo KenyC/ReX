@@ -6,7 +6,7 @@ use std::todo;
 
 use unicode_math::AtomType;
 
-use crate::dimensions::AnyUnit;
+use crate::{dimensions::AnyUnit, RGBA};
 
 use super::{Parser, symbols::Symbol, error::{ParseResult, ParseError}};
 
@@ -130,6 +130,41 @@ impl<'i, 'c> Parser<'i, 'c> {
             _ => Err(ParseError::UnrecognizedDimension),
         }
     } 
+
+    /// Parses a color. A color can be specifed as either:
+    ///   1. Alphabetic name for a valid CSS color.
+    ///   2. #RRGGBB (that is a # followed by 6 digits)
+    ///   3. #RRGGBBAA (that is a # followed by 8 digits)
+    pub fn parse_color(mut self) -> ParseResult<RGBA> {
+        // If '#' is first character, we have a color specified by value
+        if let Some(color_string) = self.input.strip_prefix('#') {
+            if color_string.len() == 6 {
+                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| todo!())?.to_be_bytes();
+                Ok(RGBA(
+                    color[1], 
+                    color[2], 
+                    color[3], 
+                    0xff,
+                ))
+            }
+            else if color_string.len() == 8 {
+                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| todo!())?.to_be_bytes();
+                Ok(RGBA(
+                    color[0],
+                    color[1], 
+                    color[2], 
+                    color[3], 
+                ))
+            }
+            else {
+                Err(todo!())
+            }
+        }
+        else {
+            RGBA::from_name(self.input).ok_or_else(|| ParseError::UnrecognizedColor(self.input.to_string()))
+        }
+
+    } 
 }
 
 /// Expects an Open or Fence category or a dot
@@ -189,7 +224,7 @@ mod tests {
 
     use rand::Rng;
 
-    use crate::{dimensions::AnyUnit, parser::{Parser, self}};
+    use crate::{dimensions::AnyUnit, parser::{Parser, self, error::ParseResult}, RGBA};
 
 
     #[test]
@@ -347,27 +382,39 @@ mod tests {
 
     #[test]
     fn lex_dimension() {
-        fn parse_dim(input : &str) -> Option<AnyUnit> {
-            todo!();
-            // let mut lexer = Lexer::new(input);
-            // lexer.dimension()  
+        fn parse_dim(input : &str) -> ParseResult<AnyUnit> {
+            let mut parser = Parser::new(input);
+            parser.parse_dimension()
         }
 
 
-        assert_eq!(parse_dim(r"123px abc"),    Some(AnyUnit::Px(123.0)));
-        assert_eq!(parse_dim(r"1.23em abc"),   Some(AnyUnit::Em(1.23)));
-        assert_eq!(parse_dim(r"- 1.23em 123"), Some(AnyUnit::Em(-1.23)));
-        assert_eq!(parse_dim(r"+1.34px 134"),  Some(AnyUnit::Px(1.34)));
-        assert_eq!(parse_dim("-   12em"),      Some(AnyUnit::Em(-12.0)));
-        assert_eq!(parse_dim("+   12px"),      Some(AnyUnit::Px(12.0)));
-        assert_eq!(parse_dim("-  .12em"),      Some(AnyUnit::Em(-0.12)));
-        assert_eq!(parse_dim("00.123000em"),   Some(AnyUnit::Em(0.123)));
-        assert_eq!(parse_dim("001.10000em"),   Some(AnyUnit::Em(1.1)));
+        assert_eq!(parse_dim(r"123px abc"),    Ok(AnyUnit::Px(123.0)));
+        assert_eq!(parse_dim(r"1.23em abc"),   Ok(AnyUnit::Em(1.23)));
+        assert_eq!(parse_dim(r"- 1.23em 123"), Ok(AnyUnit::Em(-1.23)));
+        assert_eq!(parse_dim(r"+1.34px 134"),  Ok(AnyUnit::Px(1.34)));
+        assert_eq!(parse_dim("-   12em"),      Ok(AnyUnit::Em(-12.0)));
+        assert_eq!(parse_dim("+   12px"),      Ok(AnyUnit::Px(12.0)));
+        assert_eq!(parse_dim("-  .12em"),      Ok(AnyUnit::Em(-0.12)));
+        assert_eq!(parse_dim("00.123000em"),   Ok(AnyUnit::Em(0.123)));
+        assert_eq!(parse_dim("001.10000em"),   Ok(AnyUnit::Em(1.1)));
 
-        assert_eq!(parse_dim(r"px"),       None);
-        assert_eq!(parse_dim(r"..em"),     None);
-        assert_eq!(parse_dim(r"1.4.1em"),  None);
+        parse_dim(r"px").unwrap_err();
+        parse_dim(r"..em").unwrap_err();
+        parse_dim(r"1.4.1em").unwrap_err();
 
+    }
+
+
+    #[test]
+    fn lex_color() {
+        fn get_color(input : &str) -> ParseResult<RGBA> {
+            Parser::new(input).parse_color()
+        }
+
+        assert_eq!(get_color("red"),       Ok(RGBA(0xff, 0x00, 0x00, 0xff)));
+        assert_eq!(get_color("darkgray"),  Ok(RGBA(0xa9, 0xa9, 0xa9, 0xff)));
+        assert_eq!(get_color("#ffA1e7"),   Ok(RGBA(0xff, 0xa1, 0xe7, 0xff)));
+        assert_eq!(get_color("#d25Be84c"), Ok(RGBA(0xd2, 0x5b, 0xe8, 0x4c)));
     }
 
     #[test]

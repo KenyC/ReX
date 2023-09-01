@@ -245,9 +245,9 @@ impl<'i, 'c> Parser<'i, 'c> {
             // First case, a TeX command
             if let Some(command) = Command::from_name(control_seq_name) {
                 match command {
-                    Command::Radical => self.parse_radical().map(|radical| ParseNode::Radical(radical)),
-                    Command::Rule    => self.parse_rule().map(|rule| ParseNode::Rule(rule)),
-                    Command::Color => todo!(),
+                    Command::Radical => self.parse_radical().map(ParseNode::Radical),
+                    Command::Rule    => self.parse_rule().map(ParseNode::Rule),
+                    Command::Color   => self.parse_color_command().map(ParseNode::Color),
                     Command::ColorLit(color) => self.parse_required_argument().map(|inner| ParseNode::Color(Color { color, inner, })),
                     Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
                     Command::DelimiterSize(_, _) => todo!(),
@@ -338,6 +338,14 @@ impl<'i, 'c> Parser<'i, 'c> {
             let codepoint = style_symbol(codepoint, self.local_style);
             Ok(Symbol { codepoint, atom_type, })
         })())
+    }
+
+    /// This method parses the two arguments that follow `\color`, namely a color name and a set of inner constituent
+    fn parse_color_command(&mut self) -> ParseResult<Color> {
+        let color_name = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?;
+        let color = Parser::new(color_name).parse_color()?;
+        let inner = self.parse_required_argument()?;
+        Ok(Color { color, inner, })
     }
 
     /// Creates a new parser in the same state, with no nodes

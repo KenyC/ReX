@@ -23,6 +23,8 @@ pub enum ParseError {
     UnrecognizedDimension,
     /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),
+    /// The name of the color used does not appear in `rex::parser::color::COLOR_MAP`
+    UnrecognizedColor(String),
 
 
     /// The symbol after '\left' was not in the "open" or "fence" category.
@@ -68,6 +70,8 @@ impl fmt::Display for ParseError {
                 write!(f, "failed to parse dimension"),        
             UnrecognizedEnvironment(name) => 
                 write!(f, "unrecognized environment: \\begin{{{}}}`", name),
+            UnrecognizedColor(ref color) =>
+                write!(f, "failed to recognize the color '{}'", color),
 
             ExpectedOpen(sym) =>
                 write!(f, "expected Open, Fence, or period after '\\left', found `{:?}`", sym),
