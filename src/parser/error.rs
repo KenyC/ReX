@@ -19,6 +19,8 @@ pub enum ParseError {
     UnexpectedEof,
     /// Unknown environment \begin{xyz}
     UnrecognizedEnvironment(String),
+    /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
+    UnrecognizedDimension,
     /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),
 
@@ -31,6 +33,8 @@ pub enum ParseError {
     ExpectedMiddle(Symbol),
     /// Expected an opening '{'
     ExpectedOpenGroup,
+    /// After `\rule`, a number followed by a dimension was expected
+    ExpectedDimension,
     /// `\left`, `\middle` and `\right` are not followed by a symbol 
     MissingSymbolAfterDelimiter,
     /// `\right` not preceded by `\left`, or separated from it by an open group bracket that isn't closed before
@@ -52,34 +56,40 @@ pub enum ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ParseError::*;
         match self {
-            ParseError::RequiredMacroArg => 
+            RequiredMacroArg => 
                 write!(f, "missing required macro argument"),
-            ParseError::UnexpectedEof =>
+            UnexpectedEof =>
                 write!(f, "unexpected end of input; unmatched end of array? unfinished group?"),
-            ParseError::UnrecognizedSymbol(c) =>
-                write!(f, "unrecognized symbol '{}'", c),        
-            ParseError::UnrecognizedEnvironment(name) => 
+            UnrecognizedSymbol(c) =>
+                write!(f, "unrecognized symbol '{}'", c),
+            UnrecognizedDimension =>
+                write!(f, "failed to parse dimension"),        
+            UnrecognizedEnvironment(name) => 
                 write!(f, "unrecognized environment: \\begin{{{}}}`", name),
 
-            ParseError::ExpectedOpen(sym) =>
+            ExpectedOpen(sym) =>
                 write!(f, "expected Open, Fence, or period after '\\left', found `{:?}`", sym),
-            ParseError::ExpectedClose(sym) =>
+            ExpectedClose(sym) =>
                 write!(f, "expected Close, Fence, or period after '\\right', found `{:?}`", sym),
-            ParseError::ExpectedMiddle(sym) =>
+            ExpectedMiddle(sym) =>
                 write!(f, "expected Fence, or period after '\\middle', found `{:?}`", sym),
-            ParseError::MissingSymbolAfterDelimiter =>
-                write!(f, "missing symbol following delimiter"),
-            ParseError::UnexpectedRight => 
-                write!(f, "unexpected \\right"),
-            ParseError::UnexpectedMiddle => 
-                write!(f, "unexpected \\middle"),
-            ParseError::UnrecognizedColumnFormat(token) => 
-                write!(f, "unrecognized column format: {}`", token),
-            ParseError::ExpectedDelimiter { found, expected } => 
+            ExpectedDimension => 
+                write!(f, "expected dimension"),
+            ExpectedDelimiter { found, expected } => 
                 write!(f, "`{}` was expected but `{}` was found instead", expected, found),
-            ParseError::ExpectedOpenGroup =>
+            ExpectedOpenGroup =>
                 write!(f, "expected an open group symbol"),
+                
+            MissingSymbolAfterDelimiter =>
+                write!(f, "missing symbol following delimiter"),
+            UnexpectedRight => 
+                write!(f, "unexpected \\right"),
+            UnexpectedMiddle => 
+                write!(f, "unexpected \\middle"),
+            UnrecognizedColumnFormat(token) => 
+                write!(f, "unrecognized column format: {}`", token),
 
         }
     }

@@ -7,7 +7,7 @@ use crate::parser::nodes::{MathStyle, BarThickness, GenFraction};
 use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
-use super::nodes::{Radical, self};
+use super::nodes::{Radical, self, Rule};
 use super::utils::fmap;
 use super::{ParseNode, Parser};
 use super::error::{ParseResult, ParseError};
@@ -235,6 +235,22 @@ impl<'i, 'c> Parser<'i, 'c> {
             style,
         })
     }
+
+
+    /// This method should be called after having parsed `\rule`
+    /// It will take care of parsing two required arguments, containing the desired dimension of the rule
+    pub fn parse_rule(&mut self) -> ParseResult<Rule> {
+        self.consume_whitespace();
+        let group1 = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?;
+        let width = Parser::new(group1).parse_dimension()?;
+
+        self.consume_whitespace();
+        let group2 = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?;
+        let height = Parser::new(group2).parse_dimension()?;
+
+        Ok(Rule {width, height,})
+    }
+
 }
 
 
@@ -246,17 +262,16 @@ mod tests {
 
     #[test]
     fn test_rule_parse() {
-        todo!("Replace")
-        // let mut lexer = Lexer::new(r"\rule{1em}{50px}");
-        // let result = rule(&mut lexer, Style::default(), &CommandCollection::default());
-        // result.unwrap();
+        let mut parser = Parser::new(r"{1em}{50px}");
+        let result = parser.parse_rule();
+        result.unwrap();
 
-        // let mut lexer = Lexer::new(r"\rule{  1.33em}  {  50px}");
-        // let result = rule(&mut lexer, Style::default(), &CommandCollection::default());
-        // result.unwrap();
+        let mut parser = Parser::new(r"{  1.33em}  {  50px}");
+        let result = parser.parse_rule();
+        result.unwrap();
 
-        // let mut lexer = Lexer::new(r"\rule  {  -0.5em}  {  50px}");
-        // let result = rule(&mut lexer, Style::default(), &CommandCollection::default());
-        // assert!(result.is_err());
+        let mut parser = Parser::new(r"  {  -0.5em}  {  50px}");
+        let result = parser.parse_rule();
+        result.unwrap();
     }
 }

@@ -2,7 +2,11 @@
 
 
 
+use std::todo;
+
 use unicode_math::AtomType;
+
+use crate::dimensions::AnyUnit;
 
 use super::{Parser, symbols::Symbol, error::{ParseResult, ParseError}};
 
@@ -100,6 +104,32 @@ impl<'i, 'c> Parser<'i, 'c> {
             Some(first_character_as_string_slice)
         }
     }
+
+    /// Parses the input as a dimension, e.g. `1cm` or `-2pt or `3.5em`
+    pub fn parse_dimension(mut self) -> ParseResult<AnyUnit> {
+        fn is_float_char(character : &char) -> bool {
+            character.is_ascii_digit()
+            || *character == '-'
+            || *character == '+'
+            || *character == ' '
+            || *character == '.'
+        }
+
+        let float_input_to_parse : String = self.input.chars().take_while(is_float_char).collect();
+        let number = float_input_to_parse.replace(' ', "").parse::<f64>().map_err(|_| ParseError::ExpectedDimension)?;
+
+        self.input = &self.input[float_input_to_parse.len() ..];
+        self.consume_whitespace();
+
+        // expecting 2 ASCII characters representing the dimension
+        let dim = self.input.get(.. 2).ok_or_else(|| ParseError::ExpectedDimension)?;
+
+        match dim {
+            "em" => Ok(AnyUnit::Em(number)),
+            "px" => Ok(AnyUnit::Px(number)),
+            _ => Err(ParseError::UnrecognizedDimension),
+        }
+    } 
 }
 
 /// Expects an Open or Fence category or a dot

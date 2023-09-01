@@ -24,7 +24,10 @@ use font::expect;
 use self::lexer::expect_left;
 use self::lexer::expect_middle;
 use self::lexer::expect_right;
+use self::nodes::AtomChange;
+use self::nodes::Color;
 pub use self::nodes::ParseNode;
+use self::nodes::PlainText;
 pub use self::nodes::is_symbol;
 
 
@@ -243,15 +246,20 @@ impl<'i, 'c> Parser<'i, 'c> {
             if let Some(command) = Command::from_name(control_seq_name) {
                 match command {
                     Command::Radical => self.parse_radical().map(|radical| ParseNode::Radical(radical)),
-                    Command::Rule => todo!(),
+                    Command::Rule    => self.parse_rule().map(|rule| ParseNode::Rule(rule)),
                     Command::Color => todo!(),
-                    Command::ColorLit(_) => todo!(),
+                    Command::ColorLit(color) => self.parse_required_argument().map(|inner| ParseNode::Color(Color { color, inner, })),
                     Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
                     Command::DelimiterSize(_, _) => todo!(),
-                    Command::Kerning(_) => todo!(),
+                    Command::Kerning(kern) => Ok(ParseNode::Kerning(kern)),
                     Command::Style(_) => todo!(),
-                    Command::AtomChange(_) => todo!(),
-                    Command::TextOperator(_, _) => todo!(),
+                    Command::AtomChange(at) => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
+                    Command::TextOperator(name, delim) => {
+                        Ok(ParseNode::AtomChange(AtomChange {
+                            at : AtomType::Operator(delim),
+                            inner : vec![ParseNode::PlainText(PlainText { text: name.to_string() })],
+                        }))
+                    },
                     Command::SubStack(_) => todo!(),
                     Command::Text => todo!(),
                 }

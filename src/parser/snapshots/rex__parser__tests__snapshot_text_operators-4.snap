@@ -13,22 +13,9 @@ Ok(
                                 true,
                             ),
                             inner: [
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 'd',
-                                        atom_type: Ordinary,
-                                    },
-                                ),
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 'e',
-                                        atom_type: Ordinary,
-                                    },
-                                ),
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 't',
-                                        atom_type: Ordinary,
+                                PlainText(
+                                    PlainText {
+                                        text: "det",
                                     },
                                 ),
                             ],

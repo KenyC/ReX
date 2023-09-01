@@ -13,22 +13,9 @@ Ok(
                                 true,
                             ),
                             inner: [
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 'l',
-                                        atom_type: Ordinary,
-                                    },
-                                ),
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 'i',
-                                        atom_type: Ordinary,
-                                    },
-                                ),
-                                Symbol(
-                                    Symbol {
-                                        codepoint: 'm',
-                                        atom_type: Ordinary,
+                                PlainText(
+                                    PlainText {
+                                        text: "lim",
                                     },
                                 ),
                             ],

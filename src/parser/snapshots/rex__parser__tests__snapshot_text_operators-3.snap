@@ -10,22 +10,9 @@ Ok(
                     false,
                 ),
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: 's',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'i',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'n',
-                            atom_type: Ordinary,
+                    PlainText(
+                        PlainText {
+                            text: "sin",
                         },
                     ),
                 ],
@@ -73,22 +60,9 @@ Ok(
                     false,
                 ),
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: 's',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'i',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'n',
-                            atom_type: Ordinary,
+                    PlainText(
+                        PlainText {
+                            text: "sin",
                         },
                     ),
                 ],
@@ -106,22 +80,9 @@ Ok(
                     false,
                 ),
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: 'c',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'o',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 's',
-                            atom_type: Ordinary,
+                    PlainText(
+                        PlainText {
+                            text: "cos",
                         },
                     ),
                 ],
@@ -145,22 +106,9 @@ Ok(
                     false,
                 ),
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: 'c',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'o',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 's',
-                            atom_type: Ordinary,
+                    PlainText(
+                        PlainText {
+                            text: "cos",
                         },
                     ),
                 ],
@@ -178,22 +126,9 @@ Ok(
                     false,
                 ),
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: 's',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'i',
-                            atom_type: Ordinary,
-                        },
-                    ),
-                    Symbol(
-                        Symbol {
-                            codepoint: 'n',
-                            atom_type: Ordinary,
+                    PlainText(
+                        PlainText {
+                            text: "sin",
                         },
                     ),
                 ],
