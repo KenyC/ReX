@@ -7,9 +7,9 @@ use crate::parser::nodes::{MathStyle, BarThickness, GenFraction};
 use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
-use super::nodes::{Radical, self, Rule};
+use super::nodes::{Radical, self, Rule, Stack};
 use super::utils::fmap;
-use super::{ParseNode, Parser};
+use super::{ParseNode, Parser, ParseDelimiter};
 use super::error::{ParseResult, ParseError};
 
 
@@ -54,8 +54,8 @@ pub enum Command {
     AtomChange(AtomType),
     /// A mathematical operator, like `\lim`, `\det`
     TextOperator(&'static str, bool),
-    /// `\substack{..}{..}`
-    SubStack(AtomType),
+    /// `\substack{..}`
+    SubStack,
     /// `\text{..}`
     Text,
     // // DEPRECATED
@@ -96,7 +96,7 @@ impl Command {
             "dbinom" => Self::Fraction(sym!('(', open), sym!(')', close), BarThickness::None, MathStyle::Display),
 
             // Stacking commands
-            "substack" => Self::SubStack(AtomType::Inner),
+            "substack" => Self::SubStack,
 
             // Radical commands
             "sqrt" => Self::Radical,
@@ -251,6 +251,33 @@ impl<'i, 'c> Parser<'i, 'c> {
         Ok(Rule {width, height,})
     }
 
+
+    /// This method parses the argument of `\substack` which is a group of the form `{ ... \\ ... \\ ... }`
+    pub fn parse_substack(&mut self) -> ParseResult<Stack> {
+        self.consume_whitespace();
+
+        self.try_parse_char('{').ok_or(ParseError::RequiredMacroArg)?;
+
+        let mut lines  = Vec::with_capacity(2);
+
+        loop {
+            let mut parser = self.fork();
+            let delimiter = parser.parse_expression()?;
+
+            self.input = parser.input;
+            lines.push(parser.to_results());
+
+            match delimiter {
+                ParseDelimiter::CloseBracket => break,
+                ParseDelimiter::EndOfLine    => (),
+                other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::CloseBracket })
+            }
+
+        }
+
+        Ok(Stack { lines, })
+    }
+
 }
 
 
@@ -258,6 +285,35 @@ impl<'i, 'c> Parser<'i, 'c> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_substack() {
+        // successes
+        let mut parser = Parser::new(r"  { 1   \\ 2 }");
+        let result = parser.parse_substack();
+        result.unwrap();
+
+        let mut parser = Parser::new(r"  { 1   \\ 2 \\ 3 }");
+        let result = parser.parse_substack();
+        result.unwrap();
+
+        let mut parser = Parser::new(r"  { 1   \\ 2 \\ \frac{3+1} {5+ 6} }");
+        let result = parser.parse_substack();
+        result.unwrap();
+
+        // failures
+        let mut parser = Parser::new(r"  { 1   \\ 2 ");
+        let result = parser.parse_substack();
+        result.unwrap_err();
+
+        let mut parser = Parser::new(r"  { 1    \\ ");
+        let result = parser.parse_substack();
+        result.unwrap_err();
+
+        let mut parser = Parser::new(r"  123 \\ 2}");
+        let result = parser.parse_substack();
+        result.unwrap_err();
+    }
 
 
     #[test]

@@ -260,8 +260,8 @@ impl<'i, 'c> Parser<'i, 'c> {
                             inner : vec![ParseNode::PlainText(PlainText { text: name.to_string() })],
                         }))
                     },
-                    Command::SubStack(_) => todo!(),
-                    Command::Text => todo!(),
+                    Command::SubStack => self.parse_substack().map(ParseNode::Stack),
+                    Command::Text => self.parse_text().map(ParseNode::PlainText),
                 }
             }
             // second case: a symbol with a name
@@ -288,6 +288,13 @@ impl<'i, 'c> Parser<'i, 'c> {
         )
 
     }
+
+    /// Parses the plain text argument of `\text`
+    fn parse_text(&mut self) -> ParseResult<PlainText> {
+        let text = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?.to_string();
+        Ok(PlainText { text, })
+    }
+
 
     /// Assuming `\left` has just been parsed, parses a `\left<char> .. (\middle<char>)* .. \right<char>` sequence.
     fn parse_delimited_sequence(&mut self) -> ParseResult<Delimited> {
@@ -342,8 +349,10 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// This method parses the two arguments that follow `\color`, namely a color name and a set of inner constituent
     fn parse_color_command(&mut self) -> ParseResult<Color> {
+        self.consume_whitespace();
         let color_name = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?;
         let color = Parser::new(color_name).parse_color()?;
+        self.consume_whitespace();
         let inner = self.parse_required_argument()?;
         Ok(Color { color, inner, })
     }

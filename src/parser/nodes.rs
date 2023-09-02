@@ -55,8 +55,6 @@ pub enum ParseNode {
 /// Cf [`ParseNode::Stack`]
 #[derive(Debug, PartialEq, Clone)]
 pub struct Stack {
-    /// The type of the resulting stack.
-    pub atom_type: AtomType,
     /// Lines of formulas to stack on top of each other.
     pub lines: Vec<Vec<ParseNode>>,
 }
@@ -198,7 +196,6 @@ impl ParseNode {
                 }
             }
             ParseNode::AtomChange(ref mut node) => node.at = at,
-            ParseNode::Stack(Stack { ref mut atom_type, .. }) => *atom_type = at,
             _ => (),
         }
     }
@@ -242,7 +239,7 @@ impl ParseNode {
                 .unwrap_or(AtomType::Alpha),
 
             ParseNode::Array(_)      => AtomType::Inner,
-            ParseNode::Stack(ref s)  => s.atom_type,
+            ParseNode::Stack(ref s)  => AtomType::Inner,
 
             // // DEPRECATED
             // ParseNode::Extend(_,_)   => AtomType::Inner,
