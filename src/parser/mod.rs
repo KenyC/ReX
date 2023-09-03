@@ -183,4 +183,42 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"1\33"));
     }
 
+    #[test]
+    fn snapshot_delimiter() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"\biggl("));
+        insta::assert_debug_snapshot!(parse(r"\bigr]"));
+        insta::assert_debug_snapshot!(parse(r"\Bigl\langle"));
+        insta::assert_debug_snapshot!(parse(r"\Biggr|"));
+        insta::assert_debug_snapshot!(parse(r"\Bigl\lBrack"));
+
+        // failure
+        insta::assert_debug_snapshot!(parse(r"\bigr\lBrack"));
+        insta::assert_debug_snapshot!(parse(r"\Bigl\rangle"));
+    }
+
+    #[test]
+    fn snapshot_substack() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"\substack{   1 \\ 2}"));
+        insta::assert_debug_snapshot!(parse(r"\substack{ 1 \\ \frac{7}8 \\ 4}"));
+        insta::assert_debug_snapshot!(parse(r"\begin{array}{c}\substack{1 \\ \frac{7}8 \\ 4} \\ 5 \end{array}"));
+        insta::assert_debug_snapshot!(parse(r"\substack{1 \\}"));
+        insta::assert_debug_snapshot!(parse(r"1 \substack{}"));
+
+        // failure
+        insta::assert_debug_snapshot!(parse(r"\substack{ 1 \\ 2}\\"));
+        insta::assert_debug_snapshot!(parse(r"\substack \alpha \\ 1"));
+        insta::assert_debug_snapshot!(parse(r"\substack{ 1 \\ 1"));
+    }
+
+    #[test]
+    fn snapshot_style_change() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"1\scriptstyle 2"));
+        insta::assert_debug_snapshot!(parse(r"1\scriptstyle2\textstyle1+1"));
+        insta::assert_debug_snapshot!(parse(r"1{\scriptstyle2\textstyle1}+1"));
+        insta::assert_debug_snapshot!(parse(r"\frac{22\scriptscriptstyle22}2"));
+    }
+
 }

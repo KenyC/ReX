@@ -533,9 +533,8 @@ mod tests {
                       r"\sqrt2",
                       r"\sqrt\alpha",
                       r"1^\sqrt2",
-                      r"\alpha_\sqrt{1+2}",
-                      r"\sqrt\sqrt2"]);
-        should_fail!(errs, parse, [r"\sqrt", r"\sqrt_2", r"\sqrt^2"]);
+                      r"\alpha_\sqrt{1+2}", ]);
+        should_fail!(errs, parse, [r"\sqrt", r"\sqrt_2", r"\sqrt^2", r"\sqrt\sqrt2"]);
         should_equate!(errs, parse, [(r"\sqrt2", r"\sqrt{2}")]);
         should_differ!(errs, parse, [(r"\sqrt2_3", r"\sqrt{2_3}")]);
         display_errors!(errs);

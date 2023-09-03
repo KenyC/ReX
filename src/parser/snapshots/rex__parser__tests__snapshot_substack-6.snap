@@ -1,0 +1,11 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\substack{ 1 \\\\ 2}\\\\\")"
+---
+Err(
+    ExpectedEof(
+        Command(
+            "\\",
+        ),
+    ),
+)
