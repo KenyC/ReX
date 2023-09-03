@@ -278,6 +278,16 @@ impl<'i, 'c> Parser<'i, 'c> {
         Ok(Stack { lines, })
     }
 
+
+    /// Parses the symbol after e.g. `\bigl` and `\biggr`
+    pub fn parse_delimiter_size(&mut self, atom_type : AtomType) -> ParseResult<Symbol> {
+        let delimiter = self.parse_delimiter().ok_or(ParseError::MissingSymbolAfterDelimiter)??;
+        if delimiter.atom_type != atom_type {
+            return Err(ParseError::ExpectedAtomType { found: delimiter.atom_type, expected: atom_type });
+        }
+        Ok(delimiter)
+    }
+
 }
 
 

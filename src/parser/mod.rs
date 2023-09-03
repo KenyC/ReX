@@ -250,9 +250,10 @@ impl<'i, 'c> Parser<'i, 'c> {
                     Command::Color   => self.parse_color_command().map(ParseNode::Color),
                     Command::ColorLit(color) => self.parse_required_argument().map(|inner| ParseNode::Color(Color { color, inner, })),
                     Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
-                    Command::DelimiterSize(_, _) => todo!(),
+                    // TODO: this doesn't work, it just displays the symbol
+                    Command::DelimiterSize(_, atom_type) => self.parse_delimiter_size(atom_type).map(ParseNode::Symbol),
                     Command::Kerning(kern) => Ok(ParseNode::Kerning(kern)),
-                    Command::Style(_) => todo!(),
+                    Command::Style(style) => Ok(ParseNode::Style(style)),
                     Command::AtomChange(at) => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
                     Command::TextOperator(name, delim) => {
                         Ok(ParseNode::AtomChange(AtomChange {

@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use unicode_math::AtomType;
+
 use super::{symbols::Symbol, ParseDelimiter};
 
 
@@ -37,6 +39,8 @@ pub enum ParseError {
     ExpectedOpenGroup,
     /// After `\rule`, a number followed by a dimension was expected
     ExpectedDimension,
+    /// The first token represents the expected atom type and the second the atom type that was obtained.
+    ExpectedAtomType { expected : AtomType, found : AtomType },
     /// `\left`, `\middle` and `\right` are not followed by a symbol 
     MissingSymbolAfterDelimiter,
     /// `\right` not preceded by `\left`, or separated from it by an open group bracket that isn't closed before
@@ -79,6 +83,8 @@ impl fmt::Display for ParseError {
                 write!(f, "expected Close, Fence, or period after '\\right', found `{:?}`", sym),
             ExpectedMiddle(sym) =>
                 write!(f, "expected Fence, or period after '\\middle', found `{:?}`", sym),
+            ExpectedAtomType { expected, found } =>
+                write!(f, "expected atom type {:?} found {:?}", expected, found),
             ExpectedDimension => 
                 write!(f, "expected dimension"),
             ExpectedDelimiter { found, expected } => 
