@@ -107,6 +107,11 @@ pub struct Parser<'i, 'c> {
     result : Vec<ParseNode>,
 }
 
+enum Script {
+    Subscript,
+    Superscript,
+}
+
 impl<'i, 'c> Parser<'i, 'c> {
     /// Creates a new parser from an input string.
     pub fn new(input : & 'i str) -> Self {
@@ -157,13 +162,31 @@ impl<'i, 'c> Parser<'i, 'c> {
             let node = node.ok_or_else(|| todo!())??;
 
             // Take the result of `parse_script` and shift it from `Option<Result<..>>` to `Result<Option<..>>`
-            let mut subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
-            let mut superscript = self.parse_script(true).map_or(Ok(None),  |maybe_arg| maybe_arg.map(Some))?;
-            // scripts may be in any order ; so we try to parse a subscript again (just in case superscript came first)
-            // TODO : excessive subscript error
-            if subscript.is_none() {
-                subscript   = self.parse_script(false).map_or(Ok(None), |maybe_arg| maybe_arg.map(Some))?;
+            let mut subscript   = None;
+            let mut superscript = None;
+            for _ in 0 .. 3 {
+                match self.parse_script() {
+                    Some(Ok((Script::Subscript, results)))  => {
+                        if subscript.is_none() {
+                            subscript = Some(results);
+                        }
+                        else {
+                            return Err(ParseError::ExcessiveSubscripts);
+                        }
+                    }
+                    Some(Ok((Script::Superscript, results)))  => {
+                        if superscript.is_none() {
+                            superscript = Some(results);
+                        }
+                        else {
+                            return Err(ParseError::ExcessiveSuperscripts);
+                        }
+                    },
+                    Some(Err(e)) => return Err(e),
+                    None         => break,
+                }
             }
+
 
             let node =
                 if subscript.is_some() || superscript.is_some() {
@@ -225,10 +248,16 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     /// Parses a sub- or a super-script
     #[inline]
-    fn parse_script(&mut self, superscript : bool) -> Option<ParseResult<Vec<ParseNode>>> {
-        let symbol = if superscript { '^' } else { '_' };
-        self.try_parse_char(symbol)?;
-        Some(self.parse_required_argument())
+    fn parse_script(&mut self) -> Option<ParseResult<(Script, Vec<ParseNode>)>> {
+        let symbol = Option::or_else(
+            self.try_parse_char('_'),
+            || self.try_parse_char('^'),
+        )?;
+
+        Some((|| {
+            let results = self.parse_required_argument()?;
+            Ok((if symbol == '^' {Script::Superscript} else {Script::Subscript}, results))
+        })())
     }
 
     /// Expects to parse something of the form `\foo[..]{..}` with correct number of arguments and well-typed arguments
@@ -284,7 +313,7 @@ impl<'i, 'c> Parser<'i, 'c> {
                 todo!()
             }
             else {
-                Err(todo!())
+                Err(ParseError::UnrecognizedCommand(control_seq_name.to_string()))
             }
         )
 

@@ -21,6 +21,8 @@ pub enum ParseError {
     UnexpectedEof,
     /// Unknown environment \begin{xyz}
     UnrecognizedEnvironment(String),
+    /// Unknown command. \xyz
+    UnrecognizedCommand(String),
     /// Dimension (e.g. "pt", "cm") ; this error is not thrown at the moment.
     UnrecognizedDimension,
     /// The symbol is not one we have category info about.
@@ -40,7 +42,12 @@ pub enum ParseError {
     /// After `\rule`, a number followed by a dimension was expected
     ExpectedDimension,
     /// The first token represents the expected atom type and the second the atom type that was obtained.
-    ExpectedAtomType { expected : AtomType, found : AtomType },
+    ExpectedAtomType { 
+        /// expected atom type
+        expected : AtomType, 
+        /// atom type encountered
+        found : AtomType 
+    },
     /// `\left`, `\middle` and `\right` are not followed by a symbol 
     MissingSymbolAfterDelimiter,
     /// `\right` not preceded by `\left`, or separated from it by an open group bracket that isn't closed before
@@ -57,6 +64,12 @@ pub enum ParseError {
         /// delimiter expected
         expected: ParseDelimiter 
     },
+
+
+    /// One node has two or more superscripts in a row, e.g. "x^2^2".
+    ExcessiveSubscripts,
+    /// One node has two or more subscripts in a row, e.g. "x_2_2".
+    ExcessiveSuperscripts,
 }
 
 
@@ -68,6 +81,8 @@ impl fmt::Display for ParseError {
                 write!(f, "missing required macro argument"),
             UnexpectedEof =>
                 write!(f, "unexpected end of input; unmatched end of array? unfinished group?"),
+            UnrecognizedCommand(cmd) =>
+                write!(f, "unrecognized command: \\{}`", cmd),
             UnrecognizedSymbol(c) =>
                 write!(f, "unrecognized symbol '{}'", c),
             UnrecognizedDimension =>
@@ -100,6 +115,11 @@ impl fmt::Display for ParseError {
                 write!(f, "unexpected \\middle"),
             UnrecognizedColumnFormat(token) => 
                 write!(f, "unrecognized column format: {}`", token),
+
+            ExcessiveSubscripts =>
+                write!(f, "excessive number of subscripts"),
+            ExcessiveSuperscripts =>
+                write!(f, "excessive number of superscripts"),
 
         }
     }

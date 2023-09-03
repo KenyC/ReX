@@ -92,7 +92,17 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Parses the content of {..} as a plain string
     pub fn parse_group_as_string(&mut self) -> Option<&str> {
         if self.try_parse_char('{').is_some() {
-            let (content, remainder) = self.input.split_once('}')?;
+            let mut n_open = 1;
+            let mut escaped = false;
+            let (content, remainder) = self.input
+                .split_once(|c| match c {
+                    _ if escaped => {escaped = false; false},
+                    '{'  => {n_open += 1; false},
+                    '}'  => {n_open -= 1; n_open == 0},
+                    '\\' => {escaped = true; false}
+                    _ => false
+                })?
+            ;
             self.input = remainder;
             Some(content)
         }
@@ -293,92 +303,36 @@ mod tests {
     }
 
 
-    #[test]
-    fn lex_tokens() {
-        todo!()
-        // macro_rules! assert_eq_token_stream {
-        //     ($left:expr, $right:expr) => {{
-        //         let mut left  = Lexer::new($left);
-        //         let mut right = Lexer::new($right);
-
-        //         loop {
-        //             let l_tok : Token = todo!();
-        //             let r_tok : Token = todo!();
-        //             // let l_tok = left.next();
-        //             // let r_tok = right.next();
-
-        //             assert_eq!(l_tok, r_tok);
-        //             if l_tok == Token::EOF {
-        //                 break
-        //             }
-        //         }
-        //     }}
-        // }
-
-        // assert_eq_token_stream!(r"\cs1", r"\cs 1");
-        // assert_eq_token_stream!(r"\cs1", r"\cs    1");
-        // assert_eq_token_stream!(r"\cs?", "\\cs\n\n\t?");
-        // assert_eq_token_stream!(r"\test\test", r"\test   \test");
-        // assert_eq_token_stream!(r"1     +       2", r"1 + 2");
-        // assert_eq_token_stream!(r"123\", "123");
-    }
 
     #[test]
     fn lex_group() {
-        todo!()
 
-        // let mut l = Lexer::new("{1}");
-        // assert_eq!(l.group(), Ok("1"));
-        // assert!(!(l.current() == Token::EOF));
+        let mut l = Parser::new("{1}");
+        assert_eq!(l.parse_group_as_string(), Some("1"));
+        assert_eq!(l.input, "");
 
-        // let mut l = Lexer::new("   {  abc } ");
-        // assert_eq!(l.group(), Ok("  abc "));
-        // assert!(!(l.current() == Token::EOF));
+        let mut l = Parser::new("{  abc } ");
+        assert_eq!(l.parse_group_as_string(), Some("  abc "));
+        assert_eq!(l.input, " ");
 
-        // let mut l = Lexer::new("{}");
-        // assert_eq!(l.group(), Ok(""));
-        // assert!(!(l.current() == Token::EOF));
-
-
-        // let mut l = Lexer::new("{fez{fe}}");
-        // assert_eq!(l.group(), Ok("fez{fe}"));
-        // assert!(!(l.current() == Token::EOF));
-
-        // let mut l = Lexer::new(r"{fez\{}");
-        // assert_eq!(l.group(), Ok(r"fez\{"));
-        // assert!(!(l.current() == Token::EOF));
+        let mut l = Parser::new("{}");
+        assert_eq!(l.parse_group_as_string(), Some(""));
+        assert_eq!(l.input, "");
 
 
-        // // This doesn't seem correct:
-        // // assert_group!("{{}}", Ok("{"));
+        let mut l = Parser::new("{fez{fe}}");
+        assert_eq!(l.parse_group_as_string(), Some("fez{fe}"));
+        assert_eq!(l.input, "");
+
+        let mut l = Parser::new(r"{fez\{}");
+        assert_eq!(l.parse_group_as_string(), Some(r"fez\{"));
+        assert_eq!(l.input, "");
+
+
+        // This doesn't seem correct:
+        // assert_group!("{{}}", Ok("{"));
     }
 
-    #[test]
-    fn lex_alphanumeric() {
-        macro_rules! assert_alphanumeric {
-            ($input:expr, $result:expr) => {
-                todo!()
-                // let mut lex = Lexer::new($input);
-                // assert_eq!(lex.alphanumeric(), $result);
-            }
-        }
-
-        // Ends on EOF
-        assert_alphanumeric!("abc", "abc");
-        assert_alphanumeric!("", "");
-
-        // Ends on Whitespace
-        assert_alphanumeric!("123 ", "123");
-        assert_alphanumeric!(" 123", "");
-
-        // End on Command
-        assert_alphanumeric!(r"\pi2", "");
-        assert_alphanumeric!(r"2\alpha", "2");
-
-        // End on non-alphanumeric
-        assert_alphanumeric!("{abc}", "");
-        assert_alphanumeric!("abc!", "abc");
-    }
 
     #[test]
     fn lex_dimension() {

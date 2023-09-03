@@ -202,15 +202,20 @@ impl<'i, 'c> Parser<'i, 'c> {
             let mut new_parser = self.fork();
             let delimiter = new_parser.parse_expression()?;
             self.input = new_parser.input;
-            row.push(new_parser.to_results());
+            let results = new_parser.to_results();
             
             match delimiter {
-                ParseDelimiter::Alignment => {},
+                ParseDelimiter::Alignment => row.push(results),
                 ParseDelimiter::EndOfLine => {
+                    row.push(results);
                     rows.push(std::mem::take(&mut row));
                 },
                 ParseDelimiter::EndEnv(name) if name == env => {
-                    rows.push(std::mem::take(&mut row));
+                    if !row.is_empty() || !results.is_empty()  { 
+                        // An end of line not followed by anything at the end of the environment is (bizarrely) not treated as an empty row in LaTeX
+                        row.push(results);
+                        rows.push(std::mem::take(&mut row));
+                    }
                     break;
                 },
                 other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::EndEnv(env) }),

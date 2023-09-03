@@ -64,25 +64,6 @@ pub enum Command {
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 impl Command {
-    // pub fn parse<'a>(self, lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-    //     use self::Command::*;
-    //     match self {
-    //         Radical              => radical(lex, local, command_collection),
-    //         Rule                 => rule(lex, local, command_collection),
-    //         Text                 => text(lex),
-    //         Color                => color(lex, local, command_collection),
-    //         ColorLit(a)          => color_lit(lex, local, command_collection, a),
-    //         Fraction(a, b, c, d) => fraction(lex, local, command_collection, a, b, c, d),
-    //         DelimiterSize(a, b)  => delimiter_size(lex, local, command_collection, a, b),
-    //         Kerning(a)           => kerning(lex, local, a),
-    //         Style(a)             => style(lex, local, a),
-    //         AtomChange(a)        => atom_change(lex, local, command_collection, a),
-    //         TextOperator(a, b)   => text_operator(lex, local, a, b),
-    //         SubStack(a)          => substack(lex, local, command_collection, a),
-    //         // // DEPRECATED
-    //         // VExtend              => v_extend(lex, local, command_collection),
-    //     }
-    // }
 
 
     /// Creates the `Command` corresponding to `\name`
@@ -265,11 +246,16 @@ impl<'i, 'c> Parser<'i, 'c> {
             let delimiter = parser.parse_expression()?;
 
             self.input = parser.input;
-            lines.push(parser.to_results());
+            let results = parser.to_results();
 
             match delimiter {
-                ParseDelimiter::CloseBracket => break,
-                ParseDelimiter::EndOfLine    => (),
+                ParseDelimiter::EndOfLine    => lines.push(results),
+                ParseDelimiter::CloseBracket => {
+                    if !results.is_empty(){
+                        lines.push(results)
+                    }
+                    break
+                },
                 other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::CloseBracket })
             }
 

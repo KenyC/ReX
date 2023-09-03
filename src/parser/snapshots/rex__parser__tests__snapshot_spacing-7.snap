@@ -15,6 +15,9 @@ Ok(
                 2.0,
             ),
         ),
+        Group(
+            [],
+        ),
         Symbol(
             Symbol {
                 codepoint: '3',

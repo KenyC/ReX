@@ -6,7 +6,6 @@ Ok(
     [
         Stack(
             Stack {
-                atom_type: Inner,
                 lines: [
                     [
                         Symbol(
