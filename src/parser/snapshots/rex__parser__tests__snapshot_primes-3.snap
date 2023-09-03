@@ -1,0 +1,20 @@
+---
+source: src/parser/mod.rs
+expression: "parse(\"a'''\")"
+---
+Ok(
+    [
+        Symbol(
+            Symbol {
+                codepoint: '𝑎',
+                atom_type: Alpha,
+            },
+        ),
+        Symbol(
+            Symbol {
+                codepoint: '‴',
+                atom_type: Ordinary,
+            },
+        ),
+    ],
+)

@@ -1,0 +1,20 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\sqrt'\")"
+---
+Ok(
+    [
+        Radical(
+            Radical {
+                inner: [
+                    Symbol(
+                        Symbol {
+                            codepoint: '′',
+                            atom_type: Ordinary,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+)
