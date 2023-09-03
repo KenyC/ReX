@@ -1,0 +1,14 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\bigr]\")"
+---
+Ok(
+    [
+        Symbol(
+            Symbol {
+                codepoint: ']',
+                atom_type: Close,
+            },
+        ),
+    ],
+)

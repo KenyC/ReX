@@ -1,0 +1,10 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\Biggr|\")"
+---
+Err(
+    ExpectedAtomType {
+        expected: Close,
+        found: Fence,
+    },
+)

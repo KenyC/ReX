@@ -1,0 +1,10 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\substack{ 1 \\\\ 1\")"
+---
+Err(
+    ExpectedDelimiter {
+        found: Eof,
+        expected: CloseBracket,
+    },
+)

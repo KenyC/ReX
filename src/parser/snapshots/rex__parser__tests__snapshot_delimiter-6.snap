@@ -1,0 +1,10 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\bigr\\lBrack\")"
+---
+Err(
+    ExpectedAtomType {
+        expected: Close,
+        found: Open,
+    },
+)
