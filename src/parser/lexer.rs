@@ -149,7 +149,7 @@ impl<'i, 'c> Parser<'i, 'c> {
         // If '#' is first character, we have a color specified by value
         if let Some(color_string) = self.input.strip_prefix('#') {
             if color_string.len() == 6 {
-                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| todo!())?.to_be_bytes();
+                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| ParseError::UnrecognizedColor(color_string.to_string()))?.to_be_bytes();
                 Ok(RGBA(
                     color[1], 
                     color[2], 
@@ -158,7 +158,7 @@ impl<'i, 'c> Parser<'i, 'c> {
                 ))
             }
             else if color_string.len() == 8 {
-                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| todo!())?.to_be_bytes();
+                let color = u32::from_str_radix(color_string, 0x10).map_err(|_| ParseError::UnrecognizedColor(color_string.to_string()))?.to_be_bytes();
                 Ok(RGBA(
                     color[0],
                     color[1], 
@@ -233,8 +233,9 @@ mod tests {
     use std::todo;
 
     use rand::Rng;
+    use unicode_math::AtomType;
 
-    use crate::{dimensions::AnyUnit, parser::{Parser, self, error::ParseResult}, RGBA};
+    use crate::{dimensions::AnyUnit, parser::{Parser, self, error::ParseResult, symbols::Symbol, ParseNode}, RGBA};
 
 
     #[test]
@@ -253,32 +254,23 @@ mod tests {
 
     #[test]
     fn lex_primes() {
-        todo!()
-        // let mut lexer  = Lexer::new("a'b''c'''d");
-        // let mut tokens = Vec::new();
+        let parser = Parser::new("a'b''c'''d");
+        let results = parser.parse().unwrap();
 
-        // loop {
-        //     let token : Token = todo!();
-        //     // let token = lexer.current();
-        //     if token == Token::EOF {break;}
-        //     tokens.push(token);
-        //     todo!();
-        //     // lexer.next();
-        // }
 
-        // let expected = [
-        //     Token::Symbol('a'), 
-        //     Token::Command("prime"),
-        //     Token::Symbol('b'), 
-        //     Token::Command("dprime"),
-        //     Token::Symbol('c'), 
-        //     Token::Command("trprime"),
-        //     Token::Symbol('d'), 
-        // ];
-        // assert_eq!(
-        //     tokens,
-        //     expected.to_vec(),
-        // )
+        let expected = [
+            ParseNode::Symbol(Symbol { codepoint: 'a',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: '′',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: 'b',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: '″',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: 'c',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: '‴',  atom_type: AtomType::Alpha }), 
+            ParseNode::Symbol(Symbol { codepoint: 'd',  atom_type: AtomType::Alpha }), 
+        ];
+        assert_eq!(
+            results,
+            expected.to_vec(),
+        )
     }
 
     #[test]

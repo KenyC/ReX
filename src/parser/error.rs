@@ -27,7 +27,7 @@ pub enum ParseError {
     UnrecognizedDimension,
     /// The symbol is not one we have category info about.
     UnrecognizedSymbol(char),
-    /// The name of the color used does not appear in `rex::parser::color::COLOR_MAP`
+    /// Either the name of the color used does not appear in `rex::parser::color::COLOR_MAP` or the RGBA value can't be parsed as hexadecimal
     UnrecognizedColor(String),
 
 

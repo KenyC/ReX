@@ -159,7 +159,8 @@ impl<'i, 'c> Parser<'i, 'c> {
                 .or_else(|| fmap(self.parse_group(),  |nodes|  ParseNode::Group(nodes)))
                 .or_else(|| fmap(self.parse_symbol(), |symbol| ParseNode::Symbol(symbol)))
             ;
-            let node = node.ok_or_else(|| todo!())??;
+            // TODO: could we refactor so as to guarantee this is never the case ?
+            let node = node.ok_or_else(|| unreachable!())??;
 
             // Take the result of `parse_script` and shift it from `Option<Result<..>>` to `Result<Option<..>>`
             let mut subscript   = None;
@@ -283,7 +284,8 @@ impl<'i, 'c> Parser<'i, 'c> {
                     Command::DelimiterSize(_, atom_type) => self.parse_delimiter_size(atom_type).map(ParseNode::Symbol),
                     Command::Kerning(kern) => Ok(ParseNode::Kerning(kern)),
                     Command::Style(style) => Ok(ParseNode::Style(style)),
-                    Command::AtomChange(at) => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
+                    Command::AtomChange(at)    => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
+                    Command::FaceChange(change) => self.parse_face_change(change).map(ParseNode::Group),
                     Command::TextOperator(name, delim) => {
                         Ok(ParseNode::AtomChange(AtomChange {
                             at : AtomType::Operator(delim),
@@ -319,6 +321,7 @@ impl<'i, 'c> Parser<'i, 'c> {
 
     }
 
+
     /// Parses the plain text argument of `\text`
     fn parse_text(&mut self) -> ParseResult<PlainText> {
         let text = self.parse_group_as_string().ok_or(ParseError::RequiredMacroArg)?.to_string();
@@ -351,7 +354,7 @@ impl<'i, 'c> Parser<'i, 'c> {
                 other => return Err(ParseError::ExpectedDelimiter { found: other, expected: ParseDelimiter::RightDelimiter }),
             };
 
-            let delimiter = self.parse_delimiter().ok_or_else(|| todo!())??;
+            let delimiter = self.parse_delimiter().ok_or_else(|| ParseError::MissingSymbolAfterDelimiter)??;
             // if delimiter isn't of the right type we trigger an error
             let delimiter = if hasnt_reached_right_delimiter {
                 expect_middle(delimiter)?
@@ -726,7 +729,26 @@ mod tests {
 
     #[test]
     fn test_escape_character() {
-        todo!()
+        let input = r"\}";
+        let parser = Parser::new(input);
+        parser.parse().unwrap();
+        
+        let input = r"\{";
+        let parser = Parser::new(input);
+        parser.parse().unwrap();
+        
+        let input = r"\_";
+        let parser = Parser::new(input);
+        parser.parse().unwrap();
+        
+        let input = r"\\"; // this is a TeX command
+        let parser = Parser::new(input);
+        parser.parse().unwrap_err();
+        
+        let input = r"\^"; // this is TeX command
+        let parser = Parser::new(input);
+        parser.parse().unwrap_err();
+        
     }
 
 

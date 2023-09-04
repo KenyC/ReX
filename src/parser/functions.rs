@@ -1,7 +1,7 @@
 //! Defines structs and parses TeX command, e.g. `\sqrt`
 
 use crate::dimensions::AnyUnit;
-use crate::font::{AtomType};
+use crate::font::{AtomType, Style, Family};
 use crate::layout::Style as LayoutStyle;
 use crate::parser::nodes::{MathStyle, BarThickness, GenFraction};
 use crate::parser::color::RGBA;
@@ -52,6 +52,8 @@ pub enum Command {
     /// Any command changing the atom type of a node, like `\mathop` or `\mathbin`.
     /// The atom type decides how much gap to leave between elements.
     AtomChange(AtomType),
+    /// A change in mathface (e.g. `\mathit`)
+    FaceChange(FaceChange),
     /// A mathematical operator, like `\lim`, `\det`
     TextOperator(&'static str, bool),
     /// `\substack{..}`
@@ -126,6 +128,18 @@ impl Command {
             "mathrel" => Self::AtomChange(AtomType::Relation),
             "mathord" => Self::AtomChange(AtomType::Alpha),
 
+            // Face changes
+            "mathbf"   => Self::FaceChange(FaceChange::MakeBold),
+            "mathit"   => Self::FaceChange(FaceChange::MakeItalic),
+            "mathrm"   => Self::FaceChange(FaceChange::SetFamily(Family::Roman)),
+            "mathscr"  => Self::FaceChange(FaceChange::SetFamily(Family::Script)),
+            "mathfrak" => Self::FaceChange(FaceChange::SetFamily(Family::Fraktur)),
+            "mathbb"   => Self::FaceChange(FaceChange::SetFamily(Family::Blackboard)),
+            "mathsf"   => Self::FaceChange(FaceChange::SetFamily(Family::SansSerif)),
+            "mathtt"   => Self::FaceChange(FaceChange::SetFamily(Family::Monospace)),
+            "mathcal"  => Self::FaceChange(FaceChange::SetFamily(Family::Script)),
+
+
             // Color related
             "color"   => Self::Color,
             "blue"    => Self::ColorLit(RGBA(0,0,0xff,0xff)),
@@ -176,6 +190,29 @@ impl Command {
 }
 
 
+/// A type representing a change of font style request
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FaceChange {
+    /// Make font bold
+    MakeBold,
+    /// Make font italic
+    MakeItalic,
+    /// Set font family to given value
+    SetFamily(Family),
+}
+
+impl FaceChange {
+    /// Applies the change to they style passed as argument
+    pub fn apply_to(self, style : Style) -> Style {
+        match self {
+            FaceChange::MakeBold          => style.with_bold(),
+            FaceChange::MakeItalic        => style.with_italics(),
+            FaceChange::SetFamily(family) => style.with_family(family),
+        }
+    }
+}
+
+
 
 impl<'i, 'c> Parser<'i, 'c> {
     /// Parses the argument of a control sequence, or a '_' subscript or superscipt
@@ -215,6 +252,15 @@ impl<'i, 'c> Parser<'i, 'c> {
             bar_thickness,
             style,
         })
+    }
+
+    /// Parses the argument of e.g. `\mathrm`, `\mathit`, ...
+    pub fn parse_face_change(&mut self, face_change: FaceChange) -> ParseResult<Vec<ParseNode>> {
+        let mut parser = self.fork();
+        parser.local_style = face_change.apply_to(self.local_style);
+        let result = parser.parse_required_argument();
+        self.input = parser.input;
+        result
     }
 
 

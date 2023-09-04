@@ -242,10 +242,8 @@ impl<'i, 'c> Parser<'i, 'c> {
             Environment::Array    => {
                 left_delimiter  = None;
                 right_delimiter = None;
-                // FIXME: ad hoc, should rely on a group routine
-                // we're exploiting a particular fact about column format instead of mimicking the logic of the TeX notion of group
                 self.consume_whitespace();
-                let col_format_string = self.parse_group_as_string().ok_or_else(|| todo!())?; // if not followed by an open gruop we interpret the next char as a column format
+                let col_format_string = self.parse_group_as_string().ok_or_else(|| ParseError::RequiredMacroArg)?; // if not followed by an open gruop we interpret the next char as a column format
                 let mut parser = Parser::new(col_format_string);
                 parser.input = col_format_string;
                 col_format = Some(parser.parse_col_format()?);
