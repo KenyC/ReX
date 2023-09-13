@@ -952,4 +952,14 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\frac{22\scriptscriptstyle22}2"));
     }
 
+
+    #[test]
+    fn snapshot_primes() {
+        insta::assert_debug_snapshot!(parse("a'"));
+        insta::assert_debug_snapshot!(parse("a''"));
+        insta::assert_debug_snapshot!(parse("a'''"));
+        insta::assert_debug_snapshot!(parse("a''''"));
+        insta::assert_debug_snapshot!(parse("'a"));
+        insta::assert_debug_snapshot!(parse(r"\sqrt'"));
+    }
 }
