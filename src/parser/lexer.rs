@@ -2,8 +2,6 @@
 
 
 
-use std::todo;
-
 use unicode_math::AtomType;
 
 use crate::{dimensions::AnyUnit, RGBA};
@@ -32,7 +30,7 @@ impl<'i, 'c> Parser<'i, 'c> {
 
 
     /// Attempts parsing a control sequence like `\bla`, returning `bla`.
-    pub fn control_sequence<'a>(& 'a mut self) -> Option<& 'a str> {
+    pub fn parse_control_sequence_name(&mut self) -> Option<& 'i str> {
         let mut chars = self.input.chars();
         if chars.next() != Some('\\') {
             return None;
@@ -90,7 +88,7 @@ impl<'i, 'c> Parser<'i, 'c> {
     }
 
     /// Parses the content of {..} as a plain string
-    pub fn parse_group_as_string(&mut self) -> Option<&str> {
+    pub fn parse_group_as_string(&mut self) -> Option<& 'i str> {
         if self.try_parse_char('{').is_some() {
             let mut n_open = 1;
             let mut escaped = false;
@@ -230,12 +228,9 @@ fn diff_slices<'a>(slice : & 'a str, suffix : & 'a str) -> & 'a str {
 
 #[cfg(test)]
 mod tests {
-    use std::todo;
-
-    use rand::Rng;
     use unicode_math::AtomType;
 
-    use crate::{dimensions::AnyUnit, parser::{Parser, self, error::ParseResult, symbols::Symbol, ParseNode}, RGBA};
+    use crate::{dimensions::AnyUnit, parser::{Parser, error::ParseResult, symbols::Symbol, ParseNode}, RGBA};
 
 
     #[test]
@@ -288,7 +283,7 @@ mod tests {
         for (input, name, remainder) in tests {
             eprintln!("Input: {:?}", input);
             let mut parser : Parser = Parser::new(input);
-            let control_sequence = parser.control_sequence();
+            let control_sequence = parser.parse_control_sequence_name();
             assert_eq!(control_sequence, name);
             assert_eq!(parser.input, remainder);
         }

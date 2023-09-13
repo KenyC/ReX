@@ -7,7 +7,7 @@ use crate::parser::nodes::{MathStyle, BarThickness, GenFraction};
 use crate::parser::color::RGBA;
 use crate::parser::symbols::Symbol;
 
-use super::nodes::{Radical, self, Rule, Stack};
+use super::nodes::{Radical, Rule, Stack};
 use super::utils::fmap;
 use super::{ParseNode, Parser, ParseDelimiter};
 use super::error::{ParseResult, ParseError};
@@ -217,15 +217,21 @@ impl FaceChange {
 impl<'i, 'c> Parser<'i, 'c> {
     /// Parses the argument of a control sequence, or a '_' subscript or superscipt
     pub fn parse_required_argument(&mut self) -> ParseResult<Vec<ParseNode>> {
-        let Self { input, result, .. } = self;
-        
         self.consume_whitespace();
 
 
-        fmap(self.parse_control_sequence(), |node| vec![node]) // really clunky
+        fmap(self.parse_control_sequence_token(), |node| vec![node]) // really clunky
             .or_else(|| self.parse_group())
             .or_else(|| fmap(self.parse_symbol(), |symbol| vec![ParseNode::Symbol(symbol)]))
             .ok_or(ParseError::RequiredMacroArg)?
+    }
+
+    /// Like [`Parser::parse_control_sequence`], except that we assume that the control sequence is followed by an end group token
+    fn parse_control_sequence_token(&mut self) -> Option<ParseResult<ParseNode>> {
+        let name = self.parse_control_sequence_name()?;
+        let mut parser = self.fork();
+        parser.input = "}";
+        Some(parser.parse_control_sequence_args(name))
     }
 
 

@@ -19,8 +19,6 @@ pub mod functions;
 pub mod lexer;
 pub mod error;
 
-use font::expect;
-
 use self::lexer::expect_left;
 use self::lexer::expect_middle;
 use self::lexer::expect_right;
@@ -41,15 +39,14 @@ use crate::parser::error::{ParseError, ParseResult};
 use crate::font::{Style, style_symbol, AtomType};
 use crate::parser::symbols::codepoint_atom_type;
 use crate::parser::{
-    nodes::{Delimited, Accent, Scripts},
+    nodes::{Delimited, Scripts},
     symbols::Symbol,
-    color::RGBA,
     environments::Environment,
 };
-use crate::parser::functions::{Command};
+use crate::parser::functions::Command;
 use crate::parser::macros::CommandCollection;
 use crate::parser::utils::fmap;
-use crate::dimensions::AnyUnit;
+
 
 
 /// Any sequence of characters that marks the end of something, a command (e.g. closing bracket), an environment (e.g. `\end{array}`) or delimiters
@@ -220,7 +217,7 @@ impl<'i, 'c> Parser<'i, 'c> {
             return Some(Ok(ParseDelimiter::Eof));
         }
 
-        match self.control_sequence() {
+        match self.parse_control_sequence_name() {
             Some("middle") => return Some(Ok(ParseDelimiter::MiddleDelimiter)),
             Some("right")  => return Some(Ok(ParseDelimiter::RightDelimiter)),
             Some("end")    => return Some((|| {
@@ -264,61 +261,63 @@ impl<'i, 'c> Parser<'i, 'c> {
     /// Expects to parse something of the form `\foo[..]{..}` with correct number of arguments and well-typed arguments
     /// If unable to, it does not advance input.
     fn parse_control_sequence(&mut self) -> Option<ParseResult<ParseNode>> {
-        let custom_commands = self.custom_commands;
-        let control_seq_name = self.control_sequence()?;
+        let control_seq_name = self.parse_control_sequence_name()?;
 
             
         // When the command name has been recognized, we are sure this is a command
         // Any failure from now on must be a parsing error (misformed input)
-        Some(
-            // TODO: think of best ordering of these cases
-            // First case, a TeX command
-            if let Some(command) = Command::from_name(control_seq_name) {
-                match command {
-                    Command::Radical => self.parse_radical().map(ParseNode::Radical),
-                    Command::Rule    => self.parse_rule().map(ParseNode::Rule),
-                    Command::Color   => self.parse_color_command().map(ParseNode::Color),
-                    Command::ColorLit(color) => self.parse_required_argument().map(|inner| ParseNode::Color(Color { color, inner, })),
-                    Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
-                    // TODO: this doesn't work, it just displays the symbol
-                    Command::DelimiterSize(_, atom_type) => self.parse_delimiter_size(atom_type).map(ParseNode::Symbol),
-                    Command::Kerning(kern) => Ok(ParseNode::Kerning(kern)),
-                    Command::Style(style) => Ok(ParseNode::Style(style)),
-                    Command::AtomChange(at)    => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
-                    Command::FaceChange(change) => self.parse_face_change(change).map(ParseNode::Group),
-                    Command::TextOperator(name, delim) => {
-                        Ok(ParseNode::AtomChange(AtomChange {
-                            at : AtomType::Operator(delim),
-                            inner : vec![ParseNode::PlainText(PlainText { text: name.to_string() })],
-                        }))
-                    },
-                    Command::SubStack => self.parse_substack().map(ParseNode::Stack),
-                    Command::Text => self.parse_text().map(ParseNode::PlainText),
-                }
-            }
-            // second case: a symbol with a name
-            else if let Some(mut symbol) = Symbol::from_name(control_seq_name) {
-                // TODO: make this a method of symbol
-                symbol.codepoint = style_symbol(symbol.codepoint, self.local_style);
-                Ok(ParseNode::Symbol(symbol))
-            }
-            // third case: a delimiter
-            else if control_seq_name == "left" {
-                self.parse_delimited_sequence().map(|delim| ParseNode::Delimited(delim))
-            } 
-            // fourth case: an environment start, e.g. \begin{env}
-            else if control_seq_name == "begin" {
-                self.parse_env().map(ParseNode::Array)
-            }
-            // fifth case: a custom macro
-            else if let Some(command) = custom_commands.and_then(|collection| collection.query(control_seq_name)) {
-                todo!()
-            }
-            else {
-                Err(ParseError::UnrecognizedCommand(control_seq_name.to_string()))
-            }
-        )
+        Some(self.parse_control_sequence_args(control_seq_name))
 
+    }
+
+    /// Given a command `\foo`, parses any and all arguments `\foo` needs and process them into a final node
+    fn parse_control_sequence_args(&mut self, control_seq_name : &str) -> ParseResult<ParseNode> {
+        // TODO: think of best ordering of these cases
+        // First case, a TeX command
+        if let Some(command) = Command::from_name(control_seq_name) {
+            match command {
+                Command::Radical => self.parse_radical().map(ParseNode::Radical),
+                Command::Rule    => self.parse_rule().map(ParseNode::Rule),
+                Command::Color   => self.parse_color_command().map(ParseNode::Color),
+                Command::ColorLit(color) => self.parse_required_argument().map(|inner| ParseNode::Color(Color { color, inner, })),
+                Command::Fraction(left, right, thickness, math_style) => self.parse_fraction(left, right, thickness, math_style).map(|gen_frac| ParseNode::GenFraction(gen_frac)),
+                // TODO: this doesn't work, it just displays the symbol
+                Command::DelimiterSize(_, atom_type) => self.parse_delimiter_size(atom_type).map(ParseNode::Symbol),
+                Command::Kerning(kern) => Ok(ParseNode::Kerning(kern)),
+                Command::Style(style) => Ok(ParseNode::Style(style)),
+                Command::AtomChange(at)    => self.parse_required_argument().map(|inner| ParseNode::AtomChange(AtomChange { at, inner, })),
+                Command::FaceChange(change) => self.parse_face_change(change).map(ParseNode::Group),
+                Command::TextOperator(name, delim) => {
+                    Ok(ParseNode::AtomChange(AtomChange {
+                        at : AtomType::Operator(delim),
+                        inner : vec![ParseNode::PlainText(PlainText { text: name.to_string() })],
+                    }))
+                },
+                Command::SubStack => self.parse_substack().map(ParseNode::Stack),
+                Command::Text => self.parse_text().map(ParseNode::PlainText),
+            }
+        }
+        // second case: a symbol with a name
+        else if let Some(mut symbol) = Symbol::from_name(control_seq_name) {
+            // TODO: make this a method of symbol
+            symbol.codepoint = style_symbol(symbol.codepoint, self.local_style);
+            Ok(ParseNode::Symbol(symbol))
+        }
+        // third case: a delimiter
+        else if control_seq_name == "left" {
+            self.parse_delimited_sequence().map(|delim| ParseNode::Delimited(delim))
+        } 
+        // fourth case: an environment start, e.g. \begin{env}
+        else if control_seq_name == "begin" {
+            self.parse_env().map(ParseNode::Array)
+        }
+        // fifth case: a custom macro
+        else if let Some(command) = self.custom_commands.and_then(|collection| collection.query(control_seq_name)) {
+            todo!()
+        }
+        else {
+            Err(ParseError::UnrecognizedCommand(control_seq_name.to_string()))
+        }
     }
 
 
@@ -419,7 +418,7 @@ impl<'i, 'c> Parser<'i, 'c> {
     }
 
     fn parse_delimiter(&mut self) -> Option<ParseResult<Symbol>> {
-        self.control_sequence().and_then(Symbol::from_name).map(Ok) // either a control sequence named symbol
+        self.parse_control_sequence_name().and_then(Symbol::from_name).map(Ok) // either a control sequence named symbol
             .or_else(|| self.parse_symbol()) // or a genuine symbol
     }
 }
@@ -450,7 +449,7 @@ fn group(nodes: Option<Result<Vec<ParseNode>, ParseError>>) -> Option<Result<Par
 mod tests {
     use std::eprintln;
 
-    use crate::parser::{parse, Parser, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText, error::{ParseResult, ParseError}, ParseDelimiter};
+    use crate::parser::{parse, Parser, macros::{CustomCommand, CommandCollection}, ParseNode, nodes::PlainText, error::{ParseResult}, ParseDelimiter};
     use crate::parser::{environments::Environment,};
 
 
@@ -502,9 +501,6 @@ mod tests {
             r"\sqrt{x}",
             r"\sqrt2",
             r"\sqrt\alpha",
-            r"1^\sqrt2",
-            r"\alpha_\sqrt{1+2}",
-            r"\sqrt\sqrt2"
         ];
         for case in success_cases {
             eprintln!("{}", case);
@@ -512,7 +508,15 @@ mod tests {
             result.unwrap();
         }
 
-        let failure_cases = vec![r"\sqrt", r"\sqrt_2", r"\sqrt^2"];
+        let failure_cases = vec![
+            r"\sqrt", 
+            r"\sqrt_2", 
+            r"\sqrt^2",
+            // previously accepted but was not TeX compliant
+            r"1^\sqrt2", 
+            r"\alpha_\sqrt{1+2}",
+            r"\sqrt\sqrt2"
+        ];
         for case in failure_cases {
             eprintln!("{}", case);
             let result = parse(case);

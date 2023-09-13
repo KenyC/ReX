@@ -2,7 +2,6 @@
 
 use crate::dimensions::AnyUnit;
 use crate::layout::Style;
-use crate::parser::error::{ParseResult, ParseError};
 use super::color::RGBA;
 use super::environments::Array;
 use crate::font::AtomType;
