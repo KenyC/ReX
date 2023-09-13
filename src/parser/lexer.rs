@@ -2,6 +2,7 @@
 
 
 
+
 use unicode_math::AtomType;
 
 use crate::{dimensions::AnyUnit, RGBA};
@@ -73,12 +74,36 @@ impl<'i, 'c> Parser<'i, 'c> {
         None
     }
 
-    /// Gets the next char from the input string (if not empty) and advances the input
+    /// Gets the next char from the input string (if not empty) and advances the input 
     pub fn parse_char(&mut self) -> Option<char> {
         let mut chars = self.input.chars();
         let result = chars.next();
         self.input = chars.as_str();
         result
+    }
+
+    /// Parses up to 3 primes from input and returns the Unicode codepoint
+    pub fn parse_primes(&mut self) -> Option<char> {
+        let n_primes = self.input
+            .chars()
+            .take_while(|c| *c == '\'')
+            .take(3)
+            .count()
+        ;
+        if n_primes == 0 {
+            return None;
+        }
+
+        Some({
+            self.input = &self.input[n_primes * '\''.len_utf8() ..];
+
+            match n_primes {
+                1 => '′',
+                2 => '″',
+                3 => '‴',
+                _ => unreachable!(),
+            }
+        })
     }
 
     /// Gets the next char from the input string (if not empty) and advances the input
@@ -228,7 +253,6 @@ fn diff_slices<'a>(slice : & 'a str, suffix : & 'a str) -> & 'a str {
 
 #[cfg(test)]
 mod tests {
-    use unicode_math::AtomType;
 
     use crate::{dimensions::AnyUnit, parser::{Parser, error::ParseResult, symbols::Symbol, ParseNode}, RGBA};
 
@@ -249,23 +273,29 @@ mod tests {
 
     #[test]
     fn lex_primes() {
-        let parser = Parser::new("a'b''c'''d");
-        let results = parser.parse().unwrap();
+        let mut l = Parser::new("  '");
+        assert_eq!(l.parse_primes(), None);
+        assert_eq!(l.input, "  '");
 
+        let mut l = Parser::new("' '");
+        assert_eq!(l.parse_primes(), Some('′'));
+        assert_eq!(l.input, " '");
 
-        let expected = [
-            ParseNode::Symbol(Symbol { codepoint: 'a',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: '′',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: 'b',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: '″',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: 'c',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: '‴',  atom_type: AtomType::Alpha }), 
-            ParseNode::Symbol(Symbol { codepoint: 'd',  atom_type: AtomType::Alpha }), 
-        ];
-        assert_eq!(
-            results,
-            expected.to_vec(),
-        )
+        let mut l = Parser::new("'' '");
+        assert_eq!(l.parse_primes(), Some('″'));
+        assert_eq!(l.input, " '");
+
+        let mut l = Parser::new("''' '");
+        assert_eq!(l.parse_primes(), Some('‴'));
+        assert_eq!(l.input, " '");
+
+        let mut l = Parser::new("'''' '");
+        assert_eq!(l.parse_primes(), Some('‴'));
+        assert_eq!(l.input, "' '");
+
+        let mut l = Parser::new("");
+        assert_eq!(l.parse_primes(), None);
+        assert_eq!(l.input, "");
     }
 
     #[test]

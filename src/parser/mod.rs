@@ -151,9 +151,11 @@ impl<'i, 'c> Parser<'i, 'c> {
 
 
             // We try to parse the first things that comes along
+            // TODO: this is ugly
             let node = 
                 self.parse_control_sequence()
                 .or_else(|| fmap(self.parse_group(),  |nodes|  ParseNode::Group(nodes)))
+                .or_else(|| self.parse_primes().map(|codepoint| Ok(ParseNode::Symbol(Symbol { codepoint, atom_type: AtomType::Ordinary }))))
                 .or_else(|| fmap(self.parse_symbol(), |symbol| ParseNode::Symbol(symbol)))
             ;
             // TODO: could we refactor so as to guarantee this is never the case ?
@@ -495,7 +497,6 @@ mod tests {
 
     #[test]
     fn radicals() {
-        let mut errs: Vec<String> = Vec::new();
         // TODO: Add optional paramaters for radicals
         let success_cases = vec![
             r"\sqrt{x}",
