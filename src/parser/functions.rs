@@ -220,18 +220,10 @@ impl<'i, 'c> Parser<'i, 'c> {
         self.consume_whitespace();
 
 
-        fmap(self.parse_control_sequence_token(), |node| vec![node]) // really clunky
+        fmap(self.parse_control_sequence(), |node| vec![node]) // really clunky
             .or_else(|| self.parse_group())
             .or_else(|| fmap(self.parse_symbol(), |symbol| vec![ParseNode::Symbol(symbol)]))
             .ok_or(ParseError::RequiredMacroArg)?
-    }
-
-    /// Like [`Parser::parse_control_sequence`], except that we assume that the control sequence is followed by an end group token
-    fn parse_control_sequence_token(&mut self) -> Option<ParseResult<ParseNode>> {
-        let name = self.parse_control_sequence_name()?;
-        let mut parser = self.fork();
-        parser.input = "}";
-        Some(parser.parse_control_sequence_args(name))
     }
 
 

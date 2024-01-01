@@ -106,6 +106,33 @@ impl<'i, 'c> Parser<'i, 'c> {
         })
     }
 
+
+    /// Parses the next sequence of character as a positive integer written in base 10.
+    pub fn parse_integer(&mut self) -> Option<usize> {
+        let first_non_digit = self.input.find(|c : char| !c.is_digit(10));
+        let integers;
+        let remainder;
+        if let Some(index) = first_non_digit {
+            integers  = &self.input[.. index];
+            remainder = &self.input[index ..];
+        }
+        else {
+            integers  = self.input;
+            remainder = "";
+        }
+
+
+        if integers.is_empty() {
+            return None;
+        }
+
+        let number = usize::from_str_radix(&integers, 10).ok()?;
+        self.input = remainder;
+
+        Some(number)
+    }
+
+
     /// Gets the next char from the input string (if not empty) and advances the input
     pub fn parse_string(&mut self, string : &str) -> Option<()> {
         self.input.strip_prefix(string)?;
@@ -136,6 +163,22 @@ impl<'i, 'c> Parser<'i, 'c> {
             self.input = chars.as_str();
             Some(first_character_as_string_slice)
         }
+    }
+
+    /// Parses the content of [..] as a plain string
+    pub fn parse_optional_group_as_string(&mut self) -> Option<& 'i str> {
+        self.try_parse_char('[')?;
+        let mut escaped = false;
+        let (content, remainder) = self.input
+            .split_once(|c| match c {
+                _ if escaped => {escaped = false; false},
+                ']'  => {true},
+                '\\' => {escaped = true; false}
+                _ => false
+            })?
+        ;
+        self.input = remainder;
+        Some(content)
     }
 
     /// Parses the input as a dimension, e.g. `1cm` or `-2pt or `3.5em`
@@ -319,6 +362,24 @@ mod tests {
         }
     }
 
+    #[test]
+    fn lex_optional_group() {
+        let mut l = Parser::new("[1]");
+        assert_eq!(l.parse_optional_group_as_string(), Some("1"));
+        assert_eq!(l.input, "");
+
+        let mut l = Parser::new("[1\\] 1 ]");
+        assert_eq!(l.parse_optional_group_as_string(), Some("1\\] 1 "));
+        assert_eq!(l.input, "");
+
+        let mut l = Parser::new("[1] 1 ]");
+        assert_eq!(l.parse_optional_group_as_string(), Some("1"));
+        assert_eq!(l.input, " 1 ]");
+
+        let mut l = Parser::new("1] 1 ]");
+        assert_eq!(l.parse_optional_group_as_string(), None);
+        assert_eq!(l.input, "1] 1 ]");
+    }
 
 
     #[test]
@@ -372,6 +433,30 @@ mod tests {
         parse_dim(r"px").unwrap_err();
         parse_dim(r"..em").unwrap_err();
         parse_dim(r"1.4.1em").unwrap_err();
+
+    }
+
+    #[test]
+    fn lex_integer() {
+        let mut l = Parser::new("45156");
+        assert_eq!(l.parse_integer(), Some(45156));
+        assert_eq!(l.input, "");
+
+        let mut l = Parser::new("45156 ");
+        assert_eq!(l.parse_integer(), Some(45156));
+        assert_eq!(l.input, " ");
+
+        let mut l = Parser::new("4 5156 ");
+        assert_eq!(l.parse_integer(), Some(4));
+        assert_eq!(l.input, " 5156 ");
+
+        let mut l = Parser::new("a");
+        assert_eq!(l.parse_integer(), None);
+        assert_eq!(l.input, "a");
+
+        let mut l = Parser::new(" 1");
+        assert_eq!(l.parse_integer(), None);
+        assert_eq!(l.input, " 1");
 
     }
 

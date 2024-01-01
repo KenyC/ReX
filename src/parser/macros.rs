@@ -1,5 +1,7 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
+use super::{error::ParseError, Parser};
+
 
 
 
@@ -33,6 +35,64 @@ impl CommandCollection {
         else {
             None
         }
+    }
+
+    /// Parse a series of `\newcommand{...}[]{fezefzezf}` separated by spaces and new lines 
+    /// into a command collection
+    pub fn parse(command_definitions : &str) -> Result<Self, ParseError> {
+        let mut definitions = Vec::new();        
+        let mut parser = Parser::new(command_definitions);
+
+
+
+        while !parser.input.is_empty() {
+
+
+            // -- parse `  \newcommand  ` 
+            parser.consume_whitespace();
+
+            let control_seq_name = parser.parse_control_sequence_name();
+            if control_seq_name != Some("newcommand") {
+                return Err(ParseError::ExpectedNewCommand(control_seq_name.map(|s| s.to_string())));
+            }
+
+            // -- parse `  { \commandname  }  ` 
+            parser.consume_whitespace();
+
+            let command_name_with_backslash = parser.parse_group_as_string()
+                .ok_or_else(|| ParseError::ExpectedCommandName)?;
+            let commmand_name = command_name_with_backslash.trim().strip_prefix('\\')
+                .ok_or_else(|| ParseError::CommandDoesNotStartWithBackslash)?
+                .to_owned()
+            ;
+
+
+            // -- parse `  [n_args]  ` 
+            parser.consume_whitespace();
+            parser.try_parse_char('[');
+            parser.consume_whitespace();
+            parser.parse_integer()
+                .ok_or_else(|| ParseError::ExpectedNumber(parser.input.to_string()))?;
+            parser.consume_whitespace();
+            parser.try_parse_char(']');
+
+
+            // -- parser `{ body of command}`
+            parser.consume_whitespace();
+            let command_definition = parser.parse_group_as_string()
+                .ok_or_else(|| ParseError::ExpectedCommandDefinition)?;
+            let commmand = CustomCommand::parse(command_definition)
+                .ok_or_else(|| ParseError::CannotParseCommandDefinition)?;
+
+
+            parser.consume_whitespace();
+
+
+            definitions.push((commmand_name, commmand));
+        }
+
+
+        Ok(Self(definitions))
     }
 
 }
@@ -234,8 +294,7 @@ mod tests {
                 Text(r" = 0".to_string()),
             ]})
         ]);
-        // let got = CommandCollection::parse(file).unwrap();
-        let got = todo!();
+        let got = CommandCollection::parse(file).unwrap();
         assert_eq!(expected, got);
 
 
@@ -256,8 +315,7 @@ mod tests {
                 Text(r" = 0".to_string()),
             ]}),
         ]);
-        // let got = CommandCollection::parse(file).unwrap();
-        let got = todo!();
+        let got = CommandCollection::parse(file).unwrap();
         assert_eq!(expected, got);
 
 

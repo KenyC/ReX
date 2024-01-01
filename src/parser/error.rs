@@ -70,6 +70,24 @@ pub enum ParseError {
     ExcessiveSubscripts,
     /// One node has two or more subscripts in a row, e.g. "x_2_2".
     ExcessiveSuperscripts,
+    CommandDoesNotStartWithBackslash,
+
+
+    // -- Related to custom command definitions ; cf [CustomCollection]
+
+    /// Expected a `\newcommand` control sequence, either didn't get a `newcommand` (`None`) 
+    /// or got another control sequence (`Some(name_of_other_control_seq)`)
+    ExpectedNewCommand(Option<String>),
+    /// After `\newcommand`, the parser expects a group of the form `{ \mycommandname }` 
+    /// indicating the name of the command to be added
+    ExpectedCommandName,
+    /// After `\newcommand{\mycommandname}`, the parser expects an argument of form `[ .. 4 ..]` 
+    /// indicating the number of arguments taken by the custom command
+    ExpectedNumber(String),
+    /// After `\newcommand{\mycommandname}[4]`, the parser expects group `{ .. 4 ..}` containing the definition of the command 
+    ExpectedCommandDefinition,
+    /// The body of the command could not be parsed
+    CannotParseCommandDefinition,
 }
 
 
@@ -120,6 +138,22 @@ impl fmt::Display for ParseError {
                 write!(f, "excessive number of subscripts"),
             ExcessiveSuperscripts =>
                 write!(f, "excessive number of superscripts"),
+
+            ExpectedNewCommand(Some(name)) =>
+                write!(f, "expected control `newcommand` control sequence, got `{}` instead", name),
+            ExpectedNewCommand(None) =>
+                write!(f, "expected control `newcommand` control sequence, didn't get a control sequence"),
+            CommandDoesNotStartWithBackslash => 
+                write!(f, "the new command name did not start with a backslash"),
+            ExpectedCommandName => 
+                write!(f, "first argument of `\\newcommand` cannot be parsed as the name of a command"),
+
+            ExpectedNumber(string) => 
+                write!(f, "expected integer as second argument of `\\newcommand`, got `{}`", string),
+            ExpectedCommandDefinition => 
+                write!(f, "expected command definition as third argument of `\\newcommand`"),
+            CannotParseCommandDefinition => 
+                write!(f, "could not parse command definition"),
 
         }
     }

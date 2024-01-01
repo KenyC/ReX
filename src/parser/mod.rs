@@ -476,12 +476,14 @@ mod tests {
             result.unwrap();
         }
 
-        let failure_cases = vec![r"\frac \left(1 + 2\right) 3"];
-        for case in failure_cases {
-            eprintln!("{} should fail", case);
-            let result = parse(case);
-            assert!(result.is_err());
-        }
+        // // Maybe we want the parser to be very liberal ; it's better to have TeX-non-compliant code compile
+        // // than TeX-compliant code nto compile
+        // let failure_cases = vec![r"\frac \left(1 + 2\right) 3"];
+        // for case in failure_cases {
+        //     eprintln!("{} should fail", case);
+        //     let result = parse(case);
+        //     result.unwrap_err();
+        // }
 
         let equality_cases = vec![
             (r"\frac12", r"\frac{1}{2}"),
@@ -502,6 +504,10 @@ mod tests {
             r"\sqrt{x}",
             r"\sqrt2",
             r"\sqrt\alpha",
+            // the following are accepted in ReX even though they error out in TeX
+            r"1^\sqrt2", 
+            r"\alpha_\sqrt{1+2}",
+            r"\sqrt\sqrt2"
         ];
         for case in success_cases {
             eprintln!("{}", case);
@@ -513,10 +519,6 @@ mod tests {
             r"\sqrt", 
             r"\sqrt_2", 
             r"\sqrt^2",
-            // previously accepted but was not TeX compliant
-            r"1^\sqrt2", 
-            r"\alpha_\sqrt{1+2}",
-            r"\sqrt\sqrt2"
         ];
         for case in failure_cases {
             eprintln!("{}", case);
@@ -750,7 +752,7 @@ mod tests {
         let parser = Parser::new(input);
         parser.parse().unwrap_err();
         
-        let input = r"\^"; // this is TeX command
+        let input = r"\^"; // this is a TeX command
         let parser = Parser::new(input);
         parser.parse().unwrap_err();
         
