@@ -2,9 +2,7 @@
 
 use crate::dimensions::AnyUnit;
 use crate::layout::Style;
-use crate::error::{ParseResult, ParseError};
 use super::color::RGBA;
-use super::environments::Array;
 use crate::font::AtomType;
 use super::symbols::Symbol;
 
@@ -51,6 +49,80 @@ pub enum ParseNode {
     // /// It appears to be otherwise ignored
     // Extend(char, AnyUnit),
 }
+
+
+/// The collection of column formatting for an array.  This includes the vertical
+/// alignment for each column in an array along with optional vertical bars
+/// positioned to the right of the last column.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArrayColumnsFormatting {
+    /// The formatting specifications for each column
+    pub columns: Vec<ArraySingleColumnFormatting>,
+
+    /// The number of vertical marks after the last column.
+    pub n_vertical_bars_before: u8,
+}
+
+
+/// Formatting options for a single column.  This includes both the horizontal
+/// alignment of the column (clr), and optional vertical bar spacers (on the left).
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ArraySingleColumnFormatting {
+    /// The alignment of the column.  Defaults to Centered.
+    pub alignment: ArrayColumnAlign,
+
+    /// The number of vertical marks before column.
+    pub n_vertical_bars_after: u8,
+}
+
+/// Array contents are the body of the enviornment.  Columns are seperated
+/// by `&` and a newline is terminated by either:
+///   - `\\[unit]`
+///   - `\cr[unit]`
+/// where a `[unit]` is any recognized dimension which will add (or subtract)
+/// space between the rows.  Note, the last line termination is ignored
+/// if the a line is empty.
+type Expression = Vec<ParseNode>;
+
+
+// TODO: since we use default values, we should make the argument optional?
+/// Array column alignent.  These are parsed as a required macro argument
+/// for the array enviornment. The default value is `Centered`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArrayColumnAlign {
+    /// Column is centered
+    Centered,
+
+    /// Column is left aligned.
+    Left,
+
+    /// Column is right aligned.
+    Right,
+}
+
+impl Default for ArrayColumnAlign {
+    fn default() -> ArrayColumnAlign {
+        ArrayColumnAlign::Centered
+    }
+}
+
+
+/// An array of nodes as created by e.g. `\begin{array}{c} .. \end{array}` or `\begin{pmatrix} .. \end{pmatrix}`
+#[derive(Debug, Clone, PartialEq)]
+pub struct Array {
+    /// The formatting arguments (clr) for each row.  Default: center.
+    pub col_format: ArrayColumnsFormatting,
+
+    /// A collection of rows.  Each row consists of one `Vec<Expression>`.
+    pub rows: Vec<Vec<Expression>>,
+
+    /// The left delimiter for the array (optional).
+    pub left_delimiter: Option<Symbol>,
+
+    /// The right delimiter for the array (optional).
+    pub right_delimiter: Option<Symbol>,
+}
+
 
 /// Cf [`ParseNode::Stack`]
 #[derive(Debug, PartialEq, Clone)]
@@ -187,62 +259,6 @@ pub enum MathStyle {
 }
 
 impl ParseNode {
-    /// expected a left delimiter
-    pub fn expect_left(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Open || sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedOpen(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
-    /// expected a right delimiter
-    pub fn expect_right(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Close || sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedClose(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
-    /// expected a middle delimiter
-    pub fn expect_middle(self) -> ParseResult<'static, Symbol> {
-        if let ParseNode::Symbol(sym) = self {
-            if sym.atom_type == AtomType::Fence ||
-               sym.codepoint == '.' {
-                return Ok(sym);
-            } else {
-                return Err(ParseError::ExpectedMiddle(sym));
-            }
-        } else {
-            unreachable!()
-        }
-    }
-
-    /// sets atom type
-    pub fn set_atom_type(&mut self, at: AtomType) {
-        match *self {
-            ParseNode::Symbol(ref mut sym) => sym.atom_type = at,
-            ParseNode::Scripts(Scripts { ref mut base, .. }) => {
-                if let Some(ref mut b) = *base {
-                    b.set_atom_type(at);
-                }
-            }
-            ParseNode::AtomChange(ref mut node) => node.at = at,
-            ParseNode::Stack(Stack { ref mut atom_type, .. }) => *atom_type = at,
-            _ => (),
-        }
-    }
 
     /// if parse node is a single symbol, returns it. Otherwise, `None`.
     pub fn is_symbol(&self) -> Option<Symbol> {

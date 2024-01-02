@@ -18,9 +18,8 @@ use crate::font::{
 };
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack, PlainText};
+use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack, PlainText, ArrayColumnAlign, Array};
 use crate::parser::symbols::Symbol;
-use crate::parser::environments::{Array, ArrayColumnAlign};
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Px, Em, Pt, FUnit};
 use crate::layout;
