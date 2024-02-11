@@ -7,12 +7,39 @@ pub mod color;
 pub mod symbols;
 pub mod macros;
 pub mod error;
+mod textoken;
+mod control_sequence;
+
+use unicode_math::AtomType;
 
 use crate::error::ParseResult;
+use crate::parser::textoken::InputProcessor;
+use crate::parser::textoken::TexToken;
+use crate::parser::control_sequence::PrimitiveControlSequence;
 
+use self::error::ParseError;
 use self::macros::CommandCollection;
 pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
+use self::symbols::Symbol;
+use self::textoken::TokenIterator;
+
+
+/// Contains the internal state of the TeX parser, what's left to parse, and has methods to parse various TeX construct.  
+/// Holds a reference to `CommandCollection`, which holds the definition of custom TeX macros defined by the user.
+/// When not using custom macros, the parser can be made `'static`.
+pub struct Parser<'c> {
+    command_collection : & 'c CommandCollection,
+}
+
+impl<'c> Parser<'c> {
+    const EMPTY_COMMAND_COLLECTION : & 'static CommandCollection = &CommandCollection::new();
+
+    /// Creates a new empty parser
+    pub fn new() -> Self {
+        Self { command_collection: Self::EMPTY_COMMAND_COLLECTION }
+    }
+}
 
 
 /// This function is the API entry point for parsing tex.
@@ -20,11 +47,77 @@ pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
     parse_with_custom_commands(input, &CommandCollection::default())
 }
 
-/// This function is the API entry point for parsing tex.
+
 pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
-    todo!()
+    let input_processor = InputProcessor::new(input);
+    let mut token_iter = input_processor.token_iter();
+    parse_from_tokens(token_iter, custom_commands)
 }
 
+
+fn parse_from_tokens<'a, I : Iterator<Item = TexToken<'a>>>(mut token_stream : I, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
+    let mut results = Vec::new();
+
+    while let Some(token) = token_stream.next() {
+        match token {
+            TexToken::Char('^') | TexToken::Char('_')  => {
+
+            },
+            TexToken::Char(codepoint) => {
+                let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
+                results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
+            },
+            // Here we deal with "primitive" control sequences, not macros nor environments
+            TexToken::ControlSequence(control_sequence_name) => {
+                let command = 
+                    PrimitiveControlSequence::from_name(control_sequence_name)
+                    .ok_or_else(|| ParseError::UnrecognizedControlSequence(control_sequence_name.to_string().into_boxed_str()))?
+                ;
+                match command {
+                    PrimitiveControlSequence::Radical => todo!(),
+                    PrimitiveControlSequence::Rule => todo!(),
+                    PrimitiveControlSequence::Color => todo!(),
+                    PrimitiveControlSequence::ColorLit(_) => {
+                        todo!()
+                    },
+                    PrimitiveControlSequence::Fraction(_, _, _, _) => todo!(),
+                    PrimitiveControlSequence::DelimiterSize(_, _) => todo!(),
+                    PrimitiveControlSequence::Kerning(space) => {
+                        results.push(ParseNode::Kerning(space))
+                    },
+                    PrimitiveControlSequence::Style(_) => todo!(),
+                    PrimitiveControlSequence::AtomChange(_) => todo!(),
+                    PrimitiveControlSequence::TextOperator(_, _) => todo!(),
+                    PrimitiveControlSequence::SubStack(_) => todo!(),
+                    PrimitiveControlSequence::Text => todo!(),
+                }
+            },
+        }
+    }
+
+    Ok(results)
+}
+
+
+
+
+
+/// Helper function for determining an atomtype based on a given codepoint.
+/// This is primarily used for characters while processing, so may give false
+/// negatives when used for other things.
+fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
+    Some(match codepoint {
+             'a' ..= 'z' | 'A' ..= 'Z' | '0' ..= '9' | 'Α' ..= 'Ω' | 'α' ..= 'ω' => AtomType::Alpha,
+             '*' | '+' | '-' => AtomType::Binary,
+             '[' | '(' => AtomType::Open,
+             ']' | ')' | '?' | '!' => AtomType::Close,
+             '=' | '<' | '>' | ':' => AtomType::Relation,
+             ',' | ';' => AtomType::Punctuation,
+             '|' => AtomType::Fence,
+             '/' | '@' | '.' | '"' => AtomType::Alpha,
+             _ => return None,
+         })
+}
 
 
 

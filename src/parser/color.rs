@@ -2,11 +2,39 @@
 //! 
 //! Colors can be changed by such commands as "\color{}".
 
+use std::{str::FromStr, convert::TryInto};
+
+use super::error::ParseError;
+
 
 /// A color with alpha values
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct RGBA(pub u8, pub u8, pub u8, pub u8);
+
+
+/// Type of errors encountered while parsing the color's name
+pub enum ColorParseError {
+    /// Color does not start with # but its name is not the ASCII name of a CSS color
+    UnknownColorName,
+}
+
+
+
+
+impl FromStr for RGBA {
+    type Err = ColorParseError;
+
+    /// Match a valid color token. Valid color tokens are:
+    ///  - Ascii name for css color (ie: `red`).
+    ///  - #RRGGBB (ie: `#ff0000` for red)
+    ///  - #RRGGBBAA (ie: `#00000000` for transparent)
+    ///  - `transparent`
+    // TODO: implement missing tokens
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_name(s).ok_or(ColorParseError::UnknownColorName)
+    }
+}
 
 impl RGBA {
     /// Given an English name for a color (e.g. black), returns the corresponding [`RGBA`] value (e.g. `RGBA(0, 0, 0, 255,)`)

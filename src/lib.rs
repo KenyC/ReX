@@ -46,6 +46,7 @@ pub mod error;
 pub mod dimensions;
 #[deny(missing_docs)]
 pub mod layout;
+#[warn(missing_docs)]
 pub mod parser;
 #[deny(missing_docs)]
 pub mod render;

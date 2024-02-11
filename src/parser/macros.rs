@@ -9,7 +9,12 @@ pub struct CommandCollection(Vec<(String, CustomCommand)>);
 
 
 
-impl CommandCollection {}
+impl CommandCollection {
+    /// Creates a new empty [`CommandCollection`]    
+    pub const fn new() -> Self {
+        Self(Vec::new())
+    }
+}
 
 
 
