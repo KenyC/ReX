@@ -1,7 +1,5 @@
 //! This module defines TeX tokens, an intermediate object that characters are processed into, which is what the real parser processes.
 
-use crate::error::ParseResult;
-
 
 
 
@@ -12,16 +10,35 @@ pub enum TexToken<'a> {
     ControlSequence(& 'a str),
 }
 
+impl<'a> TexToken<'a> {
+    /// Checks if token is begingroup delimiter (at the moment, just open brackets can be)
+    pub fn is_begin_group(&self) -> bool {
+        match self {
+            Self::Char('{') => true,
+            _ => false,
+        }
+    }
 
-pub struct InputProcessor<'a> {
-    stream : & 'a str,
+    /// Checks if token is endgroup delimiter (at the moment, just closing brackets can be)
+    pub fn is_end_group(&self) -> bool {
+        match self {
+            Self::Char('}') => true,
+            _ => false,
+        }
+    }
 }
+
+
 
 pub struct TokenIterator<'a> {
     input_processor : InputProcessor<'a>,
 }
 
 impl<'a> TokenIterator<'a> {
+    pub fn new(string : & 'a str) -> Self {
+        Self { input_processor: InputProcessor::new(string) }
+    }
+
     pub fn input_processor_mut(&mut self) -> &mut InputProcessor<'a> {
         &mut self.input_processor
     }
@@ -84,6 +101,9 @@ impl<'a> Iterator for TokenIterator<'a> {
     }
 }
 
+pub struct InputProcessor<'a> {
+    stream : & 'a str,
+}
 
 impl<'a> InputProcessor<'a> {
     pub fn new(stream: & 'a str) -> Self { Self { stream } }
@@ -171,6 +191,24 @@ mod tests {
                 TexToken::Char('c'),
                 TexToken::ControlSequence("abc"),
             ]
-        )
+        );
+
+        let string = r"{{a}b\}c}d";
+        let tokens : Vec<_> = InputProcessor::new(string).token_iter().collect();
+
+        assert_eq!(
+            tokens,
+            vec![
+                TexToken::Char('{'),
+                TexToken::Char('{'),
+                TexToken::Char('a'),
+                TexToken::Char('}'),
+                TexToken::Char('b'),
+                TexToken::ControlSequence("}"),
+                TexToken::Char('c'),
+                TexToken::Char('}'),
+                TexToken::Char('d'),
+            ]
+        );
     }
 }

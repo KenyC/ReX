@@ -21,6 +21,13 @@ pub enum ParseError {
     ///  - #RRGGBBAA (ie: `#00000000` for transparent)
     ///  - `transparent`
     UnknownColor(Box<str>),
+    /// A custom macro is missing an argument
+    MissingArgForMacro {
+        expected : usize,
+        got : usize,
+    },
+    /// The brackets used to enclose a macro's arguments were not matched
+    UnmatchedBrackets,
 }
 
 

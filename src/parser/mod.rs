@@ -28,16 +28,63 @@ use self::textoken::TokenIterator;
 /// Contains the internal state of the TeX parser, what's left to parse, and has methods to parse various TeX construct.  
 /// Holds a reference to `CommandCollection`, which holds the definition of custom TeX macros defined by the user.
 /// When not using custom macros, the parser can be made `'static`.
-pub struct Parser<'c> {
+pub struct Parser<'c, 'input, I : Iterator<Item = TexToken<'input>>> {
     command_collection : & 'c CommandCollection,
+    token_iter : I,
 }
 
-impl<'c> Parser<'c> {
+impl<'c, 'input, I: Iterator<Item = TexToken<'input>>> Parser<'c, 'input, I> {
+    pub fn new(command_collection: & 'c CommandCollection, token_iter: I) -> Self { 
+        Self { command_collection, token_iter } 
+    }
+
     const EMPTY_COMMAND_COLLECTION : & 'static CommandCollection = &CommandCollection::new();
 
-    /// Creates a new empty parser
-    pub fn new() -> Self {
-        Self { command_collection: Self::EMPTY_COMMAND_COLLECTION }
+    pub fn parse(&mut self) -> ParseResult<Vec<ParseNode>> {
+        let Self { command_collection, token_iter } = self;
+        let mut results = Vec::new();
+
+        while let Some(token) = token_iter.next() {
+            match token {
+                TexToken::Char('^') | TexToken::Char('_')  => {
+
+                },
+                TexToken::Char(codepoint) => {
+                    let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
+                    results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
+                },
+                // Here we deal with "primitive" control sequences, not macros nor environments
+                TexToken::ControlSequence(control_sequence_name) => {
+                    let command = 
+                        PrimitiveControlSequence::from_name(control_sequence_name)
+                        .ok_or_else(|| ParseError::UnrecognizedControlSequence(control_sequence_name.to_string().into_boxed_str()))?
+                    ;
+                    match command {
+                        PrimitiveControlSequence::Radical => todo!(),
+                        PrimitiveControlSequence::Rule => todo!(),
+                        PrimitiveControlSequence::Color => {
+                            let color = self.parse_color()?;
+                            todo!()
+                        },
+                        PrimitiveControlSequence::ColorLit(_) => {
+                            todo!()
+                        },
+                        PrimitiveControlSequence::Fraction(_, _, _, _) => todo!(),
+                        PrimitiveControlSequence::DelimiterSize(_, _) => todo!(),
+                        PrimitiveControlSequence::Kerning(space) => {
+                            results.push(ParseNode::Kerning(space))
+                        },
+                        PrimitiveControlSequence::Style(_) => todo!(),
+                        PrimitiveControlSequence::AtomChange(_) => todo!(),
+                        PrimitiveControlSequence::TextOperator(_, _) => todo!(),
+                        PrimitiveControlSequence::SubStack(_) => todo!(),
+                        PrimitiveControlSequence::Text => todo!(),
+                    }
+                },
+            }
+        }
+
+        Ok(results)
     }
 }
 
@@ -51,52 +98,10 @@ pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
 pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
     let input_processor = InputProcessor::new(input);
     let mut token_iter = input_processor.token_iter();
-    parse_from_tokens(token_iter, custom_commands)
+    Parser::new(custom_commands, token_iter).parse()
 }
 
 
-fn parse_from_tokens<'a, I : Iterator<Item = TexToken<'a>>>(mut token_stream : I, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
-    let mut results = Vec::new();
-
-    while let Some(token) = token_stream.next() {
-        match token {
-            TexToken::Char('^') | TexToken::Char('_')  => {
-
-            },
-            TexToken::Char(codepoint) => {
-                let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
-                results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
-            },
-            // Here we deal with "primitive" control sequences, not macros nor environments
-            TexToken::ControlSequence(control_sequence_name) => {
-                let command = 
-                    PrimitiveControlSequence::from_name(control_sequence_name)
-                    .ok_or_else(|| ParseError::UnrecognizedControlSequence(control_sequence_name.to_string().into_boxed_str()))?
-                ;
-                match command {
-                    PrimitiveControlSequence::Radical => todo!(),
-                    PrimitiveControlSequence::Rule => todo!(),
-                    PrimitiveControlSequence::Color => todo!(),
-                    PrimitiveControlSequence::ColorLit(_) => {
-                        todo!()
-                    },
-                    PrimitiveControlSequence::Fraction(_, _, _, _) => todo!(),
-                    PrimitiveControlSequence::DelimiterSize(_, _) => todo!(),
-                    PrimitiveControlSequence::Kerning(space) => {
-                        results.push(ParseNode::Kerning(space))
-                    },
-                    PrimitiveControlSequence::Style(_) => todo!(),
-                    PrimitiveControlSequence::AtomChange(_) => todo!(),
-                    PrimitiveControlSequence::TextOperator(_, _) => todo!(),
-                    PrimitiveControlSequence::SubStack(_) => todo!(),
-                    PrimitiveControlSequence::Text => todo!(),
-                }
-            },
-        }
-    }
-
-    Ok(results)
-}
 
 
 
