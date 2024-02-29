@@ -4,7 +4,7 @@
 
 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TexToken<'a> {
     Char(char),
     ControlSequence(& 'a str),
@@ -23,6 +23,14 @@ impl<'a> TexToken<'a> {
     pub fn is_end_group(&self) -> bool {
         match self {
             Self::Char('}') => true,
+            _ => false,
+        }
+    }
+
+    /// Checks if token is an ASCII whitespace (space, tabulation, end-of-line)
+    pub fn is_whitespace(&self) -> bool {
+        match self {
+            Self::Char(' ') => true, // `TokenIterator` normalizes all spaces to this.
             _ => false,
         }
     }
