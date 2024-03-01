@@ -7,44 +7,76 @@ pub mod color;
 pub mod symbols;
 pub mod macros;
 pub mod error;
+pub mod environments;
 mod textoken;
 mod control_sequence;
 
 use unicode_math::AtomType;
 
 use crate::error::ParseResult;
+use crate::parser::control_sequence::parse_color;
 use crate::parser::textoken::InputProcessor;
 use crate::parser::textoken::TexToken;
 use crate::parser::control_sequence::PrimitiveControlSequence;
 
+use self::environments::Environment;
 use self::error::ParseError;
 use self::macros::CommandCollection;
+use self::macros::ExpandedTokenIter;
 pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
 use self::symbols::Symbol;
 use self::textoken::TokenIterator;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GroupKind {
+    BraceGroup,
+    Env(Environment),
+    // a group ended by &
+    Cell,
+    // a group end by \\
+    Line,
+    // end of file
+    Eof,
+
+}
+
+struct List {
+    nodes : Vec<ParseNode>,
+    group : GroupKind
+}
+
 
 /// Contains the internal state of the TeX parser, what's left to parse, and has methods to parse various TeX construct.  
 /// Holds a reference to `CommandCollection`, which holds the definition of custom TeX macros defined by the user.
 /// When not using custom macros, the parser can be made `'static`.
-pub struct Parser<'c, 'input, I : Iterator<Item = TexToken<'input>>> {
-    command_collection : & 'c CommandCollection,
-    token_iter : I,
+pub struct Parser<'a> {
+    token_iter : ExpandedTokenIter<'a>
 }
 
-impl<'c, 'input, I: Iterator<Item = TexToken<'input>>> Parser<'c, 'input, I> {
-    pub fn new(command_collection: & 'c CommandCollection, token_iter: I) -> Self { 
-        Self { command_collection, token_iter } 
+impl<'a> Parser<'a> {
+    pub fn new<'command : 'a, 'input : 'a>(command_collection: & 'command CommandCollection, input: & 'input str) -> Self { 
+        Self { 
+            token_iter : ExpandedTokenIter::new(command_collection, TokenIterator::new(input)),
+        } 
     }
 
     const EMPTY_COMMAND_COLLECTION : & 'static CommandCollection = &CommandCollection::new();
 
     pub fn parse(&mut self) -> ParseResult<Vec<ParseNode>> {
-        let Self { command_collection, token_iter } = self;
+        let List { nodes, group } = self.parse_until_end_of_group()?;
+        if let GroupKind::Eof = group 
+        { Ok(nodes) }
+        else 
+        { Err(todo!()) }
+    }
+
+
+    fn parse_until_end_of_group(&mut self) -> ParseResult<List> {
+        let Self { token_iter, .. } = self;
         let mut results = Vec::new();
 
-        while let Some(token) = token_iter.next() {
+        while let Some(token) = token_iter.next_token()? {
             match token {
                 TexToken::Char('^') | TexToken::Char('_')  => {
 
@@ -53,38 +85,45 @@ impl<'c, 'input, I: Iterator<Item = TexToken<'input>>> Parser<'c, 'input, I> {
                     let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
                     results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
                 },
-                // Here we deal with "primitive" control sequences, not macros nor environments
+                // Here we deal with "primitive" control sequences, not macros
                 TexToken::ControlSequence(control_sequence_name) => {
                     let command = 
                         PrimitiveControlSequence::from_name(control_sequence_name)
                         .ok_or_else(|| ParseError::UnrecognizedControlSequence(control_sequence_name.to_string().into_boxed_str()))?
                     ;
+                    use PrimitiveControlSequence::*;
                     match command {
-                        PrimitiveControlSequence::Radical => todo!(),
-                        PrimitiveControlSequence::Rule => todo!(),
-                        PrimitiveControlSequence::Color => {
-                            let color = self.parse_color()?;
+                        Radical => todo!(),
+                        Rule => todo!(),
+                        Color => {
+                            let group = token_iter.capture_group()?;
+                            let color = parse_color(group.into_iter())?;
                             todo!()
                         },
-                        PrimitiveControlSequence::ColorLit(_) => {
+                        ColorLit(color) => {
                             todo!()
                         },
-                        PrimitiveControlSequence::Fraction(_, _, _, _) => todo!(),
-                        PrimitiveControlSequence::DelimiterSize(_, _) => todo!(),
-                        PrimitiveControlSequence::Kerning(space) => {
+                        Fraction(_, _, _, _) => todo!(),
+                        DelimiterSize(_, _) => todo!(),
+                        Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
                         },
-                        PrimitiveControlSequence::Style(_) => todo!(),
-                        PrimitiveControlSequence::AtomChange(_) => todo!(),
-                        PrimitiveControlSequence::TextOperator(_, _) => todo!(),
-                        PrimitiveControlSequence::SubStack(_) => todo!(),
-                        PrimitiveControlSequence::Text => todo!(),
+                        Style(_) => todo!(),
+                        AtomChange(_) => todo!(),
+                        TextOperator(_, _) => todo!(),
+                        SubStack(_) => todo!(),
+                        Text => todo!(),
+                        BeginEnv => todo!(),
+                        EndEnv => todo!(),
+                        Symbol(symbol) => {
+                            results.push(ParseNode::Symbol(symbol));
+                        },
                     }
                 },
             }
         }
 
-        Ok(results)
+        Ok(List { nodes: results, group: GroupKind::Eof })
     }
 }
 
@@ -96,9 +135,7 @@ pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
 
 
 pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
-    let input_processor = InputProcessor::new(input);
-    let mut token_iter = input_processor.token_iter();
-    Parser::new(custom_commands, token_iter).parse()
+    Parser::new(custom_commands, input).parse()
 }
 
 

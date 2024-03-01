@@ -113,33 +113,33 @@ impl CustomCommand {
 }
 
 
-pub struct ExpandedTokenIter<'d, 'a : 'd, 'c : 'd> {
-    command_collection : & 'c CommandCollection,
+pub struct ExpandedTokenIter<'a> {
+    command_collection : & 'a CommandCollection,
     token_iter : TokenIterator<'a>,
     /// token obtained from macro expansion
-    expanded_token : Vec<TexToken<'d>>, 
+    expanded_token : Vec<TexToken<'a>>, 
 }
 
-impl<'d, 'a : 'd, 'c : 'd> Iterator for ExpandedTokenIter<'d, 'a, 'c> {
-    type Item = TexToken<'d>;
+impl<'a> Iterator for ExpandedTokenIter<'a> {
+    type Item = TexToken<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next_token().ok().flatten()
     }
 }
 
-impl<'d, 'a : 'd, 'c : 'd> ExpandedTokenIter<'d, 'a, 'c> {
+impl<'a> ExpandedTokenIter<'a> {
 
     /// Get next token from the iterator
-    pub fn next_token(&mut self) -> ParseResult<Option<TexToken<'d>>> {
+    pub fn next_token(&mut self) -> ParseResult<Option<TexToken<'a>>> {
         if let Some(token) = self.produce_next_token() {
             if let TexToken::ControlSequence(command) = token {
                 let Self { command_collection, .. } = self;
                 if let Some(command) = command_collection.get(command) {
-                    let tokens: Vec<Vec<TexToken<'d>>> = self.gather_args_of_command(command)?;
-                    let token_slice : & [Vec<TexToken<'d>>] = tokens.as_slice();
+                    let tokens: Vec<Vec<TexToken<'a>>> = self.gather_args_of_command(command)?;
+                    let token_slice : & [Vec<TexToken<'a>>] = tokens.as_slice();
                     // TODO: something not to have to do reversals
-                    let mut expanded_tokens : Vec<TexToken<'d>> = command.expand_iter(token_slice).collect();
+                    let mut expanded_tokens : Vec<TexToken<'a>> = command.expand_iter(token_slice).collect();
                     self.expanded_token.reserve(expanded_tokens.len());
                     while let Some(token) = expanded_tokens.pop() {
                         self.expanded_token.push(token)
@@ -160,56 +160,62 @@ impl<'d, 'a : 'd, 'c : 'd> ExpandedTokenIter<'d, 'a, 'c> {
     }
 
     /// From a regular token iterator, creates one that expands macros.
-    pub fn new(command_collection: & 'c CommandCollection, token_iter: TokenIterator<'a>) -> Self {
+    pub fn new<'command : 'a, 'input : 'a>(command_collection: & 'command CommandCollection, token_iter: TokenIterator<'input>) -> Self {
         Self { command_collection, token_iter, expanded_token: Vec::new() }
     }
 
 
-    fn produce_next_token(&mut self) -> Option<TexToken<'d>> {
+    fn produce_next_token(&mut self) -> Option<TexToken<'a>> {
         Option::or_else(
             self.expanded_token.pop(),
             || self.token_iter.next(),
         )
     }
 
-    fn gather_args_of_command(&mut self, command : &CustomCommand) -> ParseResult<Vec<Vec<TexToken<'d>>>> {
+    fn gather_args_of_command(&mut self, command : &CustomCommand) -> ParseResult<Vec<Vec<TexToken<'a>>>> {
         let n_args = command.n_args();
         let mut args : Vec<Vec<TexToken>> = Vec::with_capacity(n_args);
         for i in 0 .. n_args {
-            let mut arg = Vec::with_capacity(1);
-            let mut token = self.produce_next_token()
-                .ok_or_else(|| ParseError::MissingArgForMacro {expected : n_args, got : i})?;
-
-            // when looking for arguments of a macro, skip whitespaces
-            while token.is_whitespace() {
-                token = self.produce_next_token()
-                    .ok_or_else(|| ParseError::MissingArgForMacro {expected : n_args, got : i})?;
-            }
-
-            // begingroup, we must collect all tokens till the corresponding endgroup token
-            if token.is_begin_group() {
-                let mut n_open_paren : u32 = 1;
-                while n_open_paren != 0 {
-                    let token = self.produce_next_token()
-                        .ok_or(ParseError::UnmatchedBrackets)?;
-                    if token.is_begin_group() {
-                        n_open_paren += 1;
-                    }
-                    else if token.is_end_group() {
-                        n_open_paren -= 1;
-                    }
-
-                    arg.push(token);
-                }
-                arg.pop(); // the last bracket shouldn't be added
-            }
-            // otherwise the given token is the argument
-            else {
-                arg.push(token);
-            }
+            let arg = self
+                .capture_group()
+                .map_err(|e| match e {
+                    ParseError::ExpectedToken => ParseError::MissingArgForMacro { expected: n_args, got: i },
+                    _ => e,
+                })?;
             args.push(arg);
         }
         Ok(args)
+    }
+
+    pub fn capture_group(&mut self) -> ParseResult<Vec<TexToken<'a>>> {
+        let mut arg = Vec::with_capacity(1);
+        let mut token = self.produce_next_token()
+            .ok_or_else(|| ParseError::ExpectedToken)?;
+        while token.is_whitespace() {
+            token = self.produce_next_token()
+                .ok_or_else(|| ParseError::ExpectedToken)?;
+        }
+        if token.is_begin_group() {
+            let mut n_open_paren : u32 = 1;
+            while n_open_paren != 0 {
+                let token = self.produce_next_token()
+                    .ok_or(ParseError::UnmatchedBrackets)?;
+                if token.is_begin_group() {
+                    n_open_paren += 1;
+                }
+                else if token.is_end_group() {
+                    n_open_paren -= 1;
+                }
+
+                arg.push(token);
+            }
+            arg.pop(); // the last bracket shouldn't be added
+        }
+        // otherwise the given token is the argument
+        else {
+            arg.push(token);
+        }
+        Ok(arg)
     }
 
 }

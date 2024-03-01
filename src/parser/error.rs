@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use super::GroupKind;
+
 
 /// Result type for the [`ParseError`]
 pub type ParseResult<T> = ::std::result::Result<T, ParseError>;
@@ -28,6 +30,10 @@ pub enum ParseError {
     },
     /// The brackets used to enclose a macro's arguments were not matched
     UnmatchedBrackets,
+    /// A group (e.g. `{..}`, `\begin{env}..\end{env}`, `&...&`) was ended but there is no correponding begin group
+    UnexpectedEndGroup(GroupKind),
+    /// A token or group of token was expected but never came
+    ExpectedToken,
 }
 
 

@@ -17,12 +17,23 @@ pub enum PrimitiveControlSequence {
     AtomChange(AtomType),
     TextOperator(&'static str, bool),
     SubStack(AtomType),
+    Symbol(Symbol),
+    BeginEnv,
+    EndEnv,
     Text,
 }
 
 
 impl PrimitiveControlSequence {
     pub fn from_name(name: &str) -> Option<Self> {
+        Option::or_else(
+            Symbol::from_name(name).map(PrimitiveControlSequence::Symbol), 
+            || Self::parse_command_name(name)
+        )
+    }
+
+    fn parse_command_name(name: &str) -> Option<Self> {
+        // TODO: use a lookup table
         const OPEN_PAREN  : Option<Symbol> = Some(Symbol { codepoint : '(', atom_type : AtomType::Open  });
         const CLOSE_PAREN : Option<Symbol> = Some(Symbol { codepoint : ')', atom_type : AtomType::Close });
         Some(match name {
@@ -123,26 +134,28 @@ impl PrimitiveControlSequence {
             "Ker"     => Self::TextOperator("Ker", false),
             "ln"      => Self::TextOperator("ln", false),
             "log"     => Self::TextOperator("log", false),
+
+            // Environment
+            "begin" => Self::BeginEnv,
+            "end"   => Self::EndEnv,
+
             _ => return None
         })
     }
 }
 
 
-impl<'c, 'input, I: Iterator<Item = TexToken<'input>>> Parser<'c, 'input, I> {
 
 
-    pub fn parse_color(&mut self) -> ParseResult<RGBA> {
-        let mut color_name = String::with_capacity("#11223344".len()); // #rrggbbaa, preparing for the worst case
-        todo!();
-        // for token in self.token_iter {
-        //     match token {
-        //         TexToken::Char(c) => color_name.push(c),
-        //         TexToken::ControlSequence(_) => todo!(),
-        //     }
-        // }
-        let color : RGBA = color_name.parse().map_err(|_| ParseError::UnknownColor(color_name.into_boxed_str()))?;
-        Ok(color)
+pub fn parse_color<'a, I : Iterator<Item = TexToken<'a>>>(token_iter : I) -> ParseResult<RGBA> {
+    let mut color_name = String::with_capacity("#11223344".len()); // #rrggbbaa, preparing for the worst case
+    for token in token_iter {
+        match token {
+            TexToken::Char(c) => color_name.push(c),
+            TexToken::ControlSequence(_) => todo!(),
+        }
     }
-
+    let color : RGBA = color_name.parse().map_err(|_| ParseError::UnknownColor(color_name.into_boxed_str()))?;
+    Ok(color)
 }
+
