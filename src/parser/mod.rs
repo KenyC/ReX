@@ -14,6 +14,8 @@ mod control_sequence;
 use unicode_math::AtomType;
 
 use crate::error::ParseResult;
+use crate::font::style_symbol;
+use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
 use crate::parser::textoken::InputProcessor;
 use crate::parser::textoken::TexToken;
@@ -37,7 +39,7 @@ pub enum GroupKind {
     // a group end by \\
     Line,
     // end of file
-    Eof,
+    EndOfInput,
 
 }
 
@@ -50,22 +52,34 @@ struct List {
 /// Contains the internal state of the TeX parser, what's left to parse, and has methods to parse various TeX construct.  
 /// Holds a reference to `CommandCollection`, which holds the definition of custom TeX macros defined by the user.
 /// When not using custom macros, the parser can be made `'static`.
-pub struct Parser<'a> {
-    token_iter : ExpandedTokenIter<'a>
+pub struct Parser<'a, I : Iterator<Item = TexToken<'a>>> {
+    token_iter : ExpandedTokenIter<'a, I>,
+    current_style : Style,
 }
 
-impl<'a> Parser<'a> {
+impl<'a> Parser<'a, TokenIterator<'a>> {
     pub fn new<'command : 'a, 'input : 'a>(command_collection: & 'command CommandCollection, input: & 'input str) -> Self { 
         Self { 
             token_iter : ExpandedTokenIter::new(command_collection, TokenIterator::new(input)),
+            current_style : Style::default()
         } 
     }
+}
+
+impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
     const EMPTY_COMMAND_COLLECTION : & 'static CommandCollection = &CommandCollection::new();
 
+    pub fn from_iter<'command : 'a>(command_collection: & 'command CommandCollection, input: I) -> Self { 
+        Self { 
+            token_iter : ExpandedTokenIter::new(command_collection, input),
+            current_style: Style::default(),
+        } 
+    }
+
     pub fn parse(&mut self) -> ParseResult<Vec<ParseNode>> {
         let List { nodes, group } = self.parse_until_end_of_group()?;
-        if let GroupKind::Eof = group 
+        if let GroupKind::EndOfInput = group 
         { Ok(nodes) }
         else 
         { Err(todo!()) }
@@ -73,16 +87,19 @@ impl<'a> Parser<'a> {
 
 
     fn parse_until_end_of_group(&mut self) -> ParseResult<List> {
-        let Self { token_iter, .. } = self;
         let mut results = Vec::new();
 
-        while let Some(token) = token_iter.next_token()? {
+        while let Some(token) = self.token_iter.next_token()? {
             match token {
                 TexToken::Char('^') | TexToken::Char('_')  => {
 
                 },
+                _ if token.is_end_group() => {
+                    return Ok(List { nodes: results, group: GroupKind::BraceGroup });
+                },
                 TexToken::Char(codepoint) => {
                     let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
+                    let codepoint = style_symbol(codepoint, self.current_style);
                     results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
                 },
                 // Here we deal with "primitive" control sequences, not macros
@@ -96,34 +113,61 @@ impl<'a> Parser<'a> {
                         Radical => todo!(),
                         Rule => todo!(),
                         Color => {
-                            let group = token_iter.capture_group()?;
-                            let color = parse_color(group.into_iter())?;
-                            todo!()
+                            let color_name_group = self.token_iter.capture_group()?;
+                            let color = parse_color(color_name_group.into_iter())?;
+                            let inner = self.parse_required_argument_as_nodes()?;
+                            results.push(ParseNode::Color(nodes::Color {
+                                color,
+                                inner,
+                            }));
                         },
                         ColorLit(color) => {
-                            todo!()
+                            let inner = self.parse_required_argument_as_nodes()?;
+                            results.push(ParseNode::Color(nodes::Color {
+                                color,
+                                inner,
+                            }));
                         },
                         Fraction(_, _, _, _) => todo!(),
                         DelimiterSize(_, _) => todo!(),
                         Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
                         },
-                        Style(_) => todo!(),
+                        StyleCommand(_) => todo!(),
                         AtomChange(_) => todo!(),
                         TextOperator(_, _) => todo!(),
                         SubStack(_) => todo!(),
                         Text => todo!(),
                         BeginEnv => todo!(),
                         EndEnv => todo!(),
-                        Symbol(symbol) => {
-                            results.push(ParseNode::Symbol(symbol));
+                        SymbolCommand(symbol) => {
+                            let Symbol { codepoint, atom_type } = symbol;
+                            let codepoint = style_symbol(codepoint, self.current_style);
+                            results.push(ParseNode::Symbol(Symbol { codepoint, atom_type, }));
                         },
                     }
                 },
             }
         }
 
-        Ok(List { nodes: results, group: GroupKind::Eof })
+        Ok(List { nodes: results, group: GroupKind::EndOfInput })
+    }
+
+    fn parse_required_argument_as_nodes(&mut self) -> ParseResult<Vec<ParseNode>> {
+        let group = self.token_iter.capture_group()?;
+
+        // Normally all tokens are already expanded after `capture_group`
+        // There is no need to have further expansions
+        let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
+        forked_parser.current_style = self.current_style;
+
+        let List { nodes, group } = forked_parser.parse_until_end_of_group()?;
+
+        if group != GroupKind::EndOfInput {
+            return Err(ParseError::UnexpectedEndGroup(group));
+        }
+        
+        Ok(nodes)
     }
 }
 

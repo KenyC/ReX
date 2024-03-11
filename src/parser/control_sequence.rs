@@ -13,11 +13,11 @@ pub enum PrimitiveControlSequence {
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
     DelimiterSize(u8, AtomType),
     Kerning(AnyUnit),
-    Style(LayoutStyle),
+    StyleCommand(LayoutStyle),
     AtomChange(AtomType),
     TextOperator(&'static str, bool),
     SubStack(AtomType),
-    Symbol(Symbol),
+    SymbolCommand(Symbol),
     BeginEnv,
     EndEnv,
     Text,
@@ -27,7 +27,7 @@ pub enum PrimitiveControlSequence {
 impl PrimitiveControlSequence {
     pub fn from_name(name: &str) -> Option<Self> {
         Option::or_else(
-            Symbol::from_name(name).map(PrimitiveControlSequence::Symbol), 
+            Symbol::from_name(name).map(PrimitiveControlSequence::SymbolCommand), 
             || Self::parse_command_name(name)
         )
     }
@@ -80,10 +80,10 @@ impl PrimitiveControlSequence {
 
 
             // Display style changes
-            "textstyle"         => Self::Style(LayoutStyle::Text),
-            "displaystyle"      => Self::Style(LayoutStyle::Display),
-            "scriptstyle"       => Self::Style(LayoutStyle::Script),
-            "scriptscriptstyle" => Self::Style(LayoutStyle::ScriptScript),
+            "textstyle"         => Self::StyleCommand(LayoutStyle::Text),
+            "displaystyle"      => Self::StyleCommand(LayoutStyle::Display),
+            "scriptstyle"       => Self::StyleCommand(LayoutStyle::Script),
+            "scriptscriptstyle" => Self::StyleCommand(LayoutStyle::ScriptScript),
             "text"              => Self::Text,
 
             // Atom-type changes
@@ -155,7 +155,7 @@ pub fn parse_color<'a, I : Iterator<Item = TexToken<'a>>>(token_iter : I) -> Par
             TexToken::ControlSequence(_) => todo!(),
         }
     }
-    let color : RGBA = color_name.parse().map_err(|_| ParseError::UnknownColor(color_name.into_boxed_str()))?;
+    let color : RGBA = color_name.parse().map_err(|_| ParseError::UnrecognizedColor(color_name.into_boxed_str()))?;
     Ok(color)
 }
 

@@ -113,14 +113,14 @@ impl CustomCommand {
 }
 
 
-pub struct ExpandedTokenIter<'a> {
+pub struct ExpandedTokenIter<'a, I : Iterator<Item = TexToken<'a>>> {
     command_collection : & 'a CommandCollection,
-    token_iter : TokenIterator<'a>,
+    token_iter : I,
     /// token obtained from macro expansion
     expanded_token : Vec<TexToken<'a>>, 
 }
 
-impl<'a> Iterator for ExpandedTokenIter<'a> {
+impl<'a, I : Iterator<Item = TexToken<'a>>> Iterator for ExpandedTokenIter<'a, I> {
     type Item = TexToken<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -128,14 +128,13 @@ impl<'a> Iterator for ExpandedTokenIter<'a> {
     }
 }
 
-impl<'a> ExpandedTokenIter<'a> {
+impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
 
     /// Get next token from the iterator
     pub fn next_token(&mut self) -> ParseResult<Option<TexToken<'a>>> {
         if let Some(token) = self.produce_next_token() {
             if let TexToken::ControlSequence(command) = token {
-                let Self { command_collection, .. } = self;
-                if let Some(command) = command_collection.get(command) {
+                if let Some(command) = self.command_collection.get(command) {
                     let tokens: Vec<Vec<TexToken<'a>>> = self.gather_args_of_command(command)?;
                     let token_slice : & [Vec<TexToken<'a>>] = tokens.as_slice();
                     // TODO: something not to have to do reversals
@@ -160,7 +159,7 @@ impl<'a> ExpandedTokenIter<'a> {
     }
 
     /// From a regular token iterator, creates one that expands macros.
-    pub fn new<'command : 'a, 'input : 'a>(command_collection: & 'command CommandCollection, token_iter: TokenIterator<'input>) -> Self {
+    pub fn new<'command : 'a>(command_collection: & 'command CommandCollection, token_iter: I) -> Self {
         Self { command_collection, token_iter, expanded_token: Vec::new() }
     }
 
@@ -189,16 +188,16 @@ impl<'a> ExpandedTokenIter<'a> {
 
     pub fn capture_group(&mut self) -> ParseResult<Vec<TexToken<'a>>> {
         let mut arg = Vec::with_capacity(1);
-        let mut token = self.produce_next_token()
+        let mut token = self.next_token()?
             .ok_or_else(|| ParseError::ExpectedToken)?;
         while token.is_whitespace() {
-            token = self.produce_next_token()
+            token = self.next_token()?
                 .ok_or_else(|| ParseError::ExpectedToken)?;
         }
         if token.is_begin_group() {
             let mut n_open_paren : u32 = 1;
             while n_open_paren != 0 {
-                let token = self.produce_next_token()
+                let token = self.next_token()?
                     .ok_or(ParseError::UnmatchedBrackets)?;
                 if token.is_begin_group() {
                     n_open_paren += 1;
