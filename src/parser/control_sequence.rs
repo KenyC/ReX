@@ -6,10 +6,14 @@ use super::{error::{ParseError, ParseResult}, macros::CommandCollection, nodes::
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PrimitiveControlSequence {
+    /// Represents LaTeX `\sqrt{..}`
     Radical,
     Rule,
+    /// Represents ReX's command `\color{..}{..}`
     Color,
+    /// Represents ReX's command `\blue{..}`, `\red{..}`
     ColorLit(RGBA),
+    /// Represents LaTeX `\frac{..}`
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
     DelimiterSize(u8, AtomType),
     Kerning(AnyUnit),

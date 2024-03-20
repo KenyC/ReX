@@ -18,6 +18,7 @@ use crate::font::style_symbol;
 use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
 use crate::parser::nodes::GenFraction;
+use crate::parser::nodes::PlainText;
 use crate::parser::textoken::InputProcessor;
 use crate::parser::textoken::TexToken;
 use crate::parser::control_sequence::PrimitiveControlSequence;
@@ -83,7 +84,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         if let GroupKind::EndOfInput = group 
         { Ok(nodes) }
         else 
-        { Err(todo!()) }
+        { Err(ParseError::UnexpectedEndGroup(group)) }
     }
 
 
@@ -147,8 +148,18 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         AtomChange(_) => todo!(),
                         TextOperator(_, _) => todo!(),
                         SubStack(_) => todo!(),
-                        Text => todo!(),
-                        BeginEnv => todo!(),
+                        Text => {
+                            let text_group = self.token_iter.capture_group()?;
+                            let text = tokens_as_string(text_group.into_iter())?;
+                            results.push(ParseNode::PlainText(PlainText {
+                                text,
+                            }));
+                        },
+                        BeginEnv => {
+                            let env_name_group = self.token_iter.capture_group()?;
+                            let env_name = tokens_as_string(env_name_group.into_iter())?;
+                            todo!()
+                        },
                         EndEnv => todo!(),
                         SymbolCommand(symbol) => {
                             let Symbol { codepoint, atom_type } = symbol;
@@ -179,6 +190,17 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         
         Ok(nodes)
     }
+}
+
+fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> ParseResult<String> {
+    let mut to_return = String::new();
+    for token in iterator {
+        match token {
+            TexToken::Char(c) => to_return.push(c),
+            TexToken::ControlSequence(_) => return Err(ParseError::ExpectedChars),
+        }
+    }
+    Ok(to_return)
 }
 
 

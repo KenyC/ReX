@@ -34,6 +34,8 @@ pub enum ParseError {
     UnexpectedEndGroup(GroupKind),
     /// A token or group of token was expected but never came
     ExpectedToken,
+    /// An argument of control sequence like `\begin{..}` or `\color{..}` must be a sequence of chars ; it cannot contain a command
+    ExpectedChars,
 }
 
 
