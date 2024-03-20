@@ -3,7 +3,6 @@
 
 
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TexToken<'a> {
     Char(char),

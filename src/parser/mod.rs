@@ -17,6 +17,7 @@ use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
+use crate::parser::nodes::GenFraction;
 use crate::parser::textoken::InputProcessor;
 use crate::parser::textoken::TexToken;
 use crate::parser::control_sequence::PrimitiveControlSequence;
@@ -128,7 +129,16 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 inner,
                             }));
                         },
-                        Fraction(_, _, _, _) => todo!(),
+                        Fraction(left_delimiter, right_delimiter, bar_thickness, style) => {
+                            let numerator   = self.parse_required_argument_as_nodes()?;
+                            let denominator = self.parse_required_argument_as_nodes()?;
+
+                            results.push(ParseNode::GenFraction(GenFraction {
+                                numerator, denominator,
+                                left_delimiter, right_delimiter,
+                                bar_thickness, style,
+                            }));
+                        },
                         DelimiterSize(_, _) => todo!(),
                         Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
