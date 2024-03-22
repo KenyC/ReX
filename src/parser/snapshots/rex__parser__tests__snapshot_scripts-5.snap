@@ -3,5 +3,5 @@ source: src/parser/mod.rs
 expression: "parse(r\"1^2^3\")"
 ---
 Err(
-    ExcessiveSuperscripts,
+    TooManySubscriptsOrSuperscripts,
 )

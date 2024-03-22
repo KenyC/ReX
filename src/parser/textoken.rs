@@ -7,6 +7,8 @@
 pub enum TexToken<'a> {
     Char(char),
     ControlSequence(& 'a str),
+    Superscript,
+    Subscript,
 }
 
 impl<'a> TexToken<'a> {
@@ -60,51 +62,60 @@ impl<'a> Iterator for TokenIterator<'a> {
 
         let (first_char, rest) = split_first_char((*input_processor).stream)?;
 
-        if first_char.is_ascii_whitespace() {
-            // if character is a space, eat all subsequent spaces
-            // we don't distinguish between various spaces.
-            // TODO: think whether in the restricted domain we look at, we should parse spaces at all.
-            input_processor.skip_whitespace();
-            Some(TexToken::Char(' '))
-        }
-        else if first_char == '\\' {
-            let beginning_control_seq = rest;
-            if let Some((control_seq_first_char, rest)) = split_first_char(beginning_control_seq) {
-                // there is a character after '\'
+        match first_char {
+            _ if first_char.is_ascii_whitespace() => {
+                // if character is a space, eat all subsequent spaces
+                // we don't distinguish between various spaces.
+                // TODO: think whether in the restricted domain we look at, we should parse spaces at all.
+                input_processor.skip_whitespace();
+                Some(TexToken::Char(' '))
+            },
+            '\\' => {
+                let beginning_control_seq = rest;
+                if let Some((control_seq_first_char, rest)) = split_first_char(beginning_control_seq) {
+                    // there is a character after '\'
 
-                let control_sequence_name : &str;
-                if control_seq_first_char.is_ascii_alphabetic() {
-                    // the control sequence starts with an alphanumeric character ; 
-                    // we take this character and all subsequent alphanumeric chars to be the control sequences name
-                    let index = 
-                        beginning_control_seq.find(|c : char| !c.is_ascii_alphabetic()) // either there is a non-alphanumeric character following
-                        .unwrap_or_else(|| beginning_control_seq.len()); // or the rest of the string is alphanumeric
-                    input_processor.stream = &beginning_control_seq[index ..];
-                    control_sequence_name = &beginning_control_seq[.. index];
+                    let control_sequence_name : &str;
+                    if control_seq_first_char.is_ascii_alphabetic() {
+                        // the control sequence starts with an alphanumeric character ; 
+                        // we take this character and all subsequent alphanumeric chars to be the control sequences name
+                        let index = 
+                            beginning_control_seq.find(|c : char| !c.is_ascii_alphabetic()) // either there is a non-alphanumeric character following
+                            .unwrap_or_else(|| beginning_control_seq.len()); // or the rest of the string is alphanumeric
+                        input_processor.stream = &beginning_control_seq[index ..];
+                        control_sequence_name = &beginning_control_seq[.. index];
+                    }
+                    else {
+                        // the control sequence does not start with an alphanumeric character
+                        // that character and that character only is the name of the control sequence.
+                        input_processor.stream = rest;
+                        control_sequence_name = &beginning_control_seq[.. control_seq_first_char.len_utf8()];
+                    }
+                    // Either way, skip whitespaces following the control sequence name
+                    // and return name
+                    input_processor.skip_whitespace();
+                    Some(TexToken::ControlSequence(control_sequence_name))
                 }
                 else {
-                    // the control sequence does not start with an alphanumeric character
-                    // that character and that character only is the name of the control sequence.
+                    // '\' char is just before end of string
                     input_processor.stream = rest;
-                    control_sequence_name = &beginning_control_seq[.. control_seq_first_char.len_utf8()];
+                    Some(TexToken::ControlSequence(&input_processor.stream[0 .. 0]))
                 }
-                // Either way, skip whitespaces following the control sequence name
-                // and return name
-                input_processor.skip_whitespace();
-                Some(TexToken::ControlSequence(control_sequence_name))
-            }
-            else {
-                // '\' char is just before end of string
+            },
+            '^' => {
                 input_processor.stream = rest;
-                Some(TexToken::ControlSequence(&input_processor.stream[0 .. 0]))
+                Some(TexToken::Superscript)                
+            }
+            '_' => {
+                input_processor.stream = rest;
+                Some(TexToken::Subscript)                
+            }
+            c => {
+                // a plain old character
+                input_processor.stream = rest;
+                Some(TexToken::Char(c))
             }
         }
-        else {
-            // a plain old character
-            input_processor.stream = rest;
-            Some(TexToken::Char(first_char))
-        }
-    
     }
 }
 

@@ -29,6 +29,7 @@ use self::macros::CommandCollection;
 use self::macros::ExpandedTokenIter;
 pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
+use self::nodes::Scripts;
 use self::symbols::Symbol;
 use self::textoken::TokenIterator;
 
@@ -93,8 +94,41 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
         while let Some(token) = self.token_iter.next_token()? {
             match token {
-                TexToken::Char('^') | TexToken::Char('_')  => {
-
+                TexToken::Superscript | TexToken::Subscript  => {
+                    let is_superscript = token == TexToken::Superscript;
+                    let group = self.parse_required_argument_as_nodes()?;
+                    let mut last_node = results.pop();
+                    let new_node = match last_node {
+                        Some(ParseNode::Scripts(mut scripts)) =>{
+                            let sub_or_super_script = scripts.get_script(is_superscript);
+                            match sub_or_super_script {
+                                Some(_) => return Err(ParseError::TooManySubscriptsOrSuperscripts),
+                                None => {
+                                    *sub_or_super_script = Some(group);
+                                },
+                            }
+                            ParseNode::Scripts(scripts)
+                        }
+                        Some(node) => {
+                            let mut scripts = Scripts { 
+                                base: Some(Box::new(node)), 
+                                superscript: None,
+                                subscript: None, 
+                            };
+                            *scripts.get_script(is_superscript) = Some(group);
+                            ParseNode::Scripts(scripts)
+                        }
+                        None => {
+                            let mut scripts = Scripts { 
+                                base: None, 
+                                superscript: None,
+                                subscript: None, 
+                            };
+                            *scripts.get_script(is_superscript) = Some(group);
+                            ParseNode::Scripts(scripts)
+                        }
+                    };
+                    results.push(new_node);
                 },
                 _ if token.is_end_group() => {
                     return Ok(List { nodes: results, group: GroupKind::BraceGroup });
@@ -208,7 +242,10 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
     for token in iterator {
         match token {
             TexToken::Char(c) => to_return.push(c),
-            TexToken::ControlSequence(_) => return Err(ParseError::ExpectedChars),
+            TexToken::ControlSequence(_) 
+            | TexToken::Superscript 
+            | TexToken::Subscript 
+            => return Err(ParseError::ExpectedChars),
         }
     }
     Ok(to_return)

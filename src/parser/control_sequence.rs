@@ -158,6 +158,7 @@ pub fn parse_color<'a, I : Iterator<Item = TexToken<'a>>>(token_iter : I) -> Par
         match token {
             TexToken::Char(c) => color_name.push(c),
             TexToken::ControlSequence(_) => todo!(),
+            _ => todo!()
         }
     }
     let color : RGBA = color_name.parse().map_err(|_| ParseError::UnrecognizedColor(color_name.into_boxed_str()))?;

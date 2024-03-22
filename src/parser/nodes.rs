@@ -167,6 +167,18 @@ pub struct Scripts {
     pub subscript: Option<Vec<ParseNode>>,
 }
 
+impl Scripts {
+    /// Retrieves the superscript if argument is true, otherwise the subscript. Useful for writing functions that work for both subscript and superscripts.
+    pub fn get_script(&mut self, superscript : bool) -> &mut Option<Vec<ParseNode>> {
+        if superscript {
+            &mut self.superscript
+        }
+        else  {
+            &mut self.subscript
+        }
+    }
+}
+
 /// Cf [`ParseNode::AtomChange`]
 #[derive(Clone, Debug, PartialEq)]
 pub struct AtomChange {
