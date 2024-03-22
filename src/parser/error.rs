@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::GroupKind;
+use super::{control_sequence::PrimitiveControlSequence, GroupKind};
 
 
 /// Result type for the [`ParseError`]
@@ -36,6 +36,8 @@ pub enum ParseError {
     ExpectedToken,
     /// An argument of control sequence like `\begin{..}` or `\color{..}` must be a sequence of chars ; it cannot contain a command
     ExpectedChars,
+    /// A primitive control sequence needs a group as argument but can't find one (e.g. `{\sqrt}+1`).
+    MissingArgForCommand(Box<str>),
 }
 
 

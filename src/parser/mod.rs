@@ -112,27 +112,30 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     ;
                     use PrimitiveControlSequence::*;
                     match command {
-                        Radical => todo!(),
+                        Radical => {
+                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            results.push(ParseNode::Radical(nodes::Radical { inner, }));
+                        },
                         Rule => todo!(),
                         Color => {
                             let color_name_group = self.token_iter.capture_group()?;
                             let color = parse_color(color_name_group.into_iter())?;
-                            let inner = self.parse_required_argument_as_nodes()?;
+                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Color(nodes::Color {
                                 color,
                                 inner,
                             }));
                         },
                         ColorLit(color) => {
-                            let inner = self.parse_required_argument_as_nodes()?;
+                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Color(nodes::Color {
                                 color,
                                 inner,
                             }));
                         },
                         Fraction(left_delimiter, right_delimiter, bar_thickness, style) => {
-                            let numerator   = self.parse_required_argument_as_nodes()?;
-                            let denominator = self.parse_required_argument_as_nodes()?;
+                            let numerator   = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let denominator = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
 
                             results.push(ParseNode::GenFraction(GenFraction {
                                 numerator, denominator,
@@ -172,6 +175,14 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         }
 
         Ok(List { nodes: results, group: GroupKind::EndOfInput })
+    }
+
+    fn parse_required_control_seq_argument_as_nodes(&mut self, control_seq_name : &str) -> ParseResult<Vec<ParseNode>> {
+        self.parse_required_argument_as_nodes()
+            .map_err(|e| match e {
+                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_seq_name)),
+                e => e,
+            })
     }
 
     fn parse_required_argument_as_nodes(&mut self) -> ParseResult<Vec<ParseNode>> {

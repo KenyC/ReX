@@ -73,11 +73,11 @@ impl<'a> Iterator for TokenIterator<'a> {
                 // there is a character after '\'
 
                 let control_sequence_name : &str;
-                if control_seq_first_char.is_ascii_alphanumeric() {
+                if control_seq_first_char.is_ascii_alphabetic() {
                     // the control sequence starts with an alphanumeric character ; 
                     // we take this character and all subsequent alphanumeric chars to be the control sequences name
                     let index = 
-                        beginning_control_seq.find(|c : char| !c.is_alphanumeric()) // either there is a non-alphanumeric character following
+                        beginning_control_seq.find(|c : char| !c.is_ascii_alphabetic()) // either there is a non-alphanumeric character following
                         .unwrap_or_else(|| beginning_control_seq.len()); // or the rest of the string is alphanumeric
                     input_processor.stream = &beginning_control_seq[index ..];
                     control_sequence_name = &beginning_control_seq[.. index];

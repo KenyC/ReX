@@ -31,8 +31,9 @@ pub enum PrimitiveControlSequence {
 impl PrimitiveControlSequence {
     pub fn from_name(name: &str) -> Option<Self> {
         Option::or_else(
-            Symbol::from_name(name).map(PrimitiveControlSequence::SymbolCommand), 
-            || Self::parse_command_name(name)
+            
+            Self::parse_command_name(name),
+            || Symbol::from_name(name).map(PrimitiveControlSequence::SymbolCommand),
         )
     }
 
