@@ -40,6 +40,10 @@ pub enum ParseError {
     MissingArgForCommand(Box<str>),
     /// There either is more than one subscript or more than one superscript attached to the same node.
     TooManySubscriptsOrSuperscripts,
+    /// The command `\rule` expects an argument of the form `1.3pt` (number followed by dimension). The dimension may not be anything but `em` or `pt` at the moment.
+    UnrecognizedDimension(Box<str>),
+    /// The string in `\begin{..}` or `\end{..}` is not a recognized environment. Cf [Environment] for the list of supported LaTeX environments.
+    UnrecognizedEnvironmen(Box<str>),
 }
 
 

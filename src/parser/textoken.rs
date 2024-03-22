@@ -9,33 +9,11 @@ pub enum TexToken<'a> {
     ControlSequence(& 'a str),
     Superscript,
     Subscript,
+    WhiteSpace,
+    BeginGroup,
+    EndGroup,
 }
 
-impl<'a> TexToken<'a> {
-    /// Checks if token is begingroup delimiter (at the moment, just open brackets can be)
-    pub fn is_begin_group(&self) -> bool {
-        match self {
-            Self::Char('{') => true,
-            _ => false,
-        }
-    }
-
-    /// Checks if token is endgroup delimiter (at the moment, just closing brackets can be)
-    pub fn is_end_group(&self) -> bool {
-        match self {
-            Self::Char('}') => true,
-            _ => false,
-        }
-    }
-
-    /// Checks if token is an ASCII whitespace (space, tabulation, end-of-line)
-    pub fn is_whitespace(&self) -> bool {
-        match self {
-            Self::Char(' ') => true, // `TokenIterator` normalizes all spaces to this.
-            _ => false,
-        }
-    }
-}
 
 
 
@@ -68,7 +46,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                 // we don't distinguish between various spaces.
                 // TODO: think whether in the restricted domain we look at, we should parse spaces at all.
                 input_processor.skip_whitespace();
-                Some(TexToken::Char(' '))
+                Some(TexToken::WhiteSpace)
             },
             '\\' => {
                 let beginning_control_seq = rest;
@@ -109,6 +87,14 @@ impl<'a> Iterator for TokenIterator<'a> {
             '_' => {
                 input_processor.stream = rest;
                 Some(TexToken::Subscript)                
+            }
+            '{' => {
+                input_processor.stream = rest;
+                Some(TexToken::BeginGroup)                
+            }
+            '}' => {
+                input_processor.stream = rest;
+                Some(TexToken::EndGroup)                
             }
             c => {
                 // a plain old character

@@ -190,19 +190,19 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
         let mut arg = Vec::with_capacity(1);
         let mut token = self.next_token()?
             .ok_or_else(|| ParseError::ExpectedToken)?;
-        while token.is_whitespace() {
+        while let TexToken::WhiteSpace = token {
             token = self.next_token()?
                 .ok_or_else(|| ParseError::ExpectedToken)?;
         }
-        if token.is_begin_group() {
+        if let TexToken::BeginGroup = token {
             let mut n_open_paren : u32 = 1;
             while n_open_paren != 0 {
                 let token = self.next_token()?
                     .ok_or(ParseError::UnmatchedBrackets)?;
-                if token.is_begin_group() {
+                if let TexToken::BeginGroup = token {
                     n_open_paren += 1;
                 }
-                else if token.is_end_group() {
+                else if let TexToken::EndGroup = token {
                     n_open_paren -= 1;
                 }
 

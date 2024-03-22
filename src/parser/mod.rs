@@ -13,6 +13,7 @@ mod control_sequence;
 
 use unicode_math::AtomType;
 
+use crate::dimensions::AnyUnit;
 use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
@@ -37,11 +38,11 @@ use self::textoken::TokenIterator;
 pub enum GroupKind {
     BraceGroup,
     Env(Environment),
-    // a group ended by &
+    /// a group ended by &
     Cell,
-    // a group end by \\
-    Line,
-    // end of file
+    /// a group end by \\
+    NewLine,
+    /// end of file
     EndOfInput,
 
 }
@@ -130,7 +131,16 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     };
                     results.push(new_node);
                 },
-                _ if token.is_end_group() => {
+                TexToken::WhiteSpace => { },
+                TexToken::BeginGroup => {
+                    let List { nodes, group } = self.parse_until_end_of_group()?;
+                    if group != GroupKind::BraceGroup {
+                        return Err(ParseError::UnexpectedEndGroup(group));
+                    }
+
+                    results.push(ParseNode::Group(nodes));
+                },
+                TexToken::EndGroup => {
                     return Ok(List { nodes: results, group: GroupKind::BraceGroup });
                 },
                 TexToken::Char(codepoint) => {
@@ -138,6 +148,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     let codepoint = style_symbol(codepoint, self.current_style);
                     results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
                 },
+                TexToken::ControlSequence("\\") => {
+                    return Ok(List { nodes: results, group: GroupKind::NewLine });
+                }
                 // Here we deal with "primitive" control sequences, not macros
                 TexToken::ControlSequence(control_sequence_name) => {
                     let command = 
@@ -147,29 +160,41 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     use PrimitiveControlSequence::*;
                     match command {
                         Radical => {
-                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Radical(nodes::Radical { inner, }));
                         },
-                        Rule => todo!(),
+                        Rule => {
+                            let width_tokens = self.token_iter.capture_group()?;
+                            let width_string = tokens_as_string(width_tokens.into_iter())?;
+                            let width = parse_dimension(&width_string)?;
+
+                            let height_tokens = self.token_iter.capture_group()?;
+                            let height_string = tokens_as_string(height_tokens.into_iter())?;
+                            let height = parse_dimension(&height_string)?;
+
+                            results.push(ParseNode::Rule(nodes::Rule {
+                                width, height,
+                            }))
+                        },
                         Color => {
                             let color_name_group = self.token_iter.capture_group()?;
                             let color = parse_color(color_name_group.into_iter())?;
-                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Color(nodes::Color {
                                 color,
                                 inner,
                             }));
                         },
                         ColorLit(color) => {
-                            let inner = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Color(nodes::Color {
                                 color,
                                 inner,
                             }));
                         },
                         Fraction(left_delimiter, right_delimiter, bar_thickness, style) => {
-                            let numerator   = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
-                            let denominator = self.parse_required_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let numerator   = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
+                            let denominator = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
 
                             results.push(ParseNode::GenFraction(GenFraction {
                                 numerator, denominator,
@@ -181,10 +206,58 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
                         },
-                        StyleCommand(_) => todo!(),
-                        AtomChange(_) => todo!(),
-                        TextOperator(_, _) => todo!(),
-                        SubStack(_) => todo!(),
+                        StyleCommand(style) => {
+                            results.push(ParseNode::Style(style));
+                        },
+                        AtomChange(at) => {
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
+                            results.push(ParseNode::AtomChange(nodes::AtomChange {
+                                at, inner,
+                            }));
+                        },
+                        // TODO: not sure what to name the boolean
+                        TextOperator(op_name, accent_placement) => {
+                            results.push(ParseNode::AtomChange(nodes::AtomChange {
+                                at: AtomType::Operator(accent_placement),
+                                inner: 
+                                    op_name
+                                    .chars()
+                                    .map(|c| ParseNode::Symbol(Symbol {
+                                        codepoint: c,
+                                        atom_type: AtomType::Ordinary,
+                                    }))
+                                    .collect()
+                                    ,
+                            }));
+                        },
+                        SubStack(atom_type) => {
+                            let group = self.token_iter.capture_group()?;
+
+                            let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
+                            forked_parser.current_style = self.current_style;
+
+                            let mut lines = Vec::new();
+
+                            while {
+                                let List { nodes, group } = forked_parser.parse_until_end_of_group()?;
+
+                                if !nodes.is_empty() || group != GroupKind::EndOfInput {
+                                    lines.push(nodes);
+                                }
+
+                                match group {
+                                    GroupKind::NewLine => true,
+                                    GroupKind::EndOfInput => false,
+                                    _ => return Err(ParseError::UnexpectedEndGroup(group))
+                                }
+                            } {}
+
+                            results.push(ParseNode::Stack(nodes::Stack {
+                                atom_type,
+                                lines,
+                            }))
+
+                        },
                         Text => {
                             let text_group = self.token_iter.capture_group()?;
                             let text = tokens_as_string(text_group.into_iter())?;
@@ -195,9 +268,16 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         BeginEnv => {
                             let env_name_group = self.token_iter.capture_group()?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
+                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()));
                             todo!()
                         },
-                        EndEnv => todo!(),
+                        EndEnv => {
+                            let env_name_group = self.token_iter.capture_group()?;
+                            let env_name = tokens_as_string(env_name_group.into_iter())?;
+                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
+
+                            return Ok(List { nodes: results, group: GroupKind::Env(env) });
+                        },
                         SymbolCommand(symbol) => {
                             let Symbol { codepoint, atom_type } = symbol;
                             let codepoint = style_symbol(codepoint, self.current_style);
@@ -211,7 +291,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         Ok(List { nodes: results, group: GroupKind::EndOfInput })
     }
 
-    fn parse_required_control_seq_argument_as_nodes(&mut self, control_seq_name : &str) -> ParseResult<Vec<ParseNode>> {
+    fn parse_control_seq_argument_as_nodes(&mut self, control_seq_name : &str) -> ParseResult<Vec<ParseNode>> {
         self.parse_required_argument_as_nodes()
             .map_err(|e| match e {
                 ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_seq_name)),
@@ -237,11 +317,39 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     }
 }
 
+/// Parses the input as a dimension, e.g. `1cm` or `-2pt or `3.5em`
+fn parse_dimension(mut input_string: &str) -> ParseResult<AnyUnit> {
+    fn is_float_char(character : &char) -> bool {
+        character.is_ascii_digit()
+        || *character == '-'
+        || *character == '+'
+        || *character == ' '
+        || *character == '.'
+    }
+
+    let float_input_to_parse : String = input_string.chars().take_while(is_float_char).collect();
+    let number = float_input_to_parse.replace(' ', "").parse::<f64>().map_err(|_| ParseError::UnrecognizedDimension(Box::from(input_string)))?;
+
+    let dim_string = &input_string[float_input_to_parse.len() ..];
+
+    // expecting 2 ASCII characters representing the dimension
+    let dim = dim_string.get(.. 2).ok_or_else(|| ParseError::UnrecognizedDimension(Box::from(input_string)))?;
+
+    match dim {
+        "em" => Ok(AnyUnit::Em(number)),
+        "px" => Ok(AnyUnit::Px(number)),
+        _ => Err(ParseError::UnrecognizedDimension(Box::from(input_string))),
+    }
+}
+
 fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> ParseResult<String> {
     let mut to_return = String::new();
     for token in iterator {
         match token {
-            TexToken::Char(c) => to_return.push(c),
+            TexToken::Char(c)     => to_return.push(c),
+            TexToken::WhiteSpace  => to_return.push(' '),
+            TexToken::BeginGroup
+            | TexToken::EndGroup  => (), 
             TexToken::ControlSequence(_) 
             | TexToken::Superscript 
             | TexToken::Subscript 
@@ -403,14 +511,6 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\color red{1}"));
     }
 
-    #[test]
-    fn snapshot_style() {
-        // success
-        insta::assert_debug_snapshot!(parse(r"1\scriptstyle2"));
-        insta::assert_debug_snapshot!(parse(r"{1\scriptstyle}2"));
-        insta::assert_debug_snapshot!(parse(r"1\textstyle2"));
-        insta::assert_debug_snapshot!(parse(r"1\sqrt{\displaystyle s}1"));
-    }
 
 
     #[test]
@@ -484,6 +584,12 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"1\scriptstyle2\textstyle1+1"));
         insta::assert_debug_snapshot!(parse(r"1{\scriptstyle2\textstyle1}+1"));
         insta::assert_debug_snapshot!(parse(r"\frac{22\scriptscriptstyle22}2"));
+
+        // success
+        insta::assert_debug_snapshot!(parse(r"1\scriptstyle2"));
+        insta::assert_debug_snapshot!(parse(r"{1\scriptstyle}2"));
+        insta::assert_debug_snapshot!(parse(r"1\textstyle2"));
+        insta::assert_debug_snapshot!(parse(r"1\sqrt{\displaystyle s}1"));
     }
 
 
