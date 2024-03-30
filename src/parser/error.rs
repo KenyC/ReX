@@ -31,7 +31,10 @@ pub enum ParseError {
     /// The brackets used to enclose a macro's arguments were not matched
     UnmatchedBrackets,
     /// A group (e.g. `{..}`, `\begin{env}..\end{env}`, `&...&`) was ended but there is no correponding begin group
-    UnexpectedEndGroup(GroupKind),
+    UnexpectedEndGroup{ 
+        expected: Box<[GroupKind]>,
+        got:      GroupKind,
+    },
     /// A token or group of token was expected but never came
     ExpectedToken,
     /// An argument of control sequence like `\begin{..}` or `\color{..}` must be a sequence of chars ; it cannot contain a command
@@ -44,6 +47,17 @@ pub enum ParseError {
     UnrecognizedDimension(Box<str>),
     /// The string in `\begin{..}` or `\end{..}` is not a recognized environment. Cf [Environment] for the list of supported LaTeX environments.
     UnrecognizedEnvironmen(Box<str>),
+    /// The argument of `\begin{array}{..}` is not of the correct form: 
+    /// it can only contain the characters `c`, `l`, `r`, whitespaces, braces, `|`  or macros that ultimately expand to one of these.
+    UnrecognizedArrayColumnFormat,
+    /// The token immediately following `\left`, `\middle` and `\right` isn't a symbol
+    ExpectedDelimiter,
+    /// The token immediately following `\left` is not of atom type [`AtomType::Open`] or  [`AtomType::Fence`]
+    ExpectedOpenDelimiter,
+    /// The token immediately following `\middle` is not of atom type [`AtomType::Fence`]
+    ExpectedMiddleDelimiter,
+    /// The token immediately following `\middle` is not of atom type [`AtomType::Close`]
+    ExpectedClosingDelimiter,
 }
 
 

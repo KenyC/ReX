@@ -18,6 +18,9 @@ Ok(
                 ],
                 inners: [
                     [
+                        Group(
+                            [],
+                        ),
                         Symbol(
                             Symbol {
                                 codepoint: '𝑥',

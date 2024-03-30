@@ -24,6 +24,9 @@ pub enum PrimitiveControlSequence {
     SymbolCommand(Symbol),
     BeginEnv,
     EndEnv,
+    Left,
+    Middle,
+    Right,
     Text,
 }
 
@@ -143,6 +146,11 @@ impl PrimitiveControlSequence {
             // Environment
             "begin" => Self::BeginEnv,
             "end"   => Self::EndEnv,
+
+            // Environment
+            "left"    => Self::Left,
+            "middle"  => Self::Middle,
+            "right"   => Self::Right,
 
             _ => return None
         })

@@ -82,7 +82,7 @@ pub struct ArraySingleColumnFormatting {
 /// where a `[unit]` is any recognized dimension which will add (or subtract)
 /// space between the rows.  Note, the last line termination is ignored
 /// if the a line is empty.
-type Expression = Vec<ParseNode>;
+pub type CellContent = Vec<ParseNode>;
 
 
 // TODO: since we use default values, we should make the argument optional?
@@ -114,7 +114,7 @@ pub struct Array {
     pub col_format: ArrayColumnsFormatting,
 
     /// A collection of rows.  Each row consists of one `Vec<Expression>`.
-    pub rows: Vec<Vec<Expression>>,
+    pub rows: Vec<Vec<CellContent>>,
 
     /// The left delimiter for the array (optional).
     pub left_delimiter: Option<Symbol>,

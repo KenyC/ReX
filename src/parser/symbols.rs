@@ -15,6 +15,23 @@ impl Symbol {
     pub fn from_name(name: &str) -> Option<Self> {
         others(name).or_else(|| symbol(name))
     }
+
+    const NULL_DELIMITER : char = '.';
+
+    /// Checks if symbol is an open delimiter
+    pub fn is_open_delimiter(&self) -> bool {
+        self.atom_type == AtomType::Open || self.atom_type == AtomType::Fence  || self.codepoint == Self::NULL_DELIMITER
+    }
+
+    /// Checks if symbol is an closing delimiter
+    pub fn is_close_delimiter(&self) -> bool {
+        self.atom_type == AtomType::Close || self.atom_type == AtomType::Fence  || self.codepoint == Self::NULL_DELIMITER
+    }
+
+    /// Checks if symbol is an closing delimiter
+    pub fn is_middle_delimiter(&self) -> bool {
+        self.atom_type == AtomType::Fence || self.codepoint == Self::NULL_DELIMITER
+    }
 }
 
 fn symbol(name: &str) -> Option<Symbol> {

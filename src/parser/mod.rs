@@ -18,6 +18,7 @@ use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
+use crate::parser::nodes::Delimited;
 use crate::parser::nodes::GenFraction;
 use crate::parser::nodes::PlainText;
 use crate::parser::textoken::InputProcessor;
@@ -39,11 +40,13 @@ pub enum GroupKind {
     BraceGroup,
     Env(Environment),
     /// a group ended by &
-    Cell,
+    Align,
     /// a group end by \\
     NewLine,
     /// end of file
     EndOfInput,
+    MiddleDelimiter,
+    RightDelimiter,
 
 }
 
@@ -86,7 +89,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         if let GroupKind::EndOfInput = group 
         { Ok(nodes) }
         else 
-        { Err(ParseError::UnexpectedEndGroup(group)) }
+        { Err(ParseError::UnexpectedEndGroup {
+            expected: Box::from([GroupKind::EndOfInput]),
+            got: group,
+        }) }
     }
 
 
@@ -135,7 +141,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 TexToken::BeginGroup => {
                     let List { nodes, group } = self.parse_until_end_of_group()?;
                     if group != GroupKind::BraceGroup {
-                        return Err(ParseError::UnexpectedEndGroup(group));
+                        return Err(ParseError::UnexpectedEndGroup{expected: Box::from([GroupKind::BraceGroup]), got: group});
                     }
 
                     results.push(ParseNode::Group(nodes));
@@ -143,10 +149,12 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 TexToken::EndGroup => {
                     return Ok(List { nodes: results, group: GroupKind::BraceGroup });
                 },
+                TexToken::Alignment => {
+                    return Ok(List { nodes: results, group: GroupKind::Align });
+                },
                 TexToken::Char(codepoint) => {
-                    let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
-                    let codepoint = style_symbol(codepoint, self.current_style);
-                    results.push(ParseNode::Symbol(Symbol { codepoint, atom_type }));
+                    let symbol = self.char_to_symbol(codepoint)?;
+                    results.push(ParseNode::Symbol(symbol));
                 },
                 TexToken::ControlSequence("\\") => {
                     return Ok(List { nodes: results, group: GroupKind::NewLine });
@@ -248,7 +256,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 match group {
                                     GroupKind::NewLine => true,
                                     GroupKind::EndOfInput => false,
-                                    _ => return Err(ParseError::UnexpectedEndGroup(group))
+                                    _ => return Err(ParseError::UnexpectedEndGroup {expected: Box::from([GroupKind::NewLine, GroupKind::EndOfInput]), got: group})
                                 }
                             } {}
 
@@ -268,8 +276,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         BeginEnv => {
                             let env_name_group = self.token_iter.capture_group()?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
-                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()));
-                            todo!()
+                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
+                            let array = self.parse_environment(env)?;
+                            results.push(ParseNode::Array(array));
                         },
                         EndEnv => {
                             let env_name_group = self.token_iter.capture_group()?;
@@ -278,10 +287,56 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
                             return Ok(List { nodes: results, group: GroupKind::Env(env) });
                         },
-                        SymbolCommand(symbol) => {
-                            let Symbol { codepoint, atom_type } = symbol;
-                            let codepoint = style_symbol(codepoint, self.current_style);
-                            results.push(ParseNode::Symbol(Symbol { codepoint, atom_type, }));
+                        Left => {
+                            let delimiter = self.parse_next_token_as_delimiter()?;
+                            if !delimiter.is_open_delimiter() {
+                                return Err(ParseError::ExpectedOpenDelimiter);
+                            }
+
+                            let mut delimiters = vec![delimiter];
+                            let mut inners     = Vec::new();
+                            while {
+                                let List { nodes, group } = self.parse_until_end_of_group()?;
+                                inners.push(nodes);
+
+                                match group {
+                                    GroupKind::MiddleDelimiter => {
+                                        let delimiter = self.parse_next_token_as_delimiter()?;
+                                        if !delimiter.is_middle_delimiter() {
+                                            return Err(ParseError::ExpectedMiddleDelimiter);
+                                        }
+                                        delimiters.push(delimiter);
+                                        true
+                                    },
+                                    GroupKind::RightDelimiter  => {
+                                        let delimiter = self.parse_next_token_as_delimiter()?;
+                                        if !delimiter.is_close_delimiter() {
+                                            return Err(ParseError::ExpectedClosingDelimiter);
+                                        }
+                                        delimiters.push(delimiter);
+                                        false
+                                    },
+                                    _ => return Err(ParseError::UnexpectedEndGroup { 
+                                        expected: Box::from([GroupKind::RightDelimiter, GroupKind::MiddleDelimiter]), 
+                                        got: group, 
+                                    })
+                                }
+                            }{}
+
+                            results.push(ParseNode::Delimited(Delimited::new(
+                                delimiters, 
+                                inners
+                            )))
+                        },
+                        Middle => {
+                            return Ok(List { nodes: results, group: GroupKind::MiddleDelimiter });
+                        },
+                        Right => {
+                            return Ok(List { nodes: results, group: GroupKind::RightDelimiter });
+                        },
+                        SymbolCommand(mut symbol) => {
+                            self.style_symbol_with_current_style(&mut symbol);
+                            results.push(ParseNode::Symbol(symbol));
                         },
                     }
                 },
@@ -291,12 +346,49 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         Ok(List { nodes: results, group: GroupKind::EndOfInput })
     }
 
+    fn style_symbol_with_current_style(&self, symbol: &mut Symbol) {
+        let Symbol { codepoint, .. } = symbol;
+        *codepoint = style_symbol(*codepoint, self.current_style);
+    }
+
+    fn char_to_symbol(&self, codepoint: char) -> Result<Symbol, ParseError> {
+        let atom_type = codepoint_atom_type(codepoint).ok_or_else(|| ParseError::UnrecognizedSymbol(codepoint))?;
+        let mut symbol = Symbol { codepoint, atom_type };
+        self.style_symbol_with_current_style(&mut symbol);
+        Ok(symbol)
+    }
+
     fn parse_control_seq_argument_as_nodes(&mut self, control_seq_name : &str) -> ParseResult<Vec<ParseNode>> {
         self.parse_required_argument_as_nodes()
             .map_err(|e| match e {
                 ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_seq_name)),
                 e => e,
             })
+    }
+
+    fn parse_next_token_as_delimiter(&mut self) -> ParseResult<Symbol> {
+        let token = self.token_iter.next_token()?.ok_or_else(|| todo!())?;
+        match token {
+            TexToken::Char(c) => {
+                self.char_to_symbol(c)
+            },
+            TexToken::ControlSequence(control_sequence_name) => {
+                let command = 
+                    PrimitiveControlSequence::from_name(control_sequence_name)
+                    .ok_or_else(|| ParseError::UnrecognizedControlSequence(control_sequence_name.to_string().into_boxed_str()))?
+                ;
+                match command {
+                    PrimitiveControlSequence::SymbolCommand(mut symbol) => {
+                        self.style_symbol_with_current_style(&mut symbol); 
+                        Ok(symbol)
+                    },
+                    _ => Err(ParseError::ExpectedDelimiter),
+                }
+            },
+              TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
+            | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
+            => Err(ParseError::ExpectedDelimiter),
+        }
     }
 
     fn parse_required_argument_as_nodes(&mut self) -> ParseResult<Vec<ParseNode>> {
@@ -310,7 +402,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         let List { nodes, group } = forked_parser.parse_until_end_of_group()?;
 
         if group != GroupKind::EndOfInput {
-            return Err(ParseError::UnexpectedEndGroup(group));
+            return Err(ParseError::UnexpectedEndGroup { expected : Box::from([GroupKind::EndOfInput]), got : group });
         }
         
         Ok(nodes)
@@ -353,6 +445,7 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
             TexToken::ControlSequence(_) 
             | TexToken::Superscript 
             | TexToken::Subscript 
+            | TexToken::Alignment
             => return Err(ParseError::ExpectedChars),
         }
     }

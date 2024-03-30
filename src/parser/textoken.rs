@@ -9,6 +9,8 @@ pub enum TexToken<'a> {
     ControlSequence(& 'a str),
     Superscript,
     Subscript,
+    // A '&' character
+    Alignment,
     WhiteSpace,
     BeginGroup,
     EndGroup,
@@ -80,6 +82,10 @@ impl<'a> Iterator for TokenIterator<'a> {
                     Some(TexToken::ControlSequence(&input_processor.stream[0 .. 0]))
                 }
             },
+            '&' => {
+                input_processor.stream = rest;
+                Some(TexToken::Alignment)
+            }
             '^' => {
                 input_processor.stream = rest;
                 Some(TexToken::Superscript)                
