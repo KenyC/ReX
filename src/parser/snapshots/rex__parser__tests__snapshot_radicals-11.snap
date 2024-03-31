@@ -3,5 +3,7 @@ source: src/parser/mod.rs
 expression: "parse(r\"\\sqrt^2\")"
 ---
 Err(
-    RequiredMacroArg,
+    MissingArgForCommand(
+        "sqrt",
+    ),
 )

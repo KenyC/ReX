@@ -3,7 +3,7 @@ source: src/parser/mod.rs
 expression: "parse(r\"1\\33\")"
 ---
 Err(
-    UnrecognizedCommand(
+    UnrecognizedControlSequence(
         "3",
     ),
 )

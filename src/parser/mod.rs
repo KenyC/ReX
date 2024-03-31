@@ -367,7 +367,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     }
 
     fn parse_next_token_as_delimiter(&mut self) -> ParseResult<Symbol> {
-        let token = self.token_iter.next_token()?.ok_or_else(|| todo!())?;
+        let token = self.token_iter.next_token()?.ok_or_else(|| ParseError::ExpectedDelimiter)?;
         match token {
             TexToken::Char(c) => {
                 self.char_to_symbol(c)

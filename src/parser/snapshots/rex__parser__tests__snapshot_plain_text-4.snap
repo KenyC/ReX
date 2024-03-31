@@ -3,7 +3,10 @@ source: src/parser/mod.rs
 expression: "parse(r\"\\text{}}\")"
 ---
 Err(
-    UnexpectedEndGroup(
-        BraceGroup,
-    ),
+    UnexpectedEndGroup {
+        expected: [
+            EndOfInput,
+        ],
+        got: BraceGroup,
+    },
 )

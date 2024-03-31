@@ -157,10 +157,10 @@ mod tests {
             tokens,
             vec![
                 TexToken::ControlSequence("end"),
-                TexToken::Char('{'),
-                TexToken::Char(' '),
+                TexToken::BeginGroup,
+                TexToken::WhiteSpace,
                 TexToken::Char(']'),
-                TexToken::Char(' '),
+                TexToken::WhiteSpace,
             ]
         );
 
@@ -209,14 +209,14 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                TexToken::Char('{'),
-                TexToken::Char('{'),
+                TexToken::BeginGroup,
+                TexToken::BeginGroup,
                 TexToken::Char('a'),
-                TexToken::Char('}'),
+                TexToken::EndGroup,
                 TexToken::Char('b'),
                 TexToken::ControlSequence("}"),
                 TexToken::Char('c'),
-                TexToken::Char('}'),
+                TexToken::EndGroup,
                 TexToken::Char('d'),
             ]
         );
