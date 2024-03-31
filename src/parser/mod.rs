@@ -33,6 +33,7 @@ pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
 use self::nodes::Scripts;
 use self::symbols::Symbol;
+use self::textoken::NumberOfPrimes;
 use self::textoken::TokenIterator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -136,6 +137,15 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         }
                     };
                     results.push(new_node);
+                },
+                TexToken::Prime(number_of_primes) => { 
+                    let codepoint = match number_of_primes {
+                        NumberOfPrimes::Simple => '′',
+                        NumberOfPrimes::Double => '″',
+                        NumberOfPrimes::Triple => '‴',
+                    };
+                    let symbol = Symbol { codepoint, atom_type: AtomType::Ordinary };
+                    results.push(ParseNode::Symbol(symbol));
                 },
                 TexToken::WhiteSpace => { },
                 TexToken::BeginGroup => {
@@ -387,6 +397,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             },
               TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
             | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
+            | TexToken::Prime { .. }
             => Err(ParseError::ExpectedDelimiter),
         }
     }
@@ -440,6 +451,13 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
         match token {
             TexToken::Char(c)     => to_return.push(c),
             TexToken::WhiteSpace  => to_return.push(' '),
+            TexToken::Prime(number_of_primes)  => {
+                to_return.push_str(match number_of_primes {
+                    NumberOfPrimes::Simple => "'",
+                    NumberOfPrimes::Double => "''",
+                    NumberOfPrimes::Triple => "'''",
+                });
+            },
             TexToken::BeginGroup
             | TexToken::EndGroup  => (), 
             TexToken::ControlSequence(_) 

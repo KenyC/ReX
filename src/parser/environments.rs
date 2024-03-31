@@ -167,6 +167,7 @@ fn tokens_as_column_format<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) 
             | TexToken::EndGroup 
             | TexToken::ControlSequence(_) 
             | TexToken::Superscript 
+            | TexToken::Prime { .. } 
             | TexToken::Alignment 
             | TexToken::Subscript => return Err(ParseError::UnrecognizedArrayColumnFormat),
         }

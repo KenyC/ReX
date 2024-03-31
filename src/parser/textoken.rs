@@ -1,6 +1,10 @@
 //! This module defines TeX tokens, an intermediate object that characters are processed into, which is what the real parser processes.
 
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NumberOfPrimes {
+    Simple, Double, Triple
+}
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +18,7 @@ pub enum TexToken<'a> {
     WhiteSpace,
     BeginGroup,
     EndGroup,
+    Prime(NumberOfPrimes),
 }
 
 
@@ -85,6 +90,21 @@ impl<'a> Iterator for TokenIterator<'a> {
             '&' => {
                 input_processor.stream = rest;
                 Some(TexToken::Alignment)
+            }
+            '\'' => {
+                let number_of_primes = if let Some(rest) = rest.strip_prefix("''") {
+                    input_processor.stream = rest;
+                    NumberOfPrimes::Triple
+                }
+                else if let Some(rest) = rest.strip_prefix("'") {
+                    input_processor.stream = rest;
+                    NumberOfPrimes::Double
+                }
+                else {
+                    input_processor.stream = rest;
+                    NumberOfPrimes::Simple
+                };
+                Some(TexToken::Prime(number_of_primes))
             }
             '^' => {
                 input_processor.stream = rest;
