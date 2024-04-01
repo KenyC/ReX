@@ -1,0 +1,14 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\mathrm{\\mathtt{a}}\")"
+---
+Ok(
+    [
+        Symbol(
+            Symbol {
+                codepoint: '𝚊',
+                atom_type: Alpha,
+            },
+        ),
+    ],
+)
