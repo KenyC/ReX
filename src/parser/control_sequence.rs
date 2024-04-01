@@ -1,6 +1,6 @@
 use unicode_math::AtomType;
 
-use crate::{dimensions::AnyUnit, layout::Style as LayoutStyle, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
+use crate::{dimensions::AnyUnit, font::{Family, Weight}, layout::Style as LayoutStyle, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
 
 use super::{error::{ParseError, ParseResult}, macros::CommandCollection, nodes::Color, textoken::TexToken, Parser};
 
@@ -22,6 +22,7 @@ pub enum PrimitiveControlSequence {
     TextOperator(&'static str, bool),
     SubStack(AtomType),
     SymbolCommand(Symbol),
+    StyleChange { family: Option<Family>, weight: Option<Weight> },
     BeginEnv,
     EndEnv,
     Left,
@@ -57,6 +58,18 @@ impl PrimitiveControlSequence {
 
             // Radical commands
             "sqrt" => Self::Radical,
+
+            // Style-change command
+            "mathbf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold)   },
+            "mathit"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic) },
+            "mathrm"   => Self::StyleChange {family: Some(Family::Roman),      weight: None                 },
+            "mathscr"  => Self::StyleChange {family: Some(Family::Script),     weight: None                 },
+            "mathfrak" => Self::StyleChange {family: Some(Family::Fraktur),    weight: None                 },
+            "mathbb"   => Self::StyleChange {family: Some(Family::Blackboard), weight: None                 },
+            "mathsf"   => Self::StyleChange {family: Some(Family::SansSerif),  weight: None                 },
+            "mathtt"   => Self::StyleChange {family: Some(Family::Monospace),  weight: None                 },
+            "mathcal"  => Self::StyleChange {family: Some(Family::Script),     weight: None                 },
+
 
             // Delimiter size commands
             "bigl"  => Self::DelimiterSize(1, AtomType::Open),

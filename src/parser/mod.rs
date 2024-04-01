@@ -210,6 +210,18 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 inner,
                             }));
                         },
+                        StyleChange { family, weight } => {
+                            let old_style = self.current_style;
+                            if let Some(family) = family {
+                                self.current_style = self.current_style.with_family(family);
+                            }
+                            if let Some(weight) = weight {
+                                self.current_style = self.current_style.with_weight(weight);
+                            }
+                            let nodes = self.parse_required_argument_as_nodes()?;
+                            self.current_style = old_style;
+                            results.push(ParseNode::Group(nodes));
+                        }
                         Fraction(left_delimiter, right_delimiter, bar_thickness, style) => {
                             let numerator   = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
                             let denominator = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
