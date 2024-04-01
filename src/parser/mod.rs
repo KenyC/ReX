@@ -725,4 +725,14 @@ mod tests {
         insta::assert_debug_snapshot!(parse("'a"));
         insta::assert_debug_snapshot!(parse(r"\sqrt'"));
     }
+
+    #[test]
+    fn snapshot_font_change() {
+        insta::assert_debug_snapshot!(parse(r"\mathrm{a}"));
+        insta::assert_debug_snapshot!(parse(r"\mathfrak{F+1}"));
+        insta::assert_debug_snapshot!(parse(r"\mathbb{a\mathbf{b}}"));
+        insta::assert_debug_snapshot!(parse(r"\mathrm{\mathtt{a}}"));
+        insta::assert_debug_snapshot!(parse(r"\mathrm{\frac 21}"));
+        insta::assert_debug_snapshot!(parse(r"\mathbb aa"));
+    }
 }
