@@ -1,0 +1,309 @@
+Scripts:
+  - Description: should properly scale
+    Snippets:
+    - a^2\textstyle a^2\scriptstyle a^2 \scriptscriptstyle a^2
+    - a_2\textstyle a_2\scriptstyle a_2 \scriptscriptstyle a_2
+    - a_2^2\textstyle a_2^2\scriptstyle a_2^2 \scriptscriptstyle a_2^2
+
+  - Description: should properly scale operators with limits
+    Snippets:
+    - \sum_0^k\textstyle\sum_0^k\scriptstyle\sum_0^k\scriptscriptstyle\sum_0^k
+
+  - Description: should nest properly
+    Snippets:
+    - x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}
+
+  - Description: (superscripts) if accentee is simple symbol, script should not take accent into account for height.
+    Snippets:
+    - \hat A^2 \hat{A}^2 A^2
+
+  - Description: should handle state changes (Issue 27)
+    Snippets:
+    - R_\mathfrak{E}X\ R^\mathfrak{E}X
+
+Delimiters:
+  - Description: should properly scale
+    Snippets:
+      - \left(\frac 12\right)
+      - \left(\begin{array}{c}1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\\1\\1\\1\end{array}\right)
+      - \left(\begin{array}{c}1\\1\\1\\1\\1\\1\\1\\1\\1\end{array}\right)
+
+  - Description: middle renders correctly
+    Snippets:
+      - \left\{ x \in \mathbb{R}\,\middle|\, x \geq 0\right\}
+      - \left( \frac{a}{b} \middle| c \right)^{\frac{d}{e}}
+      - \left( c \middle| \frac{a}{b} \right)^{\frac{d}{e}}
+      - \left( c \middle| \frac{a}{b} \middle\| e \right)^{\frac{d}{e}}
+
+Text:
+  - Description: Spaces should render, dash should be dashes
+    Snippets:
+      - \text{10 + 12}
+      - \text{log-in}
+      - \text{1_2}
+      - \text{1^2}
+      - \text{{}\{{}\}\a}
+      - \text{\\a{\}}}
+
+Fractions:
+  - Description: should properly scale
+    Snippets:
+    - \frac12\textstyle\frac12\scriptstyle\frac12\scriptscriptstyle\frac12
+    - \frac{\int x}{\int x}\textstyle\frac{\int x}{\int x}\scriptstyle\frac{\int x}{\int x}\scriptscriptstyle\frac{\int x}{\int x}
+
+  - Description: should center the numerator/denominator
+    Snippets:
+    - \frac{1}{x+y}\frac{x+y}{1}
+    - \textstyle\frac{1}{x+y}\frac{x+y}{1}
+    - \scriptstyle\frac{1}{x+y}\frac{x+y}{1}
+    - \scriptscriptstyle\frac{1}{x+y}\frac{x+y}{1}
+
+  - Description: should handle tall symbols
+    Snippets:
+    - \frac{x}{\int x}
+    - \frac{\int x}{x}
+    - \frac{\int x}{\int x}
+
+  - Description: should handle depth
+    Snippets:
+    - \frac{g}{x}\frac{x}{x}
+    - \frac{x}{g}\frac{x}{x}
+
+  - Description: should handle delimiters
+    Snippets:
+    - \binom{k}{p}\tbinom{k}{p}\dbinom{k}{p}
+    - \displaystyle\tbinom{k}{p}\textstyle\tbinom{k}{p}\scriptstyle\tbinom{k}{p}\scriptscriptstyle\tbinom{k}{p}
+    - \displaystyle\dbinom{k}{p}\textstyle\dbinom{k}{p}\scriptstyle\dbinom{k}{p}\scriptscriptstyle\dbinom{k}{p}
+
+  - Description: should handle display/textstyle
+    Snippets:
+    - \frac12\tfrac12\dfrac12
+    - \displaystyle\tfrac12\textstyle\tfrac12\scriptstyle\tfrac12\scriptscriptstyle\tfrac12
+    - \displaystyle\dfrac12\textstyle\dfrac12\scriptstyle\dfrac12\scriptscriptstyle\dfrac12
+
+  - Description: should interact with scripts properly (tests scaling)
+    Snippets:
+    - 2^\frac12 2^\tfrac12 2^\dfrac12
+    - 2^{2^\frac12} 2^{2^\tfrac12} 2^{2^\dfrac12}
+
+  - Description: should handle state changes (Issue 27)
+    Snippets:
+    - \frac\mathfrak{E}2
+
+Operators:
+  - Description: should display appropriate limits
+    Snippets:
+    - \displaystyle\int_0^1\int\nolimits_0^1\int\limits_0^1
+    - \textstyle\int_0^1\int\nolimits_0^1\int\limits_0^1
+    - \displaystyle\sum_0^1\sum\nolimits_0^1\sum\limits_0^1
+    - \textstyle\sum_0^1\sum\nolimits_0^1\sum\limits_0^1
+    - \scriptstyle\int_0^1\scriptscriptstyle\int_0^1
+
+  - Description: should be centered with respect to scripts
+    Snippets:
+    - \displaystyle\mathop{\mathrm{lim}}\limits_{x \to \infty}
+    - \displaystyle\sum_{a+b+c+d}^{a+b+c+d+e+f}
+
+  - Description: have same baseline with small scripts
+    Snippets:
+    - \mathop{\mathrm{lim}}\limits_{x \to \infty}\mathop{\mathrm{lim}}\limits_{M \to \infty}
+    - \mathop{\mathrm{lim\,sup}}\limits_{x \to \infty}\mathop{\mathrm{lim\,sup}}\limits_{M \to \infty}
+
+Accents:
+  - Description: should properly scale
+    Snippets:
+    - \hat A\textstyle\hat A\scriptstyle\hat A\scriptscriptstyle\hat A
+    - \hat{x+y}\textstyle\hat{x+y}\scriptstyle\hat{x+y}\scriptscriptstyle\hat{x+y}
+
+  - Description: should extend when possible
+    Snippets:
+    - \mathop{\overbrace{1+2+3+4+5+6}}\limits^{\mathrm{Arithmetic}} = 21
+
+  - Description: should typeset nucleus as cramped, and baseline unchanged.
+    Snippets:
+    - \hat{A^2} A^2
+
+  - Description: should recognize character escapes
+    Snippets:
+    - \`o\'o\^o\"o\~o\.o
+
+Radicals:
+  - Description: should properly scale
+    Snippets:
+    - \sqrt2\textstyle\sqrt2\scriptstyle\sqrt2\scriptscriptstyle\sqrt2
+    - \sqrt{\int x}\textstyle\sqrt{\int x}\scriptstyle\sqrt{\int x}\scriptscriptstyle\sqrt{\int x}
+
+Color:
+  - Description: should handle scripts and scale properly
+    Snippets:
+    - a^{\color{red}{2}}\textstyle a^{\color{red}{2}}\scriptstyle a^{\color{red}{2}}\scriptscriptstyle a^{\color{red}{2}}
+    - a_{\color{red}{2}}\textstyle a_{\color{red}{2}}\scriptstyle a_{\color{red}{2}}\scriptscriptstyle a_{\color{red}{2}}
+    - a^{\color{red}{2}}_{\color{blue}{2}}
+
+  - Description: should be transparent to operators and accents
+    Snippets:
+    - \color{red}{\int}_0^1
+    - \color{red}{\sum}_0^1
+    - \color{red}{\hat A}_0^1 A_0^1
+
+Samples:
+  - Description: should look good
+    Snippets:
+    - \iint \sqrt{1 + f^2(x,t,t)}\,\mathrm{d}x\mathrm{d}y\mathrm{d}t = \sum \xi(t)
+    - \Vert f \Vert_2 = \sqrt{\int f^2(x)\,\mathrm{d}x}
+    - \left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\right\} \mathrm{wat?}
+    - \hat A\grave A\bar A\tilde A\hat x \grave x\bar x\tilde x\hat y\grave y\bar y\tilde y
+    - \mathop{\overbrace{1+2+3+\unicodecdots+n}}\limits^{\mathrm{Arithmatic}} = \frac{n(n+1)}{2}
+    - \sigma = \left(\int f^2(x)\,\mathrm{d}x\right)^{1/2}
+    - \left\vert\sum_k a_k b_k\right\vert \leq \left(\sum_k a_k^2\right)^{\frac12}\left(\sum_k b_k^2\right)^{\frac12}
+    - f^{(n)}(z) = \frac{n!}{2\pi i} \oint \frac{f(\xi)}{(\xi - z)^{n+1}}\,\mathrm{d}\xi
+    - >
+      \frac{1}{\left(\sqrt{\phi\sqrt5} - \phi\right) e^{\frac{2}{5}\pi}}
+      = 1 + \frac{e^{-2\pi}}{1 + \frac{e^{-4\pi}}{1 + \frac{e^{-6\pi}}{1 + \frac{e^{-8\pi}}{1 + \unicodecdots}}}}
+    - \mathop{\mathrm{lim\,sup}}\limits_{x\rightarrow\infty}\ \mathop{\mathrm{sin}}(x)\mathrel{\mathop{=}\limits^?}1
+
+Spacing:
+  - Description: >
+      Rule 5. If the current item is a Bin atom, and if this was the first atom
+      in the list, or if the most recent previous atom was Bin, Op, Rel, Open,
+      or Punct, change the current Bin to Ord.
+    Snippets:
+    - +2
+    - ++2
+    - \int+2
+    - 1<+2
+    - (+2)
+    - .+2
+  - Description: >
+      Rule 6. If the current item is a Rel or Close or Punct atom, and if the
+      most recent previous atom was Bin, change that previous Bin to Ord.
+    Snippets:
+    - 1+<2
+    - 1+)
+    - 1-.
+  - Description: color should be transparent to atom spacing
+    Snippets:
+    - \color{red}{a} + b\ a\color{blue}{+}b\ \color{red}{+}\color{blue}{+}\color{red}{+}
+    - \blue{\int}+2
+    - 1\red{<}+2
+    - \blue{(}\red{+}2)
+  - Description: atom change items should space properly
+    Snippets:
+    - a\mathop{a}a\ aaa
+    - a\mathord{+}a\ a{+}a\ aaa
+    - a\mathrel{a}a\ aaa
+    - a\mathord{a}a\ aaa
+  - Description: sequence of letters should look properly spaced
+    Snippets:
+    - abcdefghijklmnopqrstuvwxyz
+    - azertyuiopqsdfghjklmwxcvbn
+    - arupdhlxbztiqfjmcneyosgkwv
+
+Arrays:
+  - Description: substack
+    Snippets:
+    - \int_{\substack{1\leq x\leq 3\\1\leq y\leq x}} f(x,y)\,dxdy
+    - X_{\substack{a=1\\b=1}}X_\substack{a=1\\b=1\\}
+    - X^{\substack{a=1\\b=1}}X^\substack{a=1\\b=1\\}
+    - \lim_\substack{1\leq i\leq n\\1\leq j\leq n\\1\leq k\leq n}
+  - Description: substack should center contents
+    Snippets:
+    - \substack{a\\xyz}
+  - Description: delimiters should size correctly
+    Snippets:
+    - \begin{pmatrix}1\\ 1\\ 1\\ 1\\ 1\end{pmatrix}
+    - \begin{vmatrix}1\\ 1\\ 1\\ 1\\ 1\end{vmatrix}
+    - \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
+    - \begin{bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{bmatrix}
+  - Description: array column alignment should be honored
+    Snippets:
+    - \begin{array}{l}a\\ aa\\ aaa\end{array}
+    - \begin{array}{c}a\\ aa\\ aaa\end{array}
+    - \begin{array}{r}a\\ aa\\ aaa\end{array}
+    - \begin{array}{lcr}lorem & ipsum & sit \\ amet & consectetur & adipscing \\ elit & set & do\end{array}
+  - Description: should display vertical bars and increase col separation accordingly
+    Snippets:
+    - \begin{array}{c|l} a & x \\ b & y \\ c & z \\ \end{array}
+    - \begin{array}{|r||c|} 1 & a \\ 2 & b \\ 3 & c \\ \end{array}
+    - \begin{array}{l|r} x & 1 \\ y & 2 \\ z & 3 \\ \end{array}
+    - \begin{array}{|c|c|} a & b \\ x & y \\ \end{array}
+  - Description: should render
+    Snippets:
+    - |
+      \begin{pmatrix}
+        1 & 2 & 3\\
+        4 & 5 & 6
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        1 \\
+        2 \\
+        3 \\
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        0 & 1 \\
+        -1 & 0
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        x \\
+        abcdef
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        x & abcdef \\
+        abcdef & x
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        a & b \\
+        c & d
+      \end{pmatrix}
+    - |
+      2 \begin{pmatrix}1\\ 2\\ 3\end{pmatrix}
+      \cdot\begin{pmatrix}1\\ 1\\ -1\end{pmatrix}
+      = \begin{pmatrix}0\\ 0\\ 0\end{pmatrix}
+    - |
+      \begin{pmatrix}
+        a_1 & b_1 \\
+        c_1 & d_1
+      \end{pmatrix}
+
+      \begin{pmatrix}
+        a_2 & b_2 \\
+        c_2 & d_2
+      \end{pmatrix}
+
+      =
+
+      \begin{pmatrix}
+        a_1 a_2 + b_1 c_2 & a_1 b_2 + b_1 d_2 \\
+        c_1 a_2 + d_1 c_2 & c_1 b_2 + d_1 d_2
+      \end{pmatrix}
+    - |
+      \begin{pmatrix}
+        a &
+      \begin{pmatrix}
+        a & b \\
+        c & d
+      \end{pmatrix} \\
+        c & d
+      \end{pmatrix}
+    - |
+      \frac{
+        \begin{pmatrix}
+          a & b \\
+          c & d
+        \end{pmatrix}
+      }{
+        \begin{pmatrix}
+          a & b \\
+          c & d
+        \end{pmatrix}
+      }
