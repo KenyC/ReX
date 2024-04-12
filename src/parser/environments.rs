@@ -57,24 +57,24 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 right_delimiter = None;
             },
             Environment::PMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : unicode_math::AtomType::Open});
-                right_delimiter = Some(Symbol {codepoint : ')', atom_type : unicode_math::AtomType::Close});
+                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : unicode_math::AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ')', atom_type : unicode_math::AtomType::Inner});
             },
             Environment::BMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : unicode_math::AtomType::Open});
-                right_delimiter = Some(Symbol {codepoint : ']', atom_type : unicode_math::AtomType::Close});
+                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : unicode_math::AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ']', atom_type : unicode_math::AtomType::Inner});
             },
             Environment::BbMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : unicode_math::AtomType::Open});
-                right_delimiter = Some(Symbol {codepoint : '}', atom_type : unicode_math::AtomType::Close});
+                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : unicode_math::AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '}', atom_type : unicode_math::AtomType::Inner});
             },
             Environment::VMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Open});
-                right_delimiter = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Close});
+                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Inner});
             },
             Environment::VvMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Open});
-                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Close});
+                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Inner});
             },
         }
 
