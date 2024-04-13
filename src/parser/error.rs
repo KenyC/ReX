@@ -58,6 +58,8 @@ pub enum ParseError {
     ExpectedMiddleDelimiter,
     /// The token immediately following `\middle` is not of atom type [`AtomType::Close`]
     ExpectedClosingDelimiter,
+    /// The command `\limits` and `\nolimits` must be placed right after an operator (or a macro that expands into something that ends in an operator)
+    LimitControlSequenceMustBeAfterOperator,
 }
 
 

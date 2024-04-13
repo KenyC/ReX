@@ -15,6 +15,8 @@ pub enum PrimitiveControlSequence {
     ColorLit(RGBA),
     /// Represents LaTeX `\frac{..}`
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
+    /// Represents `\limits` and `\nolimits` control sequences (cf [here](https://texfaq.org/FAQ-limits))
+    Limits(bool),
     DelimiterSize(u8, AtomType),
     Kerning(AnyUnit),
     StyleCommand(LayoutStyle),
@@ -164,6 +166,10 @@ impl PrimitiveControlSequence {
             "left"    => Self::Left,
             "middle"  => Self::Middle,
             "right"   => Self::Right,
+
+            // Limits
+            "limits"   => Self::Limits(true),
+            "nolimits" => Self::Limits(false),
 
             _ => return None
         })

@@ -73,7 +73,7 @@ fn make_equation(category: &str, description: &str, equation: &str, ctx: &FontCo
     const FONT_SIZE : f64 = 16.0;
     let description = format!("{}: {}", category, description);
 
-    let parse_nodes = rex::parser::parse(equation).unwrap();
+    let parse_nodes = rex::parser::parse(equation).expect(&format!("Error with {}", equation));
     let layout_settings = LayoutSettings::new(&ctx, FONT_SIZE, Style::Display);
     let mut grid = Grid::new();
     grid.insert(0, 0, rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap().as_node());

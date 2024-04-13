@@ -285,6 +285,22 @@ impl ParseNode {
         }
     }
 
+    /// sets atom type
+    pub fn set_atom_type(&mut self, at: AtomType) {
+        match *self {
+            ParseNode::Symbol(ref mut sym) => sym.atom_type = at,
+            ParseNode::Scripts(Scripts { ref mut base, .. }) => {
+                if let Some(ref mut b) = *base {
+                    b.set_atom_type(at);
+                }
+            }
+            ParseNode::AtomChange(ref mut node) => node.at = at,
+            ParseNode::Stack(Stack { ref mut atom_type, .. }) => *atom_type = at,
+            _ => (),
+        }
+    }
+
+
     /// Get atom type of parse node
     pub fn atom_type(&self) -> AtomType {
         match *self {

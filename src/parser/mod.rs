@@ -21,7 +21,6 @@ use crate::parser::control_sequence::parse_color;
 use crate::parser::nodes::Delimited;
 use crate::parser::nodes::GenFraction;
 use crate::parser::nodes::PlainText;
-use crate::parser::textoken::InputProcessor;
 use crate::parser::textoken::TexToken;
 use crate::parser::control_sequence::PrimitiveControlSequence;
 
@@ -288,6 +287,20 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             }))
 
                         },
+                        Limits(add_limits) => {
+                            let node =
+                                results
+                                    .last_mut()
+                                    .ok_or(ParseError::LimitControlSequenceMustBeAfterOperator)?
+                            ;
+                            if let AtomType::Operator(_) = node.atom_type() {
+                                node.set_atom_type(AtomType::Operator(add_limits))
+                            }
+                            else {
+                                return Err(ParseError::LimitControlSequenceMustBeAfterOperator);
+                            }
+
+                        }
                         Text => {
                             let text_group = self.token_iter.capture_group()?;
                             let text = tokens_as_string(text_group.into_iter())?;

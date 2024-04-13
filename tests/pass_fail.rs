@@ -70,7 +70,7 @@ fn pass_fail() {
     }
 }
 
-fn render<'a, 'f, 'b>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str) -> Result<String, Error<'b>> {
+fn render<'a, 'f, 'b>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str) -> Result<String, Error> {
     // parsing
     let parse_nodes = parse(string)?;
 
