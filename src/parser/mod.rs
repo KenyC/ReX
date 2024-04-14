@@ -103,7 +103,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             match token {
                 TexToken::Superscript | TexToken::Subscript  => {
                     let is_superscript = token == TexToken::Superscript;
-                    let group = self.parse_required_argument_as_nodes()?;
+                    let group = self.parse_required_argument_as_nodes().map_err(|e| match e {
+                        ParseError::ExpectedToken => ParseError::MissingSubSuperScript,
+                        e => e,
+                    })?;
                     let mut last_node = results.pop();
                     let new_node = match last_node {
                         Some(ParseNode::Scripts(mut scripts)) =>{

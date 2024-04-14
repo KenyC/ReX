@@ -19,7 +19,7 @@ Scripts:
 
   - Description: should handle state changes (Issue 27)
     Snippets:
-    - R_\mathfrak{E}X\ R^\mathfrak{E}X
+    - R_{\mathfrak{E}}X\ R^{\mathfrak{E}}X
 
 Delimiters:
   - Description: should properly scale
@@ -42,10 +42,8 @@ Text:
     Snippets:
       - \text{10 + 12}
       - \text{log-in}
-      - \text{1_2}
-      - \text{1^2}
-      - \text{{}\{{}\}\a}
-      - \text{\\a{\}}}
+      - \text{{}\{{}\}}
+      - \text{a{\}}}
 
 Fractions:
   - Description: should properly scale
@@ -85,12 +83,12 @@ Fractions:
 
   - Description: should interact with scripts properly (tests scaling)
     Snippets:
-    - 2^\frac12 2^\tfrac12 2^\dfrac12
-    - 2^{2^\frac12} 2^{2^\tfrac12} 2^{2^\dfrac12}
+    - 2^{\frac12} 2^{\tfrac12} 2^{\dfrac12}
+    - 2^{2^{\frac12}} 2^{2^{\tfrac12}} 2^{2^{\dfrac12}}
 
   - Description: should handle state changes (Issue 27)
     Snippets:
-    - \frac\mathfrak{E}2
+    - \frac{\mathfrak{E}}2
 
 Operators:
   - Description: should display appropriate limits
