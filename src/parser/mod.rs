@@ -248,5 +248,20 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\int\nolimits_1^2"));
         insta::assert_debug_snapshot!(parse(r"\bigcap\nolimits_1^2"));
         insta::assert_debug_snapshot!(parse(r"a\limits_1^2"));
+
+
+        insta::assert_debug_snapshot!(parse(r"\mathop{\overbrace{1}}\limits^{2}"));
+    }
+
+
+    #[test]
+    fn snapshot_accents() {
+        insta::assert_debug_snapshot!(parse(r"\hat{A^2}"));
+        insta::assert_debug_snapshot!(parse(r"\`o"));
+        insta::assert_debug_snapshot!(parse(r"\'o"));
+        insta::assert_debug_snapshot!(parse(r"\^o"));
+        insta::assert_debug_snapshot!(parse(r"\~o"));
+        insta::assert_debug_snapshot!(parse(r"\.o"));
+        insta::assert_debug_snapshot!(parse(r"\overbrace{1}"));
     }
 }

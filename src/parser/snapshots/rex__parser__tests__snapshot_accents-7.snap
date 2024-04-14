@@ -1,0 +1,24 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"\\overbrace{1}\")"
+---
+Ok(
+    [
+        Accent(
+            Accent {
+                symbol: Symbol {
+                    codepoint: '⏞',
+                    atom_type: Over,
+                },
+                nucleus: [
+                    Symbol(
+                        Symbol {
+                            codepoint: '1',
+                            atom_type: Alpha,
+                        },
+                    ),
+                ],
+            },
+        ),
+    ],
+)
