@@ -18,6 +18,7 @@ use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
+use crate::parser::nodes::Accent;
 use crate::parser::nodes::Delimited;
 use crate::parser::nodes::GenFraction;
 use crate::parser::nodes::PlainText;
@@ -394,8 +395,21 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             return Ok(List { nodes: results, group: GroupKind::RightDelimiter });
                         },
                         SymbolCommand(mut symbol) => {
-                            self.style_symbol_with_current_style(&mut symbol);
-                            results.push(ParseNode::Symbol(symbol));
+                            match symbol.atom_type {
+                                  AtomType::Accent 
+                                | AtomType::Over   
+                                | AtomType::Under  => {
+                                    let nucleus = self.parse_required_argument_as_nodes()?;
+                                    results.push(ParseNode::Accent(Accent {
+                                        symbol,
+                                        nucleus,
+                                    }));
+                                },
+                                _ => {
+                                    self.style_symbol_with_current_style(&mut symbol);
+                                    results.push(ParseNode::Symbol(symbol));
+                                },
+                            }
                         },
                     }
                 },
