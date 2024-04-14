@@ -77,4 +77,5 @@ cairo-rs = {version = "*", features = ["svg", "png"]}
 base64 = "0.21.0"
 rand = "0.8.5"
 insta = "1.31.0"
+similar = "2.5.0"
 
