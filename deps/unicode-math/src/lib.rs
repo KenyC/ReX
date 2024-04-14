@@ -13,6 +13,10 @@ pub enum AtomType {
     BotAccentWide,
     Alpha,
     Fence,
+    /// A mathematical operator like `\sum`, 
+    /// the boolean parameter sets whether limits are positioned like exponents or not.
+    /// For instance, in $\sum_0^1$, the 0 and 1 could be placed above and below ∑ (boolean true)
+    /// or like regular exponents, e.g. ∑³, (boolean false).
     Operator(bool),
     Over,
     Under,

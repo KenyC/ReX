@@ -241,4 +241,12 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\mathrm{\frac 21}"));
         insta::assert_debug_snapshot!(parse(r"\mathbb aa"));
     }
+
+    #[test]
+    fn snapshot_limits() {
+        insta::assert_debug_snapshot!(parse(r"\sum\limits_1^2"));
+        insta::assert_debug_snapshot!(parse(r"\int\nolimits_1^2"));
+        insta::assert_debug_snapshot!(parse(r"\bigcap\nolimits_1^2"));
+        insta::assert_debug_snapshot!(parse(r"a\limits_1^2"));
+    }
 }
