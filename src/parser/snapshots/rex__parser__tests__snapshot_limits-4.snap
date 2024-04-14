@@ -3,5 +3,5 @@ source: src/parser/mod.rs
 expression: "parse(r\"a\\limits_1^2\")"
 ---
 Err(
-    LimitsMustFollowOperator,
+    LimitControlSequenceMustBeAfterOperator,
 )

@@ -181,11 +181,17 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             results.push(ParseNode::Radical(nodes::Radical { inner, }));
                         },
                         Rule => {
-                            let width_tokens = self.token_iter.capture_group()?;
+                            let width_tokens = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let width_string = tokens_as_string(width_tokens.into_iter())?;
                             let width = parse_dimension(&width_string)?;
 
-                            let height_tokens = self.token_iter.capture_group()?;
+                            let height_tokens = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let height_string = tokens_as_string(height_tokens.into_iter())?;
                             let height = parse_dimension(&height_string)?;
 
@@ -194,7 +200,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             }))
                         },
                         Color => {
-                            let color_name_group = self.token_iter.capture_group()?;
+                            let color_name_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let color = parse_color(color_name_group.into_iter())?;
                             let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
                             results.push(ParseNode::Color(nodes::Color {
@@ -260,7 +269,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             }));
                         },
                         SubStack(atom_type) => {
-                            let group = self.token_iter.capture_group()?;
+                            let group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
 
                             let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
                             forked_parser.current_style = self.current_style;
@@ -302,21 +314,30 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
                         }
                         Text => {
-                            let text_group = self.token_iter.capture_group()?;
+                            let text_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let text = tokens_as_string(text_group.into_iter())?;
                             results.push(ParseNode::PlainText(PlainText {
                                 text,
                             }));
                         },
                         BeginEnv => {
-                            let env_name_group = self.token_iter.capture_group()?;
+                            let env_name_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
                             let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
                             let array = self.parse_environment(env)?;
                             results.push(ParseNode::Array(array));
                         },
                         EndEnv => {
-                            let env_name_group = self.token_iter.capture_group()?;
+                            let env_name_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
                             let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
 

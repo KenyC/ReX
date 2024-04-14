@@ -39,7 +39,12 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         let mut col_format = None;
 
         if let Environment::Array = env {
-            let tokens = self.token_iter.capture_group()?;
+            let tokens = self.token_iter
+                .capture_group()
+                .map_err(|e| match e {
+                    ParseError::ExpectedToken => ParseError::MissingColFormatForArrayEnvironment,
+                    _ => e,
+                })?;
             col_format = Some(tokens_as_column_format(tokens.into_iter())?);
         }
         let rows = self.parse_array_body(env)?;

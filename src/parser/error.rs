@@ -41,6 +41,8 @@ pub enum ParseError {
     ExpectedChars,
     /// A primitive control sequence needs a group as argument but can't find one (e.g. `{\sqrt}+1`).
     MissingArgForCommand(Box<str>),
+    /// `\begin{array}` must be followed by a group describing column format (e.g. `\begin{array}{cc}`)
+    MissingColFormatForArrayEnvironment,
     /// There either is more than one subscript or more than one superscript attached to the same node.
     TooManySubscriptsOrSuperscripts,
     /// The command `\rule` expects an argument of the form `1.3pt` (number followed by dimension). The dimension may not be anything but `em` or `pt` at the moment.
