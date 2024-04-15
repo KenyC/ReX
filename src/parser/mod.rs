@@ -668,6 +668,7 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\text{abc}def"));
         insta::assert_debug_snapshot!(parse(r"\text{\{\}1}1}"));
         insta::assert_debug_snapshot!(parse(r"\text{}}"));
+        insta::assert_debug_snapshot!(parse(r"\text{a{\}}}"));
     }
 
     #[test]
