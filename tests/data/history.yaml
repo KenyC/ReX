@@ -5862,7 +5862,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
 "should look good - \\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\\right\\} \\mathrm{wat?}":
   tex: "\\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\\right\\} \\mathrm{wat?}"
   description: "Samples: should look good"
-  width: 94.23289309450323
+  width: 94.23289309450321
   height: 74.77760355174542
   render:
     commands:
