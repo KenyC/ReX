@@ -39,8 +39,10 @@ const END: &'static str = r"</body></html>";
 fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
     write_equation_header(f, old);
 
-    let render_old = &old.img_render;
-    let render_new = &new.img_render;
+
+    // TODO this is first approximation ; we should hanle error cases here
+    let render_old = std::fs::read(&old.img_render_path).unwrap();
+    let render_new = std::fs::read(&new.img_render_path).unwrap();
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
@@ -66,7 +68,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
         "#,
         engine.encode(&render_old),
         engine.encode(&render_new),
-        engine.encode(&diff_img(render_old, render_new)),
+        engine.encode(&diff_img(&render_old, &render_new)),
     ).unwrap();
 
 }
@@ -74,7 +76,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
 fn write_equation<W: Write>(f: &mut W, eq: &Equation,) {
     write_equation_header(f, eq);
 
-    let render = &eq.img_render;
+    let render = std::fs::read(&eq.img_render_path).unwrap();
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
