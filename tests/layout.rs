@@ -128,13 +128,19 @@ fn make_equation(
 
 
     // Some tests display empty stuff ; we don't want to panic then
-    if draw_target.write_png(&img_render_path).is_err() {
+    let final_image_path_buffer;
+    // Some tests display empty stuff ; we don't want to panic then
+    if draw_target.write_png(&img_render_path).is_ok() {
+        final_image_path_buffer = Some(img_render_path.to_owned());
+
+    }
+    else {
         // Sometimes, a render is empty
         // Raqote throws an error but it is ok to ignore empty renders
         // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
         // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
         // png error type...
-        img_render_path = Path::new("../resources/couldnt_render.png");
+        final_image_path_buffer = None;
     }
 
     Equation { 
@@ -142,7 +148,7 @@ fn make_equation(
         description, 
         width, height,
         render: debug_render, 
-        img_render_path : img_render_path.to_owned(), 
+        img_render_path : final_image_path_buffer, 
     }
 }
 

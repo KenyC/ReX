@@ -17,7 +17,7 @@ pub struct Equation {
     pub width:            f64,
     pub height:           f64,
     pub render:           DebugRender,
-    pub img_render_path:  PathBuf,
+    pub img_render_path:  Option<PathBuf>,
 }
 impl Equation {
     pub fn same_as(&self, other : &Self) -> bool {

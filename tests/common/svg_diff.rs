@@ -41,8 +41,9 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
 
 
     // TODO this is first approximation ; we should hanle error cases here
-    let render_old = std::fs::read(&old.img_render_path).unwrap();
-    let render_new = std::fs::read(&new.img_render_path).unwrap();
+    let render_old = std::fs::read(old.img_render_path.as_ref().unwrap().as_path()).unwrap();
+    let render_new = std::fs::read(new.img_render_path.as_ref().unwrap().as_path()).unwrap();
+
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
@@ -76,7 +77,14 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
 fn write_equation<W: Write>(f: &mut W, eq: &Equation,) {
     write_equation_header(f, eq);
 
-    let render = std::fs::read(&eq.img_render_path).unwrap();
+    let render : Vec<u8>;
+    if let Some(path) = eq.img_render_path.as_ref() {
+        eprintln!("{}", path.as_os_str().to_str().unwrap());
+        render = std::fs::read(path).unwrap();
+    }
+    else {
+        render = include_bytes!("../../resources/couldnt_render.png").to_vec();
+    }
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
