@@ -60,13 +60,23 @@ const END: &'static str = r##"
 fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
     write_equation_header(f, old);
 
+    let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
-    let render_old = &old.img_render;
-    let render_new = &new.img_render;
+    let render_old = old.img_render_path.as_ref()
+        .map(|path| std::fs::read(path).expect("Couldn't open file"));
+    let render_new = new.img_render_path.as_ref()
+        .map(|path| std::fs::read(path).expect("Couldn't open file"));
+
+
+
+
+
+    // TODO this is first approximation ; we should hanle error cases here
+
+
 
     let diff_raw = diff_debug(&old.render, &new.render);
 
-    let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
     writeln!(
         f,
@@ -83,15 +93,30 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
         </tr>
         </tbody>
         </table>
-        <table class="diff-array">
-        <thead><tr><td>Diff</td></tr></thead>
-        <tbody><tr><td><img src="data:image/png;base64,{}"></td></tr></tbody>
-        </table>
         "#,
-        engine.encode(&render_old),
-        engine.encode(&render_new),
-        engine.encode(&diff_img(render_old, render_new)),
+        engine.encode(render_old.as_ref().map(Vec::as_slice).unwrap_or_else(|| include_bytes!("../../resources/couldnt_render.png"))),
+        engine.encode(render_new.as_ref().map(Vec::as_slice).unwrap_or_else(|| include_bytes!("../../resources/couldnt_render.png"))),
     ).unwrap();
+
+    if let Some((old_img, new_img)) = Option::zip(render_old, render_new) {
+        writeln!(
+            f,
+            r#"
+            <table class="diff-array">
+            <thead><tr><td>Diff</td></tr></thead>
+            <tbody><tr><td><img src="data:image/png;base64,{}"></td></tr></tbody>
+            </table>
+            "#,
+            engine.encode(&diff_img(&old_img, &new_img)),
+        ).unwrap();
+    }
+    else {
+        writeln!(
+            f,
+            "<div><strong>One of the image was an empty render.</strong></div>"
+        ).unwrap();
+    }
+
     writeln!(f, r#"
         <button type="button" class="collapsible">See raw diff between renders</button>
         <pre class="content">{}</pre>
@@ -127,7 +152,14 @@ fn diff_debug<D : std::fmt::Debug>(x : &D, y : &D) -> String {
 fn write_equation<W: Write>(f: &mut W, eq: &Equation,) {
     write_equation_header(f, eq);
 
-    let render = &eq.img_render;
+    let render : Vec<u8>;
+    if let Some(path) = eq.img_render_path.as_ref() {
+        eprintln!("{}", path.as_os_str().to_str().unwrap());
+        render = std::fs::read(path).unwrap();
+    }
+    else {
+        render = include_bytes!("../../resources/couldnt_render.png").to_vec();
+    }
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 

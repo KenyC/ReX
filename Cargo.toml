@@ -69,7 +69,6 @@ version="0.4.8"
 [dev-dependencies]
 sdl2 = "*"
 serde_yaml = "0.7"
-bincode = "1.2.1"
 env_logger = "*"
 clap = {version = "4.2.4", features = ["derive"]}
 image = "0.24.6"

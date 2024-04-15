@@ -3,6 +3,8 @@
 // #[macro_use]
 // extern crate serde_derive;
 
+use std::path::{Path, PathBuf};
+
 use rex::{GraphicsBackend, FontBackend, Backend};
 
 
@@ -10,12 +12,12 @@ use rex::{GraphicsBackend, FontBackend, Backend};
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Equation {
-    pub tex:         String,
-    pub description: String,
-    pub width:       f64,
-    pub height:      f64,
-    pub render:      DebugRender,
-    pub img_render:  Vec<u8>,
+    pub tex:              String,
+    pub description:      String,
+    pub width:            f64,
+    pub height:           f64,
+    pub render:           DebugRender,
+    pub img_render_path:  Option<PathBuf>,
 }
 impl Equation {
     pub fn same_as(&self, other : &Self) -> bool {
