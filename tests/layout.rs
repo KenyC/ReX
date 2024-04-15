@@ -3,7 +3,6 @@ extern crate rex;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_yaml;
-extern crate bincode;
 
 use std::convert::AsRef;
 use std::hash::Hash;
@@ -54,7 +53,7 @@ fn collect_tests<P: AsRef<Path>>(path: P) -> Tests {
 fn load_history<P: AsRef<Path>>(path: P) -> TestResults {
     let file = File::open(path.as_ref()).expect("failed to open test collection");
     let mut reader = BufReader::new(file);
-    let tests: TestResults = bincode::deserialize_from(&mut reader)
+    let tests: TestResults = serde_yaml::from_reader(&mut reader)
         .expect("history file not understood - did you change the structure used for tests?");
 
     tests
