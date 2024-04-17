@@ -48,8 +48,22 @@ pub enum GroupKind {
     EndOfInput,
     MiddleDelimiter,
     RightDelimiter,
-
 }
+
+impl std::fmt::Display for GroupKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GroupKind::BraceGroup      => write!(f, "}}"),
+            GroupKind::Env(_)          => write!(f, r"\end"),
+            GroupKind::Align           => write!(f, "&"),
+            GroupKind::NewLine         => write!(f, r"\\"),
+            GroupKind::EndOfInput      => write!(f, "end of input"),
+            GroupKind::MiddleDelimiter => write!(f, r"\middle"),
+            GroupKind::RightDelimiter  => write!(f, r"\right"),
+        }
+    }
+}
+
 
 struct List {
     nodes : Vec<ParseNode>,
@@ -333,7 +347,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 _ => e,
                             })?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
-                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
+                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironment(env_name.into_boxed_str()))?;
                             let array = self.parse_environment(env)?;
                             results.push(ParseNode::Array(array));
                         },
@@ -343,7 +357,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 _ => e,
                             })?;
                             let env_name = tokens_as_string(env_name_group.into_iter())?;
-                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironmen(env_name.into_boxed_str()))?;
+                            let env = Environment::from_name(&env_name).ok_or_else(|| ParseError::UnrecognizedEnvironment(env_name.into_boxed_str()))?;
 
                             return Ok(List { nodes: results, group: GroupKind::Env(env) });
                         },

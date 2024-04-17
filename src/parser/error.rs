@@ -50,7 +50,7 @@ pub enum ParseError {
     /// The command `\rule` expects an argument of the form `1.3pt` (number followed by dimension). The dimension may not be anything but `em` or `pt` at the moment.
     UnrecognizedDimension(Box<str>),
     /// The string in `\begin{..}` or `\end{..}` is not a recognized environment. Cf [Environment] for the list of supported LaTeX environments.
-    UnrecognizedEnvironmen(Box<str>),
+    UnrecognizedEnvironment(Box<str>),
     /// The argument of `\begin{array}{..}` is not of the correct form: 
     /// it can only contain the characters `c`, `l`, `r`, whitespaces, braces, `|`  or macros that ultimately expand to one of these.
     UnrecognizedArrayColumnFormat,
@@ -70,6 +70,54 @@ pub enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::ParseError::*;
-        todo!()
+        match self {
+            UnrecognizedSymbol(character) => 
+                write!(f, "Symbol '{}' is not recognized", character),
+            UnrecognizedControlSequence(control_seq) => 
+                write!(f, "Unknown control sequence '\\{}'", control_seq),
+            UnrecognizedColor(color_arg) => 
+                write!(f, "'{}' is not a recognized color", color_arg),
+            MissingArgForMacro { expected, got } => 
+                write!(f, "Expected {} arguments for custom macros, got {}", expected, got),
+            UnmatchedBrackets => 
+                write!(f, "Macro arguments has unmatched bracket"),
+            UnexpectedEndGroup { expected, got } => {
+                let expecteds = expected
+                    .into_iter()
+                    .map(|group| format!("{}", group))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+                ;
+                write!(f, "Unexpected {}, was expecting [{}]", got, expecteds)
+            }
+            ExpectedToken => 
+                write!(f, "Expected token in macro expansion"),
+            ExpectedChars => 
+                write!(f, "Command argument should be a plain string"),
+            MissingArgForCommand(control_seq) => 
+                write!(f, "One argument is missing for '\\{}'", control_seq),
+            MissingColFormatForArrayEnvironment => 
+                write!(f, "Column format is missing for \\begin{{array}}"),
+            MissingSubSuperScript => 
+                write!(f, "Missing group after _ or ^"),
+            TooManySubscriptsOrSuperscripts => 
+                write!(f, "More than one subscript or more than one superscript"),
+            UnrecognizedDimension(dimension) => 
+                write!(f, "'{}' cannot be recognized as a dimension", dimension),
+            UnrecognizedEnvironment(env_name) => 
+                write!(f, "Unknown environment '{}'", env_name),
+            UnrecognizedArrayColumnFormat => 
+                write!(f, "Unrecognized character in column format"),
+            ExpectedDelimiter => 
+                write!(f, r"Token after '\left', '\middle' or '\right' is a not symbol"),
+            ExpectedOpenDelimiter => 
+                write!(f, r"Token after '\left' is a not an open symbol"),
+            ExpectedMiddleDelimiter => 
+                write!(f, r"Token after '\middle' is a not a middle symbol"),
+            ExpectedClosingDelimiter => 
+                write!(f, r"Token after '\end' is a not a middle symbol"),
+            LimitControlSequenceMustBeAfterOperator => 
+                write!(f, r"'\limits' or '\nolimits' isn't placed after an operator"),
+        }
     }
 }
