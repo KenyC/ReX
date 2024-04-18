@@ -24,7 +24,7 @@ pub enum PrimitiveControlSequence {
     TextOperator(&'static str, bool),
     SubStack(AtomType),
     SymbolCommand(Symbol),
-    StyleChange { family: Option<Family>, weight: Option<Weight> },
+    StyleChange { family: Option<Family>, weight: Option<Weight>, takes_arg : bool },
     BeginEnv,
     EndEnv,
     Left,
@@ -62,15 +62,22 @@ impl PrimitiveControlSequence {
             "sqrt" => Self::Radical,
 
             // Style-change command
-            "mathbf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold)   },
-            "mathit"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic) },
-            "mathrm"   => Self::StyleChange {family: Some(Family::Roman),      weight: None                 },
-            "mathscr"  => Self::StyleChange {family: Some(Family::Script),     weight: None                 },
-            "mathfrak" => Self::StyleChange {family: Some(Family::Fraktur),    weight: None                 },
-            "mathbb"   => Self::StyleChange {family: Some(Family::Blackboard), weight: None                 },
-            "mathsf"   => Self::StyleChange {family: Some(Family::SansSerif),  weight: None                 },
-            "mathtt"   => Self::StyleChange {family: Some(Family::Monospace),  weight: None                 },
-            "mathcal"  => Self::StyleChange {family: Some(Family::Script),     weight: None                 },
+            "mathbf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),   takes_arg: true, },
+            "mathit"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic), takes_arg: true, },
+            "mathrm"   => Self::StyleChange {family: Some(Family::Roman),      weight: None,                 takes_arg: true, },
+            "mathscr"  => Self::StyleChange {family: Some(Family::Script),     weight: None,                 takes_arg: true, },
+            "mathfrak" => Self::StyleChange {family: Some(Family::Fraktur),    weight: None,                 takes_arg: true, },
+            "mathbb"   => Self::StyleChange {family: Some(Family::Blackboard), weight: None,                 takes_arg: true, },
+            "mathsf"   => Self::StyleChange {family: Some(Family::SansSerif),  weight: None,                 takes_arg: true, },
+            "mathtt"   => Self::StyleChange {family: Some(Family::Monospace),  weight: None,                 takes_arg: true, },
+            "mathcal"  => Self::StyleChange {family: Some(Family::Script),     weight: None,                 takes_arg: true, },
+
+            "bf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),   takes_arg: false, },
+            "it"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic), takes_arg: false, },
+            "rm"   => Self::StyleChange {family: Some(Family::Roman),      weight: None,                 takes_arg: false, },
+            "sf"   => Self::StyleChange {family: Some(Family::SansSerif),  weight: None,                 takes_arg: false, },
+            "tt"   => Self::StyleChange {family: Some(Family::Monospace),  weight: None,                 takes_arg: false, },
+            "cal"  => Self::StyleChange {family: Some(Family::Script),     weight: None,                 takes_arg: false, },
 
 
             // Delimiter size commands

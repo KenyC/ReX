@@ -122,7 +122,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         ParseError::ExpectedToken => ParseError::MissingSubSuperScript,
                         e => e,
                     })?;
-                    let mut last_node = results.pop();
+                    let last_node = results.pop();
                     let new_node = match last_node {
                         Some(ParseNode::Scripts(mut scripts)) =>{
                             let sub_or_super_script = scripts.get_script(is_superscript);
@@ -166,7 +166,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 },
                 TexToken::WhiteSpace => { },
                 TexToken::BeginGroup => {
+                    // Font changes made within a group should not affect what happens outside of it
+                    let old_style = self.current_style;
                     let List { nodes, group } = self.parse_until_end_of_group()?;
+                    self.current_style = old_style;
                     if group != GroupKind::BraceGroup {
                         return Err(ParseError::UnexpectedEndGroup{expected: Box::from([GroupKind::BraceGroup]), got: group});
                     }
@@ -236,7 +239,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 inner,
                             }));
                         },
-                        StyleChange { family, weight } => {
+                        StyleChange { family, weight, takes_arg } => {
                             let old_style = self.current_style;
                             if let Some(family) = family {
                                 self.current_style = self.current_style.with_family(family);
@@ -244,9 +247,12 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             if let Some(weight) = weight {
                                 self.current_style = self.current_style.with_weight(weight);
                             }
-                            let nodes = self.parse_required_argument_as_nodes()?;
-                            self.current_style = old_style;
-                            results.push(ParseNode::Group(nodes));
+
+                            if takes_arg {
+                                let nodes = self.parse_required_argument_as_nodes()?;
+                                self.current_style = old_style;
+                                results.push(ParseNode::Group(nodes));
+                            }
                         }
                         Fraction(left_delimiter, right_delimiter, bar_thickness, style) => {
                             let numerator   = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
@@ -803,6 +809,13 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\mathrm{\mathtt{a}}"));
         insta::assert_debug_snapshot!(parse(r"\mathrm{\frac 21}"));
         insta::assert_debug_snapshot!(parse(r"\mathbb aa"));
+
+
+        // In-place style changes
+        insta::assert_debug_snapshot!(parse(r"a{\rm a}a"));
+        insta::assert_debug_snapshot!(parse(r"a\rm a\bf a"));
+        insta::assert_debug_snapshot!(parse(r"a\rm a\bf a"));
+        insta::assert_debug_snapshot!(parse(r"a{a\tt a}a"));
     }
 
     #[test]
