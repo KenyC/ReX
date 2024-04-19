@@ -605,6 +605,9 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\alpha"));
         // should object to cyrillic characters
         insta::assert_debug_snapshot!(parse(r"Ж"));
+        // Supplemental symbols
+        insta::assert_debug_snapshot!(parse(r"\le"));
+        insta::assert_debug_snapshot!(parse(r"\ge"));
     }
 
     #[test]

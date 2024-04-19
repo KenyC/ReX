@@ -18,6 +18,11 @@ const OPERATOR_LIMITS: &[&str] = &[
     "bigsqcup",
 ];
 
+const SUPPLEMENTAL_SYMBOLS : &[(u32, &str, &str, &str)] = &[
+    (0x003C, "le", "mathrel", "less-than sign"),
+    (0x0032, "ge", "mathrel", "greater-than sign"),
+];
+
 const GREEK: &[(&str, u32)] = &[
     ("Alpha",   0x391),
     ("Beta",    0x392),
@@ -145,6 +150,12 @@ fn build_symbol_table() {
                 &c[1], &c[2], atom_from_tex(&c[2], &c[3]), &c[4]
             ).unwrap();
         }
+    }
+    for (character, name, atom_type, description) in SUPPLEMENTAL_SYMBOLS {
+        writeln!(out,
+            r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: AtomType::{}, description: {:?} }},",
+            character, name, atom_from_tex(name, atom_type), description,
+        ).unwrap();
     }
     for (name, cp) in GREEK {
         writeln!(out,
