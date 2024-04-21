@@ -199,6 +199,12 @@ Spacing:
     - azertyuiopqsdfghjklmwxcvbn
     - arupdhlxbztiqfjmcneyosgkwv
 
+Aligned:
+  - Description: aligned
+    Snippets:
+      - \begin{aligned} a=&\frac{1}{2}\sqrt{1-e_3^2} \cos(\gamma),\\ b=&\frac{1}{2}\sqrt{1-e_3^2} \sin(\gamma),\\ c=&\frac{1}{2}\Big(1+e_3\Big).\end{aligned}
+
+
 Arrays:
   - Description: substack
     Snippets:

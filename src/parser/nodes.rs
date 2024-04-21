@@ -51,29 +51,19 @@ pub enum ParseNode {
 }
 
 
-/// The collection of column formatting for an array.  This includes the vertical
-/// alignment for each column in an array along with optional vertical bars
+/// The collection of column formatting for an array.  This includes the horizontal
+/// alignment for each column in an array along with optional vertical bars, and nodes to include between each column
 /// positioned to the right of the last column.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ArrayColumnsFormatting {
     /// The formatting specifications for each column
-    pub columns: Vec<ArraySingleColumnFormatting>,
+    pub alignment: Vec<ArrayColumnAlign>,
 
-    /// The number of vertical marks after the last column.
-    pub n_vertical_bars_before: u8,
+    /// Separators between each column, could be vertical bars or
+    pub separators: Vec<Vec<ColSeparator>>,
 }
 
 
-/// Formatting options for a single column.  This includes both the horizontal
-/// alignment of the column (clr), and optional vertical bar spacers (on the left).
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ArraySingleColumnFormatting {
-    /// The alignment of the column.  Defaults to Centered.
-    pub alignment: ArrayColumnAlign,
-
-    /// The number of vertical marks before column.
-    pub n_vertical_bars_after: u8,
-}
 
 /// Array contents are the body of the enviornment.  Columns are seperated
 /// by `&` and a newline is terminated by either:
@@ -110,7 +100,7 @@ impl Default for ArrayColumnAlign {
 /// An array of nodes as created by e.g. `\begin{array}{c} .. \end{array}` or `\begin{pmatrix} .. \end{pmatrix}`
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array {
-    /// The formatting arguments (clr) for each row.  Default: center.
+    /// The alignment arguments (clr) for each row, plus separators (bars and @-expressions).  Default: center.
     pub col_format: ArrayColumnsFormatting,
 
     /// A collection of rows.  Each row consists of one `Vec<Expression>`.
@@ -121,6 +111,14 @@ pub struct Array {
 
     /// The right delimiter for the array (optional).
     pub right_delimiter: Option<Symbol>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ColSeparator {
+    /// A certain number of vertical bars
+    VerticalBars(u8),
+    /// Nodes to be put between every column
+    AtExpressions(Vec<ParseNode>),
 }
 
 

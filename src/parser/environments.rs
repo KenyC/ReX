@@ -1,7 +1,7 @@
 use crate::parser::error::ParseError;
 use crate::parser::{tokens_as_string, List};
 
-use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ArraySingleColumnFormatting};
+use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ColSeparator};
 use super::symbols::Symbol;
 use super::{error::ParseResult, nodes::CellContent, textoken::TexToken, Parser};
 use super::GroupKind;
@@ -85,12 +85,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
         let col_format = col_format.unwrap_or_else(|| {
             let n_cols = rows.last().map_or(0, |row| row.len());
-            ArrayColumnsFormatting {
-                n_vertical_bars_before: 0,
-                columns: vec![ArraySingleColumnFormatting { 
-                    alignment: ArrayColumnAlign::Centered, 
-                    n_vertical_bars_after: 0, 
-                }; n_cols],
+            ArrayColumnsFormatting { 
+                alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
+                separators: vec![vec![]; n_cols], 
             }
         });
 
@@ -141,27 +138,35 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 fn tokens_as_column_format<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> ParseResult<ArrayColumnsFormatting> {
     let mut n_vertical_bars_before = 0;
     let mut current_vertical_bars = &mut n_vertical_bars_before;
-    let mut columns = Vec::new();
+    let mut alignment  = Vec::new();
+    let mut separators = vec![Vec::new()];
     for token in iterator {
         match token {
               TexToken::Char(c@'c') 
             | TexToken::Char(c@'l') 
             | TexToken::Char(c@'r') 
             => {
-                columns.push(ArraySingleColumnFormatting {
-                    alignment: match c {
-                        'c' => ArrayColumnAlign::Centered,
-                        'l' => ArrayColumnAlign::Left,
-                        'r' => ArrayColumnAlign::Right,
-                        _   => unreachable!(), // This has already been ruled out in the previous match
-                    },
-                    n_vertical_bars_after: 0,
+                alignment.push(match c {
+                    'c' => ArrayColumnAlign::Centered,
+                    'l' => ArrayColumnAlign::Left,
+                    'r' => ArrayColumnAlign::Right,
+                    _   => unreachable!(), // This has already been ruled out in the previous match
                 });
-                current_vertical_bars = &mut columns.last_mut().unwrap_or_else(|| unreachable!()).n_vertical_bars_after;
+                separators.push(Vec::new());
             },
             TexToken::Char('|') 
             => {
-                *current_vertical_bars += 1;
+                // Safe to unwrap b/c `separators` always has at least one element
+                let current_separators = separators.last_mut().unwrap();
+
+                match current_separators.last_mut() {
+                    Some(ColSeparator::VerticalBars(bars)) => {
+                        *bars += 1;
+                    },
+                    _ => {
+                        current_separators.push(ColSeparator::VerticalBars(1));
+                    },
+                }
             },
             TexToken::Char(_) => {
                 return Err(ParseError::UnrecognizedArrayColumnFormat);
@@ -178,8 +183,8 @@ fn tokens_as_column_format<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) 
         }
     }
     Ok(ArrayColumnsFormatting {
-        columns,
-        n_vertical_bars_before,
+        alignment,
+        separators,
     })
 }
 
@@ -195,43 +200,46 @@ mod tests {
         let cols = vec![
             ("c", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0}
-                ], 
-                n_vertical_bars_before: 0
+                alignment  : vec![ArrayColumnAlign::Centered], 
+                separators : vec![vec![], vec![]],
             }),
             ("||l", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left, n_vertical_bars_after : 0},
-                ], 
-                n_vertical_bars_before: 2
+                alignment  : vec![ArrayColumnAlign::Left], 
+                separators : vec![vec![ColSeparator::VerticalBars(2)], vec![]],
             }),
             ("||c|l", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 0},
-                ], 
-                n_vertical_bars_before: 2
+                alignment  : vec![ArrayColumnAlign::Centered, ArrayColumnAlign::Left], 
+                separators : vec![vec![ColSeparator::VerticalBars(2)], vec![ColSeparator::VerticalBars(1)], vec![]],
             }),
             ("|  |c l|l|", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
+                alignment  : vec![
+                    ArrayColumnAlign::Centered, 
+                    ArrayColumnAlign::Left, 
+                    ArrayColumnAlign::Left
                 ], 
-                n_vertical_bars_before: 2
+                separators : vec![
+                    vec![ColSeparator::VerticalBars(2)], 
+                    vec![],
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(1)], 
+                ],
             }),
             (" |  r| l|| | |r||  ", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,  n_vertical_bars_after : 4},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 2},
+                alignment  : vec![
+                    ArrayColumnAlign::Right, 
+                    ArrayColumnAlign::Left, 
+                    ArrayColumnAlign::Right,
                 ], 
-                n_vertical_bars_before: 1
+                separators : vec![
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(4)], 
+                    vec![ColSeparator::VerticalBars(2)], 
+                ],
             }),
         ];
 

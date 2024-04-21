@@ -785,7 +785,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
 
         // add left vertical bars
-        let n_vertical_bars_before = array.col_format.n_vertical_bars_before;
+        let n_vertical_bars_before = todo!();
         let total_height : Unit<Px> = 
             row_heights.iter().cloned().sum::<Unit<Px>>()
             + strut_depth.scale(num_rows as f64)
@@ -801,46 +801,47 @@ impl<'f, F : MathFont> Layout<'f, F> {
         }
 
         // layout the body of the matrix
-        let column_iter = 
-            Iterator::zip(columns.into_iter(), array.col_format.columns.iter())
-            .enumerate()
+        let column_iter : Vec<(usize, ((), ArrayColumnAlign))> = 
+            Vec::new()
+            // Iterator::zip(columns.into_iter(), array.col_format.columns.iter())
+            // .enumerate()
         ;
-        for (col_idx, (col, col_format)) in column_iter {
-            let alignment = col_format.alignment;
+        for (col_idx, (col, alignment)) in column_iter {
             let mut vbox = builders::VBox::new();
-            for (row_idx, mut row) in col.into_iter().enumerate() {
-                // Center columns as necessary
-                if row.width < col_widths[col_idx] {
-                    row.alignment = match alignment {
-                        ArrayColumnAlign::Centered => Alignment::Centered(row.width),
-                        ArrayColumnAlign::Left     => Alignment::Left,
-                        ArrayColumnAlign::Right    => Alignment::Right(row.width),
-                    };
-                    row.width = col_widths[col_idx];
-                }
+            todo!();
+            // for (row_idx, mut row) in col.into_iter().enumerate() {
+            //     // Center columns as necessary
+            //     if row.width < col_widths[col_idx] {
+            //         row.alignment = match alignment {
+            //             ArrayColumnAlign::Centered => Alignment::Centered(row.width),
+            //             ArrayColumnAlign::Left     => Alignment::Left,
+            //             ArrayColumnAlign::Right    => Alignment::Right(row.width),
+            //         };
+            //         row.width = col_widths[col_idx];
+            //     }
 
-                // Add additional strut if required to align rows
-                if row.height < row_heights[row_idx] {
-                    let diff = row_heights[row_idx] - row.height;
-                    vbox.add_node(kern![vert: diff]);
-                }
+            //     // Add additional strut if required to align rows
+            //     if row.height < row_heights[row_idx] {
+            //         let diff = row_heights[row_idx] - row.height;
+            //         vbox.add_node(kern![vert: diff]);
+            //     }
 
-                // add inter-row spacing.  Since vboxes get their depth from the their
-                // last entry, we manually add the depth from the last row if it exceeds
-                // the row_seperation.
-                // FIXME: This should be actual depth, not additional kerning
-                let node = row.as_node();
-                let mut vert_dist = strut_depth;
-                if row_idx + 1 == num_rows { 
-                    vert_dist = Unit::max(vert_dist, -node.depth); 
-                };
-                vbox.add_node(node);
-                vbox.add_node(kern![vert: vert_dist]);
-            }
+            //     // add inter-row spacing.  Since vboxes get their depth from the their
+            //     // last entry, we manually add the depth from the last row if it exceeds
+            //     // the row_seperation.
+            //     // FIXME: This should be actual depth, not additional kerning
+            //     let node = row.as_node();
+            //     let mut vert_dist = strut_depth;
+            //     if row_idx + 1 == num_rows { 
+            //         vert_dist = Unit::max(vert_dist, -node.depth); 
+            //     };
+            //     vbox.add_node(node);
+            //     vbox.add_node(kern![vert: vert_dist]);
+            // }
 
             // add column to matrix body and full column seperation spacing except for last one.
             hbox.add_node(vbox.build());
-            let n_vertical_bars_after = col_format.n_vertical_bars_after;
+            let n_vertical_bars_after = todo!();
 
             // don't add half col separation on the last node if there is a right delimiter
             if !(array.right_delimiter.is_some() && col_idx + 1 == num_columns) {
