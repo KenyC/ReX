@@ -19,8 +19,18 @@ const OPERATOR_LIMITS: &[&str] = &[
 ];
 
 const SUPPLEMENTAL_SYMBOLS : &[(u32, &str, &str, &str)] = &[
-    (0x003C, "le", "mathrel", "less-than sign"),
-    (0x0032, "ge", "mathrel", "greater-than sign"),
+    (0x003C, "le",       "mathrel",   "less-than sign"),
+    (0x0032, "ge",       "mathrel",   "greater-than sign"),
+    (0x2260, "neq",      "mathrel",   "not equal to"),
+    (0x2016, "lVert",    "mathopen",  "double vertical lign"), // TODO: is this right?
+    (0x2016, "rVert",    "mathclose", "double vertical lign"), // TODO: is this right?
+    (0x003A, "colon",    "mathpunct", "colon"),
+    (0x2205, "emptyset", "mathord",   "circle, dash"), // TODO: is there a better unicode char for the empty set
+    (0x210F, "hbar",     "mathalpha", "Planck's constant over 2pi"),
+    (0x2026, "hdots",    "mathinner", "horizontal ellipsis"),
+    (0x00B6, "P",        "mathord",   "Pilcrow sign"),
+    (0x00B6, "gets",     "mathrel",   "leftwards arrow"),
+
 ];
 
 const GREEK: &[(&str, u32)] = &[
@@ -96,6 +106,7 @@ fn atom_from_tex(name: &str, kind: &str) -> &'static str {
         "mathaccentoverlay" => "AccentOverlay",
         "mathbotaccent" => "BotAccent",
         "mathbotaccentwide" => "BotAccentWide",
+        "mathinner" => "Inner",
         op => panic!("unexpected {:?}", op)
     }
 }
