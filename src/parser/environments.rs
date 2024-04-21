@@ -39,13 +39,15 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         let mut col_format = None;
 
         if let Environment::Array = env {
-            let tokens = self.token_iter
+            let group = self.token_iter
                 .capture_group()
                 .map_err(|e| match e {
                     ParseError::ExpectedToken => ParseError::MissingColFormatForArrayEnvironment,
                     _ => e,
                 })?;
-            col_format = Some(tokens_as_column_format(tokens.into_iter())?);
+
+            let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
+            col_format = Some(forked_parser.tokens_as_column_format()?);
         }
         let rows = self.parse_array_body(env)?;
 
@@ -135,63 +137,71 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     }
 }
 
-fn tokens_as_column_format<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> ParseResult<ArrayColumnsFormatting> {
-    let mut n_vertical_bars_before = 0;
-    let mut current_vertical_bars = &mut n_vertical_bars_before;
-    let mut alignment  = Vec::new();
-    let mut separators = vec![Vec::new()];
-    for token in iterator {
-        match token {
-              TexToken::Char(c@'c') 
-            | TexToken::Char(c@'l') 
-            | TexToken::Char(c@'r') 
-            => {
-                alignment.push(match c {
-                    'c' => ArrayColumnAlign::Centered,
-                    'l' => ArrayColumnAlign::Left,
-                    'r' => ArrayColumnAlign::Right,
-                    _   => unreachable!(), // This has already been ruled out in the previous match
-                });
-                separators.push(Vec::new());
-            },
-            TexToken::Char('|') 
-            => {
-                // Safe to unwrap b/c `separators` always has at least one element
-                let current_separators = separators.last_mut().unwrap();
+impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
+    fn tokens_as_column_format(&mut self) -> ParseResult<ArrayColumnsFormatting> {
+        let mut n_vertical_bars_before = 0;
+        let mut current_vertical_bars = &mut n_vertical_bars_before;
+        let mut alignment  = Vec::new();
+        let mut separators = vec![Vec::new()];
+        while let Some(token) = self.token_iter.next_token()? {
+            match token {
+                  TexToken::Char(c@'c') 
+                | TexToken::Char(c@'l') 
+                | TexToken::Char(c@'r') 
+                => {
+                    alignment.push(match c {
+                        'c' => ArrayColumnAlign::Centered,
+                        'l' => ArrayColumnAlign::Left,
+                        'r' => ArrayColumnAlign::Right,
+                        _   => unreachable!(), // This has already been ruled out in the previous match
+                    });
+                    separators.push(Vec::new());
+                },
+                TexToken::Char('|') 
+                => {
+                    // Safe to unwrap b/c `separators` always has at least one element
+                    let current_separators = separators.last_mut().unwrap();
 
-                match current_separators.last_mut() {
-                    Some(ColSeparator::VerticalBars(bars)) => {
-                        *bars += 1;
-                    },
-                    _ => {
-                        current_separators.push(ColSeparator::VerticalBars(1));
-                    },
+                    match current_separators.last_mut() {
+                        Some(ColSeparator::VerticalBars(bars)) => {
+                            *bars += 1;
+                        },
+                        _ => {
+                            current_separators.push(ColSeparator::VerticalBars(1));
+                        },
+                    }
+                },
+                TexToken::Char('@') => {
+                    let nodes = self.parse_control_seq_argument_as_nodes("@")?;
+                    // Safe to unwrap b/c `separators` always has at least one element
+                    let current_separators = separators.last_mut().unwrap();
+                    current_separators.push(ColSeparator::AtExpressions(nodes));
                 }
-            },
-            TexToken::Char(_) => {
-                return Err(ParseError::UnrecognizedArrayColumnFormat);
+                TexToken::Char(_) => {
+                    return Err(ParseError::UnrecognizedArrayColumnFormat);
+                }
+
+                TexToken::WhiteSpace => (),
+
+                TexToken::BeginGroup 
+                | TexToken::EndGroup 
+                | TexToken::ControlSequence(_) 
+                | TexToken::Superscript 
+                | TexToken::Prime { .. } 
+                | TexToken::Alignment 
+                | TexToken::Subscript => return Err(ParseError::UnrecognizedArrayColumnFormat),
             }
-            TexToken::WhiteSpace => (),
-
-            TexToken::BeginGroup 
-            | TexToken::EndGroup 
-            | TexToken::ControlSequence(_) 
-            | TexToken::Superscript 
-            | TexToken::Prime { .. } 
-            | TexToken::Alignment 
-            | TexToken::Subscript => return Err(ParseError::UnrecognizedArrayColumnFormat),
         }
+        Ok(ArrayColumnsFormatting {
+            alignment,
+            separators,
+        })
     }
-    Ok(ArrayColumnsFormatting {
-        alignment,
-        separators,
-    })
 }
-
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::textoken::TokenIterator;
+    use crate::parser::{macros::CommandCollection, textoken::TokenIterator};
 
     use super::*;
 
@@ -244,10 +254,11 @@ mod tests {
         ];
 
         for (string, col_format) in cols {
-            let mut token_iter = TokenIterator::new(string);
+            let command_collection = CommandCollection::new();
+            let mut parser = Parser::new(&command_collection, string);
 
             assert_eq!(
-                tokens_as_column_format(token_iter),
+                parser.tokens_as_column_format(),
                 Ok(col_format),
             );
 

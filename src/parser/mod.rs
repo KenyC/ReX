@@ -676,6 +676,12 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\begin{pmatrix}1&2\\3&4\end{pmatrix}"));
         insta::assert_debug_snapshot!(parse(r"\begin{array}{c|l}1&\alpha\\2&\frac12\end{array}"));
         insta::assert_debug_snapshot!(parse(r"\begin{array}{cc}1 \\ 2"));
+
+
+        insta::assert_debug_snapshot!(parse(r"\begin{array}{r@{-}l}  1 & 2 \\ 3 & 4\end{array}"));
+        insta::assert_debug_snapshot!(parse(r"\begin{array}{r@{-}|l} 1 & 2 \\ 3 & 4\end{array}"));
+        insta::assert_debug_snapshot!(parse(r"\begin{array}{r@{}l} 1 & 2 \\ 3 & 4\end{array}"));
+        insta::assert_debug_snapshot!(parse(r"\begin{array}{rl@} 1 & 2 \\ 3 & 4\end{array}"));
     }
 
     #[ignore = "unsupported as of yet"]
