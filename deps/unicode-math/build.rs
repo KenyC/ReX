@@ -20,7 +20,7 @@ const OPERATOR_LIMITS: &[&str] = &[
 
 const SUPPLEMENTAL_SYMBOLS : &[(u32, &str, &str, &str)] = &[
     (0x003C, "le",       "mathrel",   "less-than sign"),
-    (0x0032, "ge",       "mathrel",   "greater-than sign"),
+    (0x003E, "ge",       "mathrel",   "greater-than sign"),
     (0x2260, "neq",      "mathrel",   "not equal to"),
     (0x2016, "lVert",    "mathopen",  "double vertical lign"), // TODO: is this right?
     (0x2016, "rVert",    "mathclose", "double vertical lign"), // TODO: is this right?
