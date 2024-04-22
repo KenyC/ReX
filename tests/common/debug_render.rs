@@ -14,17 +14,31 @@ use rex::{GraphicsBackend, FontBackend, Backend};
 pub struct Equation {
     pub tex:              String,
     pub description:      String,
-    pub width:            f64,
-    pub height:           f64,
-    pub render:           DebugRender,
-    pub img_render_path:  Option<PathBuf>,
+    pub render:           Result<EquationRender, String>
 }
 impl Equation {
+    pub fn same_render_as(&self, other: &Equation) -> bool {
+        match (&self.render, &other.render) {
+            (Ok(a), Ok(b)) => a.same_as(b),
+            _ => false
+        }
+    }
+}
+impl EquationRender {
     pub fn same_as(&self, other : &Self) -> bool {
         self.width  == other.width  &&
         self.height == other.height &&
         self.render == other.render 
     }
+}
+
+#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct EquationRender {
+    pub width:            f64,
+    pub height:           f64,
+    pub render:           DebugRender,
+    pub img_render_path:  Option<PathBuf>,
 }
 
 #[derive(Debug,)]

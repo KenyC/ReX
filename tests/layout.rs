@@ -16,7 +16,7 @@ use raqote::{DrawTarget, Transform};
 use rex::Renderer;
 
 mod common;
-use common::debug_render::{Equation, DebugRender, EquationDiffs};
+use common::debug_render::{DebugRender, Equation, EquationDiffs, EquationRender};
 use common::{simple_hash, svg_diff, utf8_to_ascii};
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
@@ -89,6 +89,8 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
     equations
 }
 
+
+
 fn make_equation(
     category: &str, 
     description: &str, 
@@ -96,10 +98,20 @@ fn make_equation(
     ctx: &FontContext<TtfMathFont>,
     img_render_path : &Path,
 ) -> Equation {
-    const FONT_SIZE : f64 = 16.0;
     let description = format!("{}: {}", category, description);
 
-    let parse_nodes = rex::parser::parse(equation).expect(&format!("Error with '{}'", equation));
+    let render = render_equation(equation, ctx, img_render_path);
+
+    Equation { 
+        tex:         equation.to_owned(), 
+        description,
+        render, 
+    }
+}
+
+fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_render_path: &Path) -> Result<EquationRender, String> {
+    const FONT_SIZE : f64 = 16.0;
+    let parse_nodes = rex::parser::parse(equation).map_err(|e| e.to_string())?;
     let layout_settings = LayoutSettings::new(&ctx, FONT_SIZE, Style::Display);
     let mut grid = Grid::new();
     grid.insert(0, 0, rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap().as_node());
@@ -140,13 +152,12 @@ fn make_equation(
         final_image_path_buffer = None;
     }
 
-    Equation { 
-        tex:         equation.to_owned(), 
-        description, 
-        width, height,
-        render: debug_render, 
-        img_render_path : final_image_path_buffer, 
-    }
+    Ok(EquationRender {
+        width,
+        height,
+        render: debug_render,
+        img_render_path: final_image_path_buffer,
+    })
 }
 
 
@@ -163,7 +174,7 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
     // Only looking at tests in the intersection of both
     for (key_new, equation_new) in new.iter() {
         if let Some(equation_old) = old.get(key_new) {
-            if !equation_old.same_as(equation_new) {
+            if !equation_old.same_render_as(equation_new) {
                 diffs.push((equation_old, equation_new))
             }
         }
