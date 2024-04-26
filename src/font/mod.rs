@@ -62,16 +62,16 @@ impl<'f, F> Clone for FontContext<'f, F> {
 }
 
 impl<'f, F : MathFont> FontContext<'f, F> {
-    pub fn new(font: &'f F) -> Result<Self, FontError> {
+    pub fn new(font: &'f F) -> Self {
         let font_units_to_em = font.font_units_to_em();
         let units_per_em = font_units_to_em.recip();
         let constants = font.constants(font_units_to_em);
 
-        Ok(FontContext {
+        FontContext {
             font,
             units_per_em,
             constants
-        })
+        }
     }
 
     pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f, F>, FontError> {

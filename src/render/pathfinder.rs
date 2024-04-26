@@ -120,7 +120,7 @@ pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
 
     // TODO : remove '.unwrap()' 
     let font = OpenTypeFont::parse(font).unwrap();
-    let ctx = FontContext::new(&font)?;
+    let ctx = FontContext::new(&font);
     let mut renderer = Renderer::new();
     renderer.debug = true;
     let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);

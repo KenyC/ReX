@@ -193,7 +193,7 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
 fn layout() {
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
     let font = common::load_font(font_file);
-    let font_context = FontContext::new(&font).unwrap();
+    let font_context = FontContext::new(&font);
 
     let img_dir = std::env::temp_dir();
     let tests = collect_tests(LAYOUT_YAML);
@@ -220,7 +220,7 @@ fn save_layout() {
 
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
     let font = common::load_font(font_file);
-    let font_context = FontContext::new(&font).unwrap();
+    let font_context = FontContext::new(&font);
 
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(LAYOUT_YAML);
