@@ -37,7 +37,7 @@ pub struct Renderer {
     pub debug: bool,
 }
 
-/// Position of the cursor in space. 
+/// Position of the cursor in space. The unit used in pixels.
 #[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct Cursor {
     /// x-coordinate
@@ -147,7 +147,7 @@ impl Renderer {
         Ok(layout(&mut parse, layout_settings)?)
     }
 
-    /// Renders the given layout onto `out` the provided backend.
+    /// Renders the given layout onto `out`, the provided backend.
     pub fn render<F>(&self, layout: &Layout<F>, out: &mut impl Backend<F>) {
         let pos = Cursor {
             x: 0.0,

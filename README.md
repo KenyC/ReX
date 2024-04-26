@@ -111,7 +111,7 @@ You may add support for other font parser by implementing the `MathFont` trait a
 
 # Usage
 
-## Simple example
+## As an executable
 
 You can see a simple example of use in [examples/svg_basic.rs](examples/svg_basic.rs). To run this example, run the following in the root of the repository.
 
@@ -134,13 +134,54 @@ cargo r --example gui-basic --features="femtovg-renderer ttfparser-fontparser" -
 The crate is primarily intended as a library. To use it as such, first add the following line to `[dependencies]` section of `Cargo.toml`:
 
 ```toml
-rex = {git = "https://github.com/KenyC/ReX", features = ["ttfparser-fontparser", "cairo-fontparser"]} # replace with whichever features you may need
+rex = {git = "https://github.com/KenyC/ReX", features = ["ttfparser-fontparser", "cairo-renderer"]} # replace with whichever features you may need
 ```
+
+
+### The simple way
+
+To render, you need to pick:
+
+  1. A font parser that can load a math font: anything that implements `FontBackend`
+  2. A graphics backend that can draw shapes to some surface: anything that implements `GraphicsBackend<F>`
+
+
+For instance, using the `ttf_parser` crate as our font parser and the `cairo` crate as our renderer:
+
+```rust
+// create font backend
+let font_file = std::fs::read("font.otf").expect("Couldn't load font");
+let font = ttf_parser::Face::parse(file, 0).expect("Couldn't parse font.");
+let math_font = TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
+let font_context = FontContext::new(math_font);
+
+
+// create graphics backend
+let svg_surface = cairo::SvgSurface::new(800, 600, Some("out.svg")).expect("Couldn't create SVG surface");
+let context = cairo::Context::new(&svg_surface).expect("Couldn't get context for SVG surface");
+// The (0, 0) point is the baseline of the first glyph we move it to a reasonable place
+context.translate(0., 300.);
+let mut backend = CairoBackend::new(context);
+
+
+rex::render(
+  r"e = \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n", 
+  &mut backend,
+  &font_context,
+).expect("Error in rendering");
+
+```
+
+
+
+
+### More control
+
 
 The process of rendering of formula in code is as follows:
 
-  - Parse the formula into `ParseNode`, using `rex::parser::engine::parse`.
   - Create a `FontContext` struct from your font (the font provided by the font parser, e.g. `ttfparser`).
+  - Parse the formula into `ParseNode`, using `rex::parser::engine::parse`.
   - Create a `LayoutSettings` struct from this font context, specifying font size.
   - Create a `Layout` from `ParseNode` using `rex::layout::engine::layout`.
   - Create a `Renderer`.
