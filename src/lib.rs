@@ -68,7 +68,7 @@ mod tests {
     fn all_alphanumeric_style_combinations_must_work() {
         let font = ttf_parser::Face::parse(GARAMOND_MATH_FONT, 0).unwrap();
         let font = TtfMathFont::new(font).unwrap();
-        let ctx = FontContext::new(&font).unwrap();
+        let ctx = FontContext::new(&font);
 
         let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
 

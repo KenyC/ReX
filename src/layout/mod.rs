@@ -674,7 +674,7 @@ mod tests {
         let nodes = parse("1").unwrap();
         let font = ttf_parser::Face::parse(XITS_FONT_BYTES, 0).unwrap();
         let font = TtfMathFont::new(font).unwrap();
-        let ctx = FontContext::new(&font).unwrap();
+        let ctx = FontContext::new(&font);
 
         // 10pt layout
         let font_size = Unit::<FontSize>::new(10.);

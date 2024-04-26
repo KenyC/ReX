@@ -123,7 +123,7 @@ fn main() {
 fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str, debug : bool, font_size : f64) 
 {
     // -- Create context
-    let font_context = FontContext::new(font).unwrap();
+    let font_context = FontContext::new(font);
     let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display);
 
 

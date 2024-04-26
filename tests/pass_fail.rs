@@ -35,7 +35,7 @@ fn pass_fail() {
 
     let font_file = std::fs::read(FONT_FILE_PATH).unwrap();
     let font = load_font(&font_file);
-    let ctx = FontContext::new(&font).unwrap();
+    let ctx = FontContext::new(&font);
     
 
 
