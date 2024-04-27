@@ -1,3 +1,4 @@
+//! Regression tests
 extern crate rex;
 
 #[macro_use]
@@ -11,16 +12,17 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use base64::Engine;
+
 use raqote::{DrawTarget, Transform};
 use rex::Renderer;
 
 mod common;
-use common::debug_render::{Equation, DebugRender, EquationDiffs};
-use common::{simple_hash, svg_diff, small_ascii_repr};
+use common::debug_render::DebugRender;
+use common::equation_sample::{Equation, EquationDiffs};
+use common::utils::equation_to_filepath;
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
-use rex::layout::{LayoutSettings, Style, Grid, Layout};
+use rex::layout::{LayoutSettings, Style};
 use rex::raqote::RaqoteBackend;
 
 const LAYOUT_YAML: &str = "tests/data/layout.yaml";
@@ -67,7 +69,7 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
         for snippets in collection {
             for equation in &snippets.snippets {
                 let key = format!("{} - {}", &snippets.description, equation);
-                let file_name = equation_to_filepath(equation, snippets);
+                let file_name = equation_to_filepath(equation, &snippets.description);
                 let img_path = img_dir.join(&file_name);
                 let equation = make_equation(
                     category, 
@@ -84,23 +86,14 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
     equations
 }
 
-fn equation_to_filepath(equation: &String, snippets: &Category) -> String {
-    let mut bytes = snippets.description.as_bytes().to_vec();
-    bytes.extend_from_slice(equation.as_bytes());
 
-    format!(
-        "{}-{}.png",
-        &small_ascii_repr(equation),
-        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(simple_hash(&bytes)),
-    )
-}
 
 fn make_equation(
     category: &str, 
     description: &str, 
     equation: &str, 
     ctx: &FontContext<TtfMathFont>,
-    mut img_render_path : &Path,
+    img_render_path : &Path,
 ) -> Equation {
     const FONT_SIZE : f64 = 16.0;
     let description = format!("{}: {}", category, description);
@@ -187,9 +180,9 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
 }
 
 #[test]
-fn layout() {
+fn render_regression() {
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::load_font(font_file);
+    let font = common::utils::load_font(font_file);
     let font_context = FontContext::new(&font);
 
     let img_dir = std::env::temp_dir();
@@ -201,7 +194,7 @@ fn layout() {
     if !diff.no_diff() {
         let diff_count = diff.diffs.len();
         let new_count  = diff.new_eqs.len();
-        svg_diff::write_diff(LAYOUT_HTML, diff);
+        common::report::write_diff(LAYOUT_HTML, diff);
         panic!("Detected {} formula changes and {} new formulas. \
                 Please review the changes in `{}`",
                diff_count,
@@ -212,11 +205,11 @@ fn layout() {
 
 #[test]
 #[ignore]
-fn save_layout() {
+fn save_renders_to_history() {
     use std::io::BufWriter;
 
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::load_font(font_file);
+    let font = common::utils::load_font(font_file);
     let font_context = FontContext::new(&font);
 
     // Remove PNG images from HISTORY_IMG_DIR
