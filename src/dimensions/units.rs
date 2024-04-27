@@ -1,6 +1,6 @@
 //! Defines all the units relevant to rendering: font units, em, points, inches, pixels
 //!
-//! This module defines common units and conventional conversion factors between these (between pt and inches, inches and pixels, etc)
+//! This module defines common units and conventional conversion factors between these (between pt and inches, inches and pixels, etc).
 //! The conversions not given here are font-dependent or font size-dependent:
 //!    - setting the conversion factor between [`Em`] to [`Pt`] is precisely what specifying a font size is about (cf [`FontSize`]).
 //!    - the factor between [`FUnit`] and [`Em`] is specified in the font file in OpenType
@@ -12,7 +12,9 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FUnit;
 
-/// A virtual unit, bigger than [`FUnit`], conventionally corresponding to:
+/// A virtual unit, bigger than [`FUnit`], approximately but not necessarily equal to the width of upper-case M.
+///
+///  It is conventionally equal one or more of the following quantities:
 ///
 ///  - width of an em-dash and an em-space character
 ///  - line separation
@@ -57,7 +59,7 @@ pub type FontSize = Ratio<Pt, Em>;
 
 // ------------------- UNIT COMBINATORS -------------------------
 
-/// If U is a unit and V is a unit, Ratio<U, V> is the unit U . V⁻¹
+/// If `U` is a unit and `V` is a unit, `Ratio<U, V>` is the unit `U . V⁻¹`
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ratio<U, V> {
 	_numerator    : std::marker::PhantomData<U>,

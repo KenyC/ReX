@@ -219,7 +219,7 @@ pub fn render<'a, F : MathFont, B : Backend<F>>(formula : & 'a str, backend : &m
 
     let parse_nodes = parse(formula)?;
 
-    let layout_settings = LayoutSettings::new(font_context, DEFAULT_FONT_SIZE, Style::Display);
+    let layout_settings = LayoutSettings::new(font_context);
 
 
     let layout = crate::layout::engine::layout(&parse_nodes, layout_settings)?;
@@ -246,7 +246,7 @@ mod tests {
         let font = TtfMathFont::new(font).unwrap();
         let ctx = FontContext::new(&font);
 
-        let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+        let layout_settings = LayoutSettings::new(&ctx).font_size(10.0);
 
         let alphanumeric : Vec<_> =
             (0 .. 0x7F)

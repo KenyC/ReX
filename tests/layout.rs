@@ -100,7 +100,7 @@ fn make_equation(
     let description = format!("{}: {}", category, description);
 
     let parse_nodes = rex::parser::parse(equation).unwrap();
-    let layout_settings = LayoutSettings::new(&ctx, FONT_SIZE, Style::Display);
+    let layout_settings = LayoutSettings::new(&ctx).font_size(FONT_SIZE).layout_style(Style::Display);
     let mut grid = Grid::new();
     grid.insert(0, 0, rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap().as_node());
 
