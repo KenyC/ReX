@@ -123,7 +123,7 @@ pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
     let ctx = FontContext::new(&font);
     let mut renderer = Renderer::new();
     renderer.debug = true;
-    let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+    let layout_settings = LayoutSettings::new(&ctx).font_size(10.0);
     let layout = renderer.layout(tex, layout_settings).unwrap();
     let LayoutDimensions { width, height, depth } = layout.size();
 

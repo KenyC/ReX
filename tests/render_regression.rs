@@ -1,3 +1,4 @@
+//! Regression tests
 extern crate rex;
 
 #[macro_use]
@@ -11,16 +12,17 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use base64::Engine;
+
 use raqote::{DrawTarget, Transform};
 use rex::Renderer;
 
 mod common;
-use common::debug_render::{DebugRender, Equation, EquationDiffs, EquationRender};
-use common::{simple_hash, svg_diff, utf8_to_ascii};
+use common::debug_render::DebugRender;
+use common::equation_sample::{Equation, EquationDiffs, EquationRender};
+use common::utils::equation_to_filepath;
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
-use rex::layout::{LayoutSettings, Style, Grid, Layout};
+use rex::layout::{LayoutSettings, Style};
 use rex::raqote::RaqoteBackend;
 
 const LAYOUT_YAML: &str = "tests/data/layout.yaml";
@@ -61,18 +63,13 @@ fn load_history<P: AsRef<Path>>(path: P) -> TestResults {
 
 
 fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tests: Tests, img_dir : &Path) -> TestResults {
-    let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
     let mut equations: TestResults = BTreeMap::new();
     for (category, collection) in tests.0.iter() {
         for snippets in collection {
             for equation in &snippets.snippets {
                 let key = format!("{} - {}", &snippets.description, equation);
-                let file_name = format!(
-                    "{}-{}.png",
-                    &utf8_to_ascii(equation),
-                    engine.encode(simple_hash(snippets.description.as_bytes())),
-                );
+                let file_name = equation_to_filepath(equation, &snippets.description);
                 let img_path = img_dir.join(&file_name);
                 let equation = make_equation(
                     category, 
@@ -111,13 +108,12 @@ fn make_equation(
 
 fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_render_path: &Path) -> Result<EquationRender, String> {
     const FONT_SIZE : f64 = 16.0;
-    let parse_nodes = rex::parser::parse(equation).map_err(|e| e.to_string())?;
-    let layout_settings = LayoutSettings::new(&ctx, FONT_SIZE, Style::Display);
-    let mut grid = Grid::new();
-    grid.insert(0, 0, rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap().as_node());
+    // let description = format!("{}: {}", category, description);
 
-    let mut layout = Layout::new();
-    layout.add_node(grid.build());
+    let parse_nodes = rex::parser::parse(equation).unwrap();
+    let layout_settings = LayoutSettings::new(&ctx).font_size(FONT_SIZE).layout_style(Style::Display);
+
+    let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();
 
 
     let renderer = Renderer::new();
@@ -133,23 +129,27 @@ fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_r
     // rendering to png
     const SCALE: f32 = 2.5;
     let mut draw_target = DrawTarget::new((width.ceil() * f64::from(SCALE)) as i32, (height.ceil() * f64::from(SCALE)) as i32);
-    draw_target.set_transform(&Transform::scale(SCALE, SCALE));
+    draw_target.set_transform(&Transform::translation(0., dims.height as f32).then_scale(SCALE, SCALE));
     let mut raqote_backend = RaqoteBackend::new(&mut draw_target);
     renderer.render(&layout, &mut raqote_backend);
 
 
     let final_image_path_buffer;
     // Some tests display empty stuff ; we don't want to panic then
-    if draw_target.write_png(&img_render_path).is_ok() {
-        final_image_path_buffer = Some(img_render_path.to_owned());
-    }
-    else {
-        // Sometimes, a render is empty
-        // Raqote throws an error but it is ok to ignore empty renders
-        // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
-        // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
-        // png error type...
-        final_image_path_buffer = None;
+    match draw_target.write_png(&img_render_path) {
+        Ok(_) => {
+            final_image_path_buffer = Some(img_render_path.to_owned());
+        },
+        Err(e) => {
+            // Sometimes, a render is empty
+            // Raqote throws an error but it is ok to ignore empty renders
+            // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
+            // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
+            // png error type...
+            eprintln!("Error writing png: {}", e);
+            eprintln!("png name: {}", img_render_path.to_str().unwrap());
+            final_image_path_buffer = None;
+        }
     }
 
     Ok(EquationRender {
@@ -190,9 +190,9 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
 }
 
 #[test]
-fn layout() {
+fn render_regression() {
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::load_font(font_file);
+    let font = common::utils::load_font(font_file);
     let font_context = FontContext::new(&font);
 
     let img_dir = std::env::temp_dir();
@@ -204,7 +204,7 @@ fn layout() {
     if !diff.no_diff() {
         let diff_count = diff.diffs.len();
         let new_count  = diff.new_eqs.len();
-        svg_diff::write_diff(LAYOUT_HTML, diff);
+        common::report::write_diff(LAYOUT_HTML, diff);
         panic!("Detected {} formula changes and {} new formulas. \
                 Please review the changes in `{}`",
                diff_count,
@@ -215,16 +215,29 @@ fn layout() {
 
 #[test]
 #[ignore]
-fn save_layout() {
+fn save_renders_to_history() {
     use std::io::BufWriter;
 
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::load_font(font_file);
+    let font = common::utils::load_font(font_file);
     let font_context = FontContext::new(&font);
+
+    // Remove PNG images from HISTORY_IMG_DIR
+    let img_dir = Path::new(HISTORY_IMG_DIR);
+    for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
+        if let Ok(entry) = entry {
+            let file_path = entry.path();
+            if let Some(extension) = file_path.extension() {
+                if extension == "png" {
+                    std::fs::remove_file(file_path).expect("failed to remove PNG image");
+                }
+            }
+        }
+    }
 
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(LAYOUT_YAML);
-    let rendered = render_tests(&font_context, tests, Path::new(HISTORY_IMG_DIR));
+    let rendered = render_tests(&font_context, tests, img_dir);
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
     let writer = BufWriter::new(out);

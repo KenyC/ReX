@@ -124,7 +124,7 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMat
 {
     // -- Create context
     let font_context = FontContext::new(font);
-    let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display);
+    let layout_settings = rex::layout::LayoutSettings::new(&font_context).font_size(font_size);
 
 
     // -- Parse formula

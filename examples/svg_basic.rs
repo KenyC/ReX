@@ -48,7 +48,7 @@ fn main() {
     // -- Create ReX context
     let ctx = FontContext::new(&font);
     // 12pt = 16px
-    let layout_settings = LayoutSettings::new(&ctx, font_size, Style::Display);
+    let layout_settings = LayoutSettings::new(&ctx).font_size(font_size);
 
 
 

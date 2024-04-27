@@ -75,7 +75,7 @@ fn render<'a, 'f, 'b>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str)
     let parse_nodes = parse(string)?;
 
     // laying out
-    let layout_settings = LayoutSettings::new(&ctx, 10.0, Style::Display);
+    let layout_settings = LayoutSettings::new(&ctx).font_size(10.0).layout_style(Style::Display);
     let node = rex::layout::engine::layout(&parse_nodes, layout_settings).map(|l| l.as_node())?;
     let mut grid = Grid::new();
     grid.insert(0, 0, node);
