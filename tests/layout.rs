@@ -17,7 +17,7 @@ use rex::Renderer;
 
 mod common;
 use common::debug_render::{Equation, DebugRender, EquationDiffs};
-use common::{simple_hash, svg_diff, utf8_to_ascii};
+use common::{simple_hash, svg_diff, small_ascii_repr};
 use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::layout::{LayoutSettings, Style, Grid, Layout};
@@ -61,18 +61,13 @@ fn load_history<P: AsRef<Path>>(path: P) -> TestResults {
 
 
 fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tests: Tests, img_dir : &Path) -> TestResults {
-    let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
     let mut equations: TestResults = BTreeMap::new();
     for (category, collection) in tests.0.iter() {
         for snippets in collection {
             for equation in &snippets.snippets {
                 let key = format!("{} - {}", &snippets.description, equation);
-                let file_name = format!(
-                    "{}-{}.png",
-                    &utf8_to_ascii(equation),
-                    engine.encode(simple_hash(snippets.description.as_bytes())),
-                );
+                let file_name = equation_to_filepath(equation, snippets);
                 let img_path = img_dir.join(&file_name);
                 let equation = make_equation(
                     category, 
@@ -89,6 +84,17 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
     equations
 }
 
+fn equation_to_filepath(equation: &String, snippets: &Category) -> String {
+    let mut bytes = snippets.description.as_bytes().to_vec();
+    bytes.extend_from_slice(equation.as_bytes());
+
+    format!(
+        "{}-{}.png",
+        &small_ascii_repr(equation),
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(simple_hash(&bytes)),
+    )
+}
+
 fn make_equation(
     category: &str, 
     description: &str, 
@@ -101,11 +107,8 @@ fn make_equation(
 
     let parse_nodes = rex::parser::parse(equation).unwrap();
     let layout_settings = LayoutSettings::new(&ctx).font_size(FONT_SIZE).layout_style(Style::Display);
-    let mut grid = Grid::new();
-    grid.insert(0, 0, rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap().as_node());
 
-    let mut layout = Layout::new();
-    layout.add_node(grid.build());
+    let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();
 
 
     let renderer = Renderer::new();
@@ -121,7 +124,7 @@ fn make_equation(
     // rendering to png
     const SCALE: f32 = 2.5;
     let mut draw_target = DrawTarget::new((width.ceil() * f64::from(SCALE)) as i32, (height.ceil() * f64::from(SCALE)) as i32);
-    draw_target.set_transform(&Transform::scale(SCALE, SCALE));
+    draw_target.set_transform(&Transform::translation(0., dims.height as f32).then_scale(SCALE, SCALE));
     let mut raqote_backend = RaqoteBackend::new(&mut draw_target);
     renderer.render(&layout, &mut raqote_backend);
 
@@ -129,17 +132,20 @@ fn make_equation(
     // Some tests display empty stuff ; we don't want to panic then
     let final_image_path_buffer;
     // Some tests display empty stuff ; we don't want to panic then
-    if draw_target.write_png(&img_render_path).is_ok() {
-        final_image_path_buffer = Some(img_render_path.to_owned());
-
-    }
-    else {
-        // Sometimes, a render is empty
-        // Raqote throws an error but it is ok to ignore empty renders
-        // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
-        // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
-        // png error type...
-        final_image_path_buffer = None;
+    match draw_target.write_png(&img_render_path) {
+        Ok(_) => {
+            final_image_path_buffer = Some(img_render_path.to_owned());
+        },
+        Err(e) => {
+            // Sometimes, a render is empty
+            // Raqote throws an error but it is ok to ignore empty renders
+            // Problematically, we can't distinguish between an error safe to ignore (e.g. ZeroWidthError)
+            // and one unsafe to ignore (e.g. IoError), b/c raqote doesn't give access to the underlying
+            // png error type...
+            eprintln!("Error writing png: {}", e);
+            eprintln!("png name: {}", img_render_path.to_str().unwrap());
+            final_image_path_buffer = None;
+        }
     }
 
     Equation { 
@@ -213,9 +219,22 @@ fn save_layout() {
     let font = common::load_font(font_file);
     let font_context = FontContext::new(&font);
 
+    // Remove PNG images from HISTORY_IMG_DIR
+    let img_dir = Path::new(HISTORY_IMG_DIR);
+    for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
+        if let Ok(entry) = entry {
+            let file_path = entry.path();
+            if let Some(extension) = file_path.extension() {
+                if extension == "png" {
+                    std::fs::remove_file(file_path).expect("failed to remove PNG image");
+                }
+            }
+        }
+    }
+
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(LAYOUT_YAML);
-    let rendered = render_tests(&font_context, tests, Path::new(HISTORY_IMG_DIR));
+    let rendered = render_tests(&font_context, tests, img_dir);
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
     let writer = BufWriter::new(out);

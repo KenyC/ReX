@@ -81,17 +81,18 @@ pub fn load_font<'a>(file : &'a [u8]) -> rex::font::backend::ttf_parser::TtfMath
     TtfMathFont::new(font).unwrap()
 }
 
-pub fn utf8_to_ascii(input : &str) -> String {
+pub fn small_ascii_repr(input : &str) -> String {
     let mut to_return = String::new();
-    for c in input.chars() {
+    for c in input.chars().take(20) {
         match c {
-            c if c.is_ascii_alphanumeric() || c.is_ascii_whitespace() => {
+            c if 
+                   c.is_ascii_alphanumeric() 
+                || c.is_ascii_whitespace() 
+                || "+-<>=()_^?!&{}".contains(c)
+            => {
                 to_return.push(c);
             },
-            c => {
-                let to_add : String = c.escape_unicode().skip(1).collect();
-                to_return.push_str(&to_add);
-            },
+            _ => to_return.push(' '),
         };
     }
     to_return
