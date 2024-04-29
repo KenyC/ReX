@@ -486,11 +486,13 @@ pub enum Style {
     Script,
     /// TODO
     TextCramped,
-    /// TODO
+    /// This is the default style when writing formulas within a text paragraph, i.e. what you get with `$...$` in LaTeX.  
+    /// Among other things, it places limits on ∑ and ∫ as exponents not above and below the symbol to avoid making the text line too big.
     Text,
     /// TODO
     DisplayCramped,
-    /// TODO
+    /// This is the default style when writing formulas in its own paragraph, i.e. what you get with `$$...$$` or `\[...\]` in LaTeX.  
+    /// It places limits on ∑ and ∫ above and below the symbols, as would be standard when writing the formulas on paper.
     Display,
 }
 
@@ -595,14 +597,31 @@ impl<'a, 'f, F> Copy for LayoutSettings<'a, 'f, F> {}
 
 
 impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
+    /// Default font size used when none is provided: 12 pt.em-1
+    pub const DEFAULT_FONT_SIZE : Unit<FontSize> = Unit::new(12.);
+
     /// Creates a new LayoutSettings
-    pub fn new(ctx: &'a FontContext<'f, F>, font_size: f64, style: Style) -> Self {
+    pub fn new(ctx: &'a FontContext<'f, F>) -> Self {
         LayoutSettings {
             ctx,
-            font_size: Unit::<FontSize>::new(font_size) * Unit::standard_pt_to_px().lift(),
-            style,
+            font_size: Self::DEFAULT_FONT_SIZE * Unit::standard_pt_to_px().lift(),
+            style : Style::default(),
         }
     }
+
+    /// Sets starting font size for layout, unit is pt / em.  
+    /// See module [`rex::dimensions::units`](crate::dimensions::units) for an explanation of the different dimensions used in font rendering.
+    pub fn font_size(mut self, font_size: f64) -> Self {
+        self.font_size = Unit::<FontSize>::new(font_size) * Unit::standard_pt_to_px().lift();
+        self
+    }
+
+    /// Sets the starting style of the layout (e.g. text style, display style). Cf [`Style`] for explanation of what a style is.
+    pub fn layout_style(mut self, style : Style) -> Self {
+        self.style = style;
+        self
+    }
+
 
     fn cramped(self) -> Self {
         LayoutSettings {
@@ -674,11 +693,11 @@ mod tests {
         let nodes = parse("1").unwrap();
         let font = ttf_parser::Face::parse(XITS_FONT_BYTES, 0).unwrap();
         let font = TtfMathFont::new(font).unwrap();
-        let ctx = FontContext::new(&font).unwrap();
+        let ctx = FontContext::new(&font);
 
         // 10pt layout
         let font_size = Unit::<FontSize>::new(10.);
-        let config = LayoutSettings::new(&ctx, font_size.unitless(FontSize::new()), Style::default());
+        let config = LayoutSettings::new(&ctx).font_size(font_size.unitless(FontSize::new()));
         let result_layout = layout(&nodes, config).unwrap();
         let height = Unit::<Px>::new(result_layout.size().height);
         assert_close!(
@@ -689,7 +708,7 @@ mod tests {
 
         // 12pt layout
         let font_size = Unit::<FontSize>::new(12.);
-        let config = LayoutSettings::new(&ctx, font_size.unitless(FontSize::new()), Style::default());
+        let config = LayoutSettings::new(&ctx).font_size(font_size.unitless(FontSize::new()));
         let result_layout = layout(&nodes, config).unwrap();
         let height = Unit::<Px>::new(result_layout.size().height);
         assert_close!(
