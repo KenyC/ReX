@@ -16,9 +16,10 @@ use crate::font::{
     VariantGlyph,
     AtomType
 };
+use crate::layout::builders::{HBox, VBox};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{BarThickness, MathStyle, ParseNode, Accent, Delimited, GenFraction, Radical, Scripts, Stack, PlainText, ArrayColumnAlign, Array};
+use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Px, Em, Pt, FUnit};
@@ -767,15 +768,24 @@ impl<'f, F : MathFont> Layout<'f, F> {
         //     hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);
         // }
 
+        #[derive(Debug, Clone, Copy)]
+        struct RuleMeasurements {
+            rule_width:      Unit<Px>, 
+            total_height:    Unit<Px>, 
+            double_rule_sep: Unit<Px>
+        }
+
+
 
         #[inline]
-        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_vertical_bars_after: u8, rule_width: Unit<Px>, total_height: Unit<Px>, double_rule_sep: Unit<Px>) {
-            if n_vertical_bars_after != 0 {
+        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_bars: u8, rule_measurements: RuleMeasurements) {
+            if n_bars != 0 {
+                let RuleMeasurements { rule_width, total_height, double_rule_sep } = rule_measurements;
                 let rule_width = rule_width;
                 let total_height = total_height;
                 let double_rule_sep = double_rule_sep;
                 hbox.add_node(rule![width: rule_width, height: total_height]);
-                for _ in 0 .. n_vertical_bars_after - 1 {
+                for _ in 0 .. n_bars - 1 {
                     hbox.add_node(kern![horz: double_rule_sep]);
                     hbox.add_node(rule![width: rule_width, height: total_height]);
                 }
@@ -783,75 +793,136 @@ impl<'f, F : MathFont> Layout<'f, F> {
         }
 
 
+        #[inline]
+        fn draw_separators<'a, 'f, 'c, F : MathFont>(
+            hbox: &mut builders::HBox<'f, F>, 
+            separators : & 'c [ColSeparator], 
+            row_heights: &[Unit<Px>],
+            strut_depth: Unit<Px>,
+            config: LayoutSettings<'a, 'f, F>, 
+            rule_measurements: RuleMeasurements
+        ) -> LayoutResult<()> {
+            for separator in separators {
+                match separator {
+                    ColSeparator::VerticalBars(n_bars) => {
+                        draw_vertical_bars(hbox, *n_bars, rule_measurements);
+                    },
+                    ColSeparator::AtExpression(nodes) => {
+                        // TODO: fast path if separator node is empty
+                        // first layout the nodes in the HBox
+                        let separator_node = layout(nodes, config)?.as_node();
+                        let mut vbox = VBox::new();
+                        let num_rows = row_heights.len();
+                        for (row_idx, row_height) in row_heights.iter().cloned().enumerate() {
+                            // TODO: Consider shared ref to avoid too many copying?
+                            let node = separator_node.clone();
+                            let node_depth = node.depth;
+                            if separator_node.height < row_height {
+                                let diff = row_height - separator_node.height;
+                                vbox.add_node(kern![vert: diff]);
+                            }
+                            vbox.add_node(node);
+
+                            let mut vert_dist = strut_depth;
+                            if row_idx + 1 == num_rows { 
+                                vert_dist = Unit::max(vert_dist, -node_depth); 
+                            };
+                            vbox.add_node(kern![vert: vert_dist]);
+                        }
+                        hbox.add_node(vbox.build());
+                    },
+                }
+            }
+            Ok(())
+        }
+
 
         // add left vertical bars
-        let n_vertical_bars_before = todo!();
         let total_height : Unit<Px> = 
             row_heights.iter().cloned().sum::<Unit<Px>>()
             + strut_depth.scale(num_rows as f64)
         ;
-        draw_vertical_bars(&mut hbox, n_vertical_bars_before, rule_width, total_height, double_rule_sep);
 
-        // If there are delimiters, don't put half column separation at the beginning of array 
-        // This appears to be what LateX does. Compare:
-        // 1. \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
-        // 2. \left\lbrace\begin{array}{c}1\\ 1\\ 1\\ 1\\ 1\end{array}\right\rbrace
-        if array.left_delimiter.is_none() {
-            hbox.add_node(kern![horz: half_col_sep]);
-        }
+        let rule_measurements = RuleMeasurements {
+            rule_width,
+            total_height,
+            double_rule_sep,
+        };
 
-        // layout the body of the matrix
-        let column_iter : Vec<(usize, ((), ArrayColumnAlign))> = 
-            Vec::new()
-            // Iterator::zip(columns.into_iter(), array.col_format.columns.iter())
-            // .enumerate()
+
+        // draw first separator
+        draw_separators(&mut hbox, &array.col_format.separators[0], &row_heights, strut_depth, config, rule_measurements)?;
+
+
+        let ArrayColumnsFormatting { alignment, separators } = &array.col_format;
+
+        let column_iter = 
+            Iterator::zip(columns.into_iter(), alignment.iter())
+            .enumerate()
         ;
         for (col_idx, (col, alignment)) in column_iter {
-            let mut vbox = builders::VBox::new();
-            todo!();
-            // for (row_idx, mut row) in col.into_iter().enumerate() {
-            //     // Center columns as necessary
-            //     if row.width < col_widths[col_idx] {
-            //         row.alignment = match alignment {
-            //             ArrayColumnAlign::Centered => Alignment::Centered(row.width),
-            //             ArrayColumnAlign::Left     => Alignment::Left,
-            //             ArrayColumnAlign::Right    => Alignment::Right(row.width),
-            //         };
-            //         row.width = col_widths[col_idx];
-            //     }
-
-            //     // Add additional strut if required to align rows
-            //     if row.height < row_heights[row_idx] {
-            //         let diff = row_heights[row_idx] - row.height;
-            //         vbox.add_node(kern![vert: diff]);
-            //     }
-
-            //     // add inter-row spacing.  Since vboxes get their depth from the their
-            //     // last entry, we manually add the depth from the last row if it exceeds
-            //     // the row_seperation.
-            //     // FIXME: This should be actual depth, not additional kerning
-            //     let node = row.as_node();
-            //     let mut vert_dist = strut_depth;
-            //     if row_idx + 1 == num_rows { 
-            //         vert_dist = Unit::max(vert_dist, -node.depth); 
-            //     };
-            //     vbox.add_node(node);
-            //     vbox.add_node(kern![vert: vert_dist]);
-            // }
-
-            // add column to matrix body and full column seperation spacing except for last one.
-            hbox.add_node(vbox.build());
-            let n_vertical_bars_after = todo!();
-
-            // don't add half col separation on the last node if there is a right delimiter
-            if !(array.right_delimiter.is_some() && col_idx + 1 == num_columns) {
+            // check if previous separator span ends in vertical bars ; 
+            // if yes, add half_col_sep
+            // If there are delimiters, don't put half column separation at the beginning of array 
+            // This appears to be what LateX does. Compare:
+            // 1. \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
+            // 2. \left\lbrace\begin{array}{c}1\\ 1\\ 1\\ 1\\ 1\end{array}\right\rbrace
+            if !(array.right_delimiter.is_some() && col_idx == 0) 
+               && separators[col_idx].last().map_or(true, ColSeparator::is_vert_bars)
+            {
                 hbox.add_node(kern![horz: half_col_sep]);
             }
-            draw_vertical_bars(&mut hbox, n_vertical_bars_after, rule_width, total_height, double_rule_sep);
-            if col_idx + 1 < num_columns {
+
+
+            let mut vbox = builders::VBox::new();
+            // To every row, add what's necessary to center them horizontally 
+            // Add interrow spaincg            
+            for (row_idx, mut row) in col.into_iter().enumerate() {
+                // Center columns as necessary
+                if row.width < col_widths[col_idx] {
+                    row.alignment = match alignment {
+                        ArrayColumnAlign::Centered => Alignment::Centered(row.width),
+                        ArrayColumnAlign::Left     => Alignment::Left,
+                        ArrayColumnAlign::Right    => Alignment::Right(row.width),
+                    };
+                    row.width = col_widths[col_idx];
+                }
+
+                // Add additional strut if required to align rows
+                if row.height < row_heights[row_idx] {
+                    let diff = row_heights[row_idx] - row.height;
+                    vbox.add_node(kern![vert: diff]);
+                }
+
+                // add inter-row spacing.  Since vboxes get their depth from the their
+                // last entry, we manually add the depth from the last row if it exceeds
+                // the row_seperation.
+                // FIXME: This should be actual depth, not additional kerning
+                let node = row.as_node();
+                let mut vert_dist = strut_depth;
+                if row_idx + 1 == num_rows { 
+                    vert_dist = Unit::max(vert_dist, -node.depth); 
+                };
+                vbox.add_node(node);
+                vbox.add_node(kern![vert: vert_dist]);
+            }
+
+            hbox.add_node(vbox.build());
+
+
+            let next_separators = &separators[col_idx + 1];
+
+            // don't add half col separation on the last node if there is a right delimiter
+            // or if next separator starts with @-expression
+            if !(array.right_delimiter.is_some() && col_idx + 1 == num_columns) 
+               && next_separators.first().map_or(true, ColSeparator::is_vert_bars)
+            {
                 hbox.add_node(kern![horz: half_col_sep]);
-            } 
+            }
+            draw_separators(&mut hbox, &next_separators, &row_heights, strut_depth, config, rule_measurements)?;
         }
+
+
 
         if array.right_delimiter.is_none() {
             hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);

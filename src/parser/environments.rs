@@ -89,7 +89,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             let n_cols = rows.last().map_or(0, |row| row.len());
             ArrayColumnsFormatting { 
                 alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
-                separators: vec![vec![]; n_cols], 
+                separators: vec![vec![]; n_cols + 1], 
             }
         });
 
@@ -175,7 +175,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     let nodes = self.parse_control_seq_argument_as_nodes("@")?;
                     // Safe to unwrap b/c `separators` always has at least one element
                     let current_separators = separators.last_mut().unwrap();
-                    current_separators.push(ColSeparator::AtExpressions(nodes));
+                    current_separators.push(ColSeparator::AtExpression(nodes));
                 }
                 TexToken::Char(_) => {
                     return Err(ParseError::UnrecognizedArrayColumnFormat);

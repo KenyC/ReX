@@ -118,7 +118,13 @@ pub enum ColSeparator {
     /// A certain number of vertical bars
     VerticalBars(u8),
     /// Nodes to be put between every column
-    AtExpressions(Vec<ParseNode>),
+    AtExpression(Vec<ParseNode>),
+}
+
+impl ColSeparator {
+    pub fn is_vert_bars(&self) -> bool {
+        matches!(self, Self::VerticalBars(_))
+    }
 }
 
 
