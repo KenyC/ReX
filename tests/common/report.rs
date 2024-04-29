@@ -11,7 +11,7 @@ use std::path::Path;
 use super::img_diff::diff_img;
 use super::equation_sample::{Equation, EquationDiffs};
 
-const HEADER: &'static str =
+pub const HTML_REPORT_HEADER: &'static str =
 r##"<!DOCTYPE html>
 <html>
 <head>
@@ -39,7 +39,7 @@ r##"<!DOCTYPE html>
 </head>
 <body>"##;
 
-const END: &'static str = r"</body></html>";
+pub const HTML_REPORT_FOOTER: &'static str = r"</body></html>";
 
 fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
     write_equation_header(f, old);
@@ -54,7 +54,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
 
 
 
-
+    let mut buffer_diff_img = Vec::new();
     // TODO this is first approximation ; we should hanle error cases here
 
 
@@ -82,6 +82,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
     ).unwrap();
 
     if let Some((old_img, new_img)) = Option::zip(render_old, render_new) {
+        diff_img(&old_img, &new_img, &mut buffer_diff_img);
         writeln!(
             f,
             r#"
@@ -90,7 +91,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
             <tbody><tr><td><img src="data:image/png;base64,{}"></td></tr></tbody>
             </table>
             "#,
-            engine.encode(&diff_img(&old_img, &new_img)),
+            engine.encode(&buffer_diff_img),
         ).unwrap();
     }
     else {
@@ -154,12 +155,12 @@ pub fn write_diff<P: AsRef<Path>>(path: P, diff: EquationDiffs) {
     let out = File::create(path.as_ref()).expect("failed to create html file for SVG diff");
     let mut writer = BufWriter::new(out);
 
-    writer.write(HEADER.as_bytes()).unwrap();
+    writer.write(HTML_REPORT_HEADER.as_bytes()).unwrap();
     for new_eq in diff.new_eqs {
         write_equation(&mut writer, new_eq);
     }
     for (before, after) in diff.diffs {
         write_equation_diff(&mut writer, before, after);
     }
-    writer.write(END.as_bytes()).unwrap();
+    writer.write(HTML_REPORT_FOOTER.as_bytes()).unwrap();
 }

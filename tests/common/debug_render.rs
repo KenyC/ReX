@@ -1,10 +1,9 @@
 // extern crate rex;
 // extern crate font_types as font;
-// #[macro_use]
-// extern crate serde_derive;
 
 
 use rex::{GraphicsBackend, FontBackend, Backend};
+use serde_derive::{Deserialize, Serialize};
 
 
 
