@@ -1,0 +1,7 @@
+[
+  "\\begin{array}{r@{=}l}2 & 1\\\\ 3 & 4\\end{array}",
+  "\\iint \\sqrt{1 + f^2(x,t,t)}\\,\\mathrm{d}x\\mathrm{d}y\\mathrm{d}t = \\sum \\xi(t)",
+  "\\Vert f \\Vert_2 = \\sqrt{\\int f^2(x)\\,\\mathrm{d}x}",
+  "\\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\\right\\rbrace \\mathrm{wat?}"
+
+]
