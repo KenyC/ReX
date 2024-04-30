@@ -1,10 +1,12 @@
+use unicode_math::AtomType;
+
 use crate::parser::error::ParseError;
 use crate::parser::{tokens_as_string, List};
 
-use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ColSeparator};
+use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ColSeparator, DummyNode};
 use super::symbols::Symbol;
 use super::{error::ParseResult, nodes::CellContent, textoken::TexToken, Parser};
-use super::GroupKind;
+use super::{GroupKind, ParseNode};
 
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -16,6 +18,7 @@ pub enum Environment {
     BbMatrix,
     VMatrix,
     VvMatrix,
+    Aligned,
 }
 
 impl Environment {
@@ -28,6 +31,7 @@ impl Environment {
             "Bmatrix"  => Some(Self::BbMatrix),
             "vmatrix"  => Some(Self::VMatrix),
             "Vmatrix"  => Some(Self::VvMatrix),
+            "aligned"  => Some(Self::Aligned),
             _ => None
         }
     }
@@ -49,47 +53,68 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
             col_format = Some(forked_parser.tokens_as_column_format()?);
         }
-        let rows = self.parse_array_body(env)?;
+        let mut rows = self.parse_array_body(env)?;
 
         let left_delimiter;
         let right_delimiter;
 
         match env {
-            Environment::Array    => {
-                left_delimiter  = None;
-                right_delimiter = None;
-            },
-            Environment::Matrix   => {
+            Environment::Array   |
+            Environment::Matrix  | 
+            Environment::Aligned
+            => {
                 left_delimiter  = None;
                 right_delimiter = None;
             },
             Environment::PMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : unicode_math::AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : ')', atom_type : unicode_math::AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ')', atom_type : AtomType::Inner});
             },
             Environment::BMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : unicode_math::AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : ']', atom_type : unicode_math::AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ']', atom_type : AtomType::Inner});
             },
             Environment::BbMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : unicode_math::AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '}', atom_type : unicode_math::AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '}', atom_type : AtomType::Inner});
             },
             Environment::VMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '|', atom_type : unicode_math::AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
             },
             Environment::VvMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : unicode_math::AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
             },
+        }
+
+        // For the `aligned` ennvironment, we add dummies in even columns (second, fourth, etc.)
+        // which copy the atom_type of the last node of the previous column
+        if let Environment::Aligned = env {
+            for row in rows.iter_mut() {
+                for cell in row.chunks_exact_mut(2) {
+                    let atom_type = cell[0].last().map_or_else(
+                        || AtomType::Ordinary, 
+                        |node| node.atom_type(),
+                    );
+                    cell[1].insert(0, ParseNode::DummyNode(DummyNode { at: atom_type }));
+                }
+            }
         }
 
         let col_format = col_format.unwrap_or_else(|| {
             let n_cols = rows.last().map_or(0, |row| row.len());
-            ArrayColumnsFormatting { 
-                alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
-                separators: vec![vec![]; n_cols + 1], 
+            if let Environment::Aligned = env {
+                ArrayColumnsFormatting {
+                    alignment:  [ArrayColumnAlign::Right, ArrayColumnAlign::Left].iter().cycle().cloned().take(n_cols).collect(),
+                    separators: [Vec::new(), vec![ColSeparator::AtExpression(Vec::new())]].iter().cycle().cloned().take(n_cols + 1).collect(),
+                }
+            }
+            else {
+                ArrayColumnsFormatting { 
+                    alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
+                    separators: vec![vec![]; n_cols + 1], 
+                }
             }
         });
 

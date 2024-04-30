@@ -137,6 +137,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 self.add_node(builders::color(inner, clr))
             }
 
+            ParseNode::DummyNode(_) => (),
+
             ParseNode::PlainText(PlainText {ref text}) => {
                 for character in text.chars() {
                     if character.is_ascii_whitespace() {
