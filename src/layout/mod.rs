@@ -21,6 +21,7 @@ mod builders;
 mod convert;
 pub mod engine;
 pub mod spacing;
+pub mod constants;
 
 use crate::font::common::GlyphId;
 use crate::parser::color::RGBA;

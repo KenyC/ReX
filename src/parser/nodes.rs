@@ -98,7 +98,7 @@ impl Default for ArrayColumnAlign {
 }
 
 
-/// An array of nodes as created by e.g. `\begin{array}{c} .. \end{array}` or `\begin{pmatrix} .. \end{pmatrix}`
+/// An array of nodes as created by e.g. `\begin{array}{c} .. \end{array}`, `\begin{pmatrix} .. \end{pmatrix}` or `\begin{aligned} .. \end{aligned}`
 #[derive(Debug, Clone, PartialEq)]
 pub struct Array {
     /// The alignment arguments (clr) for each row, plus separators (bars and @-expressions).  Default: center.
@@ -112,6 +112,9 @@ pub struct Array {
 
     /// The right delimiter for the array (optional).
     pub right_delimiter: Option<Symbol>,
+
+    /// Extra space to add between rows
+    pub extra_row_sep : Option<AnyUnit>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

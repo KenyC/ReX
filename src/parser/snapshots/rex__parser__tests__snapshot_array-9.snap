@@ -14,7 +14,7 @@ Ok(
                     separators: [
                         [],
                         [
-                            AtExpressions(
+                            AtExpression(
                                 [],
                             ),
                         ],
@@ -61,6 +61,7 @@ Ok(
                 ],
                 left_delimiter: None,
                 right_delimiter: None,
+                extra_row_sep: None,
             },
         ),
     ],

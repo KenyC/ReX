@@ -17,11 +17,12 @@ use crate::font::{
     AtomType
 };
 use crate::layout::builders::{HBox, VBox};
+use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
 use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
-use crate::dimensions::Unit;
+use crate::dimensions::{AnyUnit, Unit};
 use crate::dimensions::units::{Px, Em, Pt, FUnit};
 use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
@@ -701,21 +702,12 @@ impl<'f, F : MathFont> Layout<'f, F> {
     }
 
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
-        // From [https://tex.stackexchange.com/questions/48276/latex-specify-font-point-size] & `info latex`
-        // "A rule of thumb is that the baselineskip should be 1.2 times the font size."
-        let base_line_skip = Unit::<Em>::new(1.2);
-
-        // TODO: let jot = UNITS_PER_EM / 4;
-        // The values below are gathered from the definition of the corresponding commands in "article.cls" on a default LateX installation
-        const STRUT_HEIGHT      : f64 = 0.7;         // \strutbox height = 0.7\baseline
-        const STRUT_DEPTH       : f64 = 0.3;         // \strutbox depth  = 0.3\baseline
-        const COLUMN_SEP        : Unit<Pt> = Unit::<Pt>::new(5.0) ;  // \arraycolsep
-        const RULE_WIDTH        : Unit<Pt> = Unit::<Pt>::new(0.4) ;  // \arrayrulewidth
-        const DOUBLE_RULE_SEP   : Unit<Pt> = Unit::<Pt>::new(2.0) ;  // \doublerulesep
-        let strut_height     = base_line_skip.scale(STRUT_HEIGHT) * config.font_size; 
-        let strut_depth      = base_line_skip.scale(STRUT_DEPTH)  * config.font_size; 
-        // From Lamport - LateX a document preparation system (2end edition) - p. 207
-        // "\arraycolsep : Half the width of the default horizontal space between columns in an array environment"
+        let line_skip   = BASELINE_SKIP + array.extra_row_sep.map_or(Unit::ZERO, |unit| match unit {
+            AnyUnit::Em(length_em) => Unit::new(length_em),
+            AnyUnit::Px(length_px) => Unit::<Px>::new(length_px) * config.font_size.recip(),
+        }); 
+        let strut_height     = line_skip.scale(STRUT_HEIGHT) * config.font_size; 
+        let strut_depth      = line_skip.scale(STRUT_DEPTH)  * config.font_size; 
         let half_col_sep     = COLUMN_SEP      * Unit::standard_pt_to_px(); 
         let rule_width       = RULE_WIDTH      * Unit::standard_pt_to_px();
         let double_rule_sep  = DOUBLE_RULE_SEP * Unit::standard_pt_to_px();
@@ -970,7 +962,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         self.add_node(hbox.build());
 
         Ok(())
-    }
+    } 
 }
 
 
