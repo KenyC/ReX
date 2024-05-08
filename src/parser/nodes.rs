@@ -113,8 +113,9 @@ pub struct Array {
     /// The right delimiter for the array (optional).
     pub right_delimiter: Option<Symbol>,
 
-    /// Extra space to add between rows
-    pub extra_row_sep : Option<AnyUnit>,
+    /// Whether to add separation between rows.  
+    /// In `\begin{aligned} .. \end{aligned}` environments, there is more space between lines
+    pub extra_row_sep : bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]

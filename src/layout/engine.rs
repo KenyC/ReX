@@ -4,6 +4,7 @@
 //! this function returns a layout. The layout can then be sent to the renderer (cf [`render`](crate::render)) to create a graphical output.
 
 
+use std::io::Write;
 use std::unimplemented;
 
 use super::builders;
@@ -17,7 +18,7 @@ use crate::font::{
     AtomType
 };
 use crate::layout::builders::{HBox, VBox};
-use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
+use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
 use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
@@ -702,15 +703,21 @@ impl<'f, F : MathFont> Layout<'f, F> {
     }
 
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
-        let line_skip   = BASELINE_SKIP + array.extra_row_sep.map_or(Unit::ZERO, |unit| match unit {
-            AnyUnit::Em(length_em) => Unit::new(length_em),
-            AnyUnit::Px(length_px) => Unit::<Px>::new(length_px) * config.font_size.recip(),
-        }); 
-        let strut_height     = line_skip.scale(STRUT_HEIGHT) * config.font_size; 
-        let strut_depth      = line_skip.scale(STRUT_DEPTH)  * config.font_size; 
+        let normal_baseline_skip = BASELINE_SKIP; 
+        let strut_height     = normal_baseline_skip.scale(STRUT_HEIGHT) * config.font_size; 
+        let strut_depth      = - normal_baseline_skip.scale(STRUT_DEPTH)  * config.font_size; 
+
+        let jot = if array.extra_row_sep { JOT } else { Unit::ZERO };
+        let baseline_skip = normal_baseline_skip * config.font_size + jot * Unit::standard_pt_to_px();
+        let line_skip = (LINE_SKIP_ARRAY + jot) * Unit::standard_pt_to_px();
+        let line_skip_limit = (LINE_SKIP_LIMIT_ARRAY + jot)  * Unit::standard_pt_to_px();
+
         let half_col_sep     = COLUMN_SEP      * Unit::standard_pt_to_px(); 
         let rule_width       = RULE_WIDTH      * Unit::standard_pt_to_px();
         let double_rule_sep  = DOUBLE_RULE_SEP * Unit::standard_pt_to_px();
+
+        let null_delimiter_space = config.ctx.constants.null_delimiter_space * config.font_size;
+
 
         // Don't bother constructing a new node if there is nothing.
         let num_rows = array.rows.len();
@@ -719,122 +726,198 @@ impl<'f, F : MathFont> Layout<'f, F> {
             return Ok(());
         }
 
-        let mut columns = Vec::with_capacity(num_columns);
-        for _ in 0..num_columns {
-            columns.push(Vec::with_capacity(num_rows));
+        // -- LAY OUT ALL NODES OF ARRAY
+        // Columns of an array may be separated by @-expressions
+        // We treat @-expressions are ordinary columns, except for the fact that
+        // @-expression content is the same in every row
+        // We compute how many columns there are, when taking into account @-expressions
+        let all_separators = &array.col_format.separators;
+        // We count the number of columns including @-expr columns
+        let num_columns_at = num_columns + all_separators
+            .iter().map(|separators| separators.iter()) 
+            .flatten()
+            .filter(|separator| matches!(separator, ColSeparator::AtExpression(_)))
+            .count()
+        ;
+        // we store alignments information ; we can also use this array to check if a column was an @-expression or not
+        let mut alignments : Vec<Option<ArrayColumnAlign>> = Vec::with_capacity(num_columns_at); 
+        let mut columns : Vec<Vec<Layout<'f, F>>> = Vec::with_capacity(num_columns_at);
+        let mut n_vertical_bars : Vec<u8> = Vec::with_capacity(num_columns_at + 1);
+        let mut current_n_vertical_bars = 0;
+
+        for separator in &all_separators[0] {
+            match separator {
+                ColSeparator::VerticalBars(n_bars) => 
+                    current_n_vertical_bars += n_bars,
+                ColSeparator::AtExpression(nodes) => {
+                    let node = layout(&nodes, config)?;
+                    let mut column = Vec::with_capacity(num_rows);
+                    for _ in 0 .. num_rows {
+                        column.push(node.clone());
+                    }
+                    columns.push(column);
+                    alignments.push(None);
+                    n_vertical_bars.push(std::mem::replace(&mut current_n_vertical_bars, 0));
+                },
+            }
         }
-
-        // Layout each node in each row, while keeping track of the largest row/col
-        let mut col_widths = vec![Unit::ZERO; num_columns];
-        let mut row_heights = Vec::with_capacity(num_rows);
-        let mut prev_depth = Unit::ZERO;
-        let mut row_max = strut_height;
-        for row in &array.rows {
-            let mut max_depth = Unit::ZERO;
-            for col_idx in 0..num_columns {
-                // layout row element if it exists
-                let square = match row.get(col_idx) {
-                    Some(r) => {
-                        // record the max height/width for current row/col
-                        let square = layout(r, config)?;
-                        row_max = Unit::max(square.height, row_max);
-                        max_depth = Unit::max(max_depth, -square.depth);
-                        col_widths[col_idx] = Unit::max(col_widths[col_idx], square.width);
-                        square
-                    },
-                    _ => Layout::new(),
+        for (i, separators) in all_separators[1..].iter().enumerate() {
+            // first comes the real column
+            let mut column = Vec::with_capacity(num_rows);
+            for j in 0 .. num_rows {
+                let cell_node = array.rows
+                    .get(j)
+                    .and_then(|row| row.get(i))
+                ;  
+                let layout = match cell_node {
+                    Some(cell_node) => layout(&cell_node, config)?,
+                    None => Layout::new(),
                 };
+                column.push(layout);
+            }
+            columns.push(column);
+            alignments.push(Some(array.col_format.alignment[i]));
+            n_vertical_bars.push(std::mem::replace(&mut current_n_vertical_bars, 0));
 
-                columns[col_idx].push(square);
+            // then comes the separators
+            for separator in separators {
+                match separator {
+                    ColSeparator::VerticalBars(n_bars) => 
+                        current_n_vertical_bars += n_bars,
+                    ColSeparator::AtExpression(nodes) => {
+                        let node = layout(&nodes, config)?;
+                        let mut column = Vec::with_capacity(num_rows);
+                        for _ in 0 .. num_rows {
+                            column.push(node.clone());
+                        }
+                        columns.push(column);
+                        alignments.push(None);
+                        n_vertical_bars.push(std::mem::replace(&mut current_n_vertical_bars, 0));
+                    },
+                }
+            }
+        }
+        n_vertical_bars.push(std::mem::replace(&mut current_n_vertical_bars, 0));
+
+        debug_assert_eq!(columns.len(), num_columns_at);
+        debug_assert_eq!(alignments.len(), num_columns_at);
+        debug_assert_eq!(n_vertical_bars.len(), num_columns_at + 1);
+
+
+        // let mut columns = Vec::with_capacity(num_columns);
+        // for _ in 0..num_columns {
+        //     columns.push(Vec::with_capacity(num_rows));
+        // }
+
+        // -- COMPUTE COLUMN WIDTHS AND BASELINE DISTS
+        // column width
+        let mut col_widths = Vec::with_capacity(num_columns_at);
+
+        for column in columns.iter() {
+            // TODO: there is no need to do that if the column is an @-expr, since the width is expected to be the same
+            let mut col_width = Unit::ZERO;
+            for node in column {
+                col_width = Unit::max(col_width, node.width);
+            }
+            col_widths.push(col_width);
+        }
+        debug_assert_eq!(col_widths.len(), num_columns_at);
+
+
+        // baseline_dists[0] is dist from top of first line to first baseline (e.g. as though it was preceded by a line of zero-depth)
+        // baseline_dists[i] is the dist from row indexed i and row indexed i+1
+        let mut baseline_dists = Vec::with_capacity(num_rows);
+        let mut prev_depth = Unit::ZERO;
+
+        for i_row in 0 .. num_rows {
+            let mut max_height = strut_height;
+            let mut max_depth  = strut_depth;
+
+            for column in columns.iter() {
+                let cell = &column[i_row];
+
+                max_height = Unit::max(max_height, cell.height);
+                max_depth  = Unit::min(max_depth, cell.depth); // depth are negative
             }
 
-            // ensure row height >= strut_height
-            row_heights.push(row_max + prev_depth);
-            row_max = strut_height;
-            prev_depth = Unit::max(Unit::ZERO, max_depth - strut_depth);
+            let box_separation = max_height - prev_depth;
+            let baseline_dist = 
+                if i_row == 0 {
+                    box_separation
+                }
+                else if box_separation + line_skip_limit > baseline_skip && !baseline_dists.is_empty() {
+                    box_separation + line_skip
+                }
+                else {
+                    baseline_skip
+                }
+            ;
+            baseline_dists.push(baseline_dist);
+            prev_depth = max_depth;
         }
+        let last_depth = prev_depth;
+        debug_assert_eq!(baseline_dists.len(), num_rows);
+
+        eprintln!("{:?}", baseline_dists);
+
+        // -- CONSTRUCT COLUMNS
+        // Each column is a VBox containing (1) the cell's content, (2) vertical space needed to align rows
+        // We need to center cells on the horizontal axis (left, center or right)
+        // We need to add vertical space between successive cells so that the baselines of all cells are aligned
+        let mut column_vboxes = Vec::with_capacity(num_columns_at);
+        for (i_col, column) in columns.into_iter().enumerate() {
+            let mut vbox = builders::VBox::new();
+            let col_width = col_widths[i_col];
+            let alignment = alignments[i_col];
+
+
+            for (i_row, mut cell) in column.into_iter().enumerate() {
+                // add vertical space if necessary to align cells of the same row
+                let kern = baseline_dists[i_row] - cell.height;
+                if kern > Unit::ZERO {
+                    vbox.add_node(LayoutNode::vert_kern(kern));
+                }
+                prev_depth = cell.depth;
+
+                cell.alignment = match alignment {
+                    Some(ArrayColumnAlign::Centered) => Alignment::Centered(cell.width),
+                    Some(ArrayColumnAlign::Left)     => Alignment::Left,
+                    Some(ArrayColumnAlign::Right)    => Alignment::Right(cell.width),
+                    None => Alignment::Default,
+                };
+                cell.width = col_width;
+                vbox.add_node(cell.as_node());
+
+            }
+
+            // add final space to align bottom of boxes
+            let kern = - last_depth;
+            if kern > Unit::ZERO {
+                vbox.add_node(LayoutNode::vert_kern(kern));
+            }
+            column_vboxes.push(vbox);
+        }
+        debug_assert_eq!(column_vboxes.len(), num_columns_at);
+
+
+
+        // -- CONSTRUCT ARRAY
+        // Now columns have been constructed, we lay them out together
+        // We insert space between columns and vertical bars between them
+
         // the body of the matrix is an hbox of column vectors.
         let mut hbox = builders::HBox::new();
 
         // If there are no delimiters, insert a null space.  Otherwise we insert
         // the delimiters _after_ we have laidout the body of the matrix.
-        // if array.left_delimiter.is_none() {
-        //     hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);
-        // }
-
-        #[derive(Debug, Clone, Copy)]
-        struct RuleMeasurements {
-            rule_width:      Unit<Px>, 
-            total_height:    Unit<Px>, 
-            double_rule_sep: Unit<Px>
+        if array.left_delimiter.is_none() {
+            hbox.add_node(LayoutNode::horiz_kern(null_delimiter_space));
         }
 
 
-
-        #[inline]
-        fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_bars: u8, rule_measurements: RuleMeasurements) {
-            if n_bars != 0 {
-                let RuleMeasurements { rule_width, total_height, double_rule_sep } = rule_measurements;
-                let rule_width = rule_width;
-                let total_height = total_height;
-                let double_rule_sep = double_rule_sep;
-                hbox.add_node(rule![width: rule_width, height: total_height]);
-                for _ in 0 .. n_bars - 1 {
-                    hbox.add_node(kern![horz: double_rule_sep]);
-                    hbox.add_node(rule![width: rule_width, height: total_height]);
-                }
-            }
-        }
-
-
-        #[inline]
-        fn draw_separators<'a, 'f, 'c, F : MathFont>(
-            hbox: &mut builders::HBox<'f, F>, 
-            separators : & 'c [ColSeparator], 
-            row_heights: &[Unit<Px>],
-            strut_depth: Unit<Px>,
-            config: LayoutSettings<'a, 'f, F>, 
-            rule_measurements: RuleMeasurements
-        ) -> LayoutResult<()> {
-            for separator in separators {
-                match separator {
-                    ColSeparator::VerticalBars(n_bars) => {
-                        draw_vertical_bars(hbox, *n_bars, rule_measurements);
-                    },
-                    ColSeparator::AtExpression(nodes) => {
-                        // TODO: fast path if separator node is empty
-                        // first layout the nodes in the HBox
-                        let separator_node = layout(nodes, config)?.as_node();
-                        let mut vbox = VBox::new();
-                        let num_rows = row_heights.len();
-                        for (row_idx, row_height) in row_heights.iter().cloned().enumerate() {
-                            // TODO: Consider shared ref to avoid too many copying?
-                            let node = separator_node.clone();
-                            let node_depth = node.depth;
-                            if separator_node.height < row_height {
-                                let diff = row_height - separator_node.height;
-                                vbox.add_node(kern![vert: diff]);
-                            }
-                            vbox.add_node(node);
-
-                            let mut vert_dist = strut_depth;
-                            if row_idx + 1 == num_rows { 
-                                vert_dist = Unit::max(vert_dist, -node_depth); 
-                            };
-                            vbox.add_node(kern![vert: vert_dist]);
-                        }
-                        hbox.add_node(vbox.build());
-                    },
-                }
-            }
-            Ok(())
-        }
-
-
-        // add left vertical bars
         let total_height : Unit<Px> = 
-            row_heights.iter().cloned().sum::<Unit<Px>>()
-            + strut_depth.scale(num_rows as f64)
+            baseline_dists.iter().cloned().sum::<Unit<Px>>()
+            - last_depth
         ;
 
         let rule_measurements = RuleMeasurements {
@@ -843,84 +926,36 @@ impl<'f, F : MathFont> Layout<'f, F> {
             double_rule_sep,
         };
 
+        // add left vertical bars
+        draw_vertical_bars(&mut hbox, n_vertical_bars[0], rule_measurements);
 
-        // draw first separator
-        draw_separators(&mut hbox, &array.col_format.separators[0], &row_heights, strut_depth, config, rule_measurements)?;
 
-
-        let ArrayColumnsFormatting { alignment, separators } = &array.col_format;
-
-        let column_iter = 
-            Iterator::zip(columns.into_iter(), alignment.iter())
-            .enumerate()
-        ;
-        for (col_idx, (col, alignment)) in column_iter {
-            // check if previous separator span ends in vertical bars ; 
-            // if yes, add half_col_sep
-            // If there are delimiters, don't put half column separation at the beginning of array 
-            // This appears to be what LateX does. Compare:
-            // 1. \begin{Bmatrix}1\\ 1\\ 1\\ 1\\ 1\end{Bmatrix}
-            // 2. \left\lbrace\begin{array}{c}1\\ 1\\ 1\\ 1\\ 1\end{array}\right\rbrace
-            if !(array.right_delimiter.is_some() && col_idx == 0) 
-               && separators[col_idx].last().map_or(true, ColSeparator::is_vert_bars)
-            {
-                hbox.add_node(kern![horz: half_col_sep]);
+        for (i_col, vbox) in column_vboxes.into_iter().enumerate() {
+            // insert half col sep before if:
+            //   - vbox is not an @-expression
+            //   - if this is the first col, there is no left delimiter
+            if (i_col != 0 || array.left_delimiter.is_none()) && alignments[i_col].is_some() {
+                hbox.add_node(LayoutNode::horiz_kern(half_col_sep));
             }
 
-
-            let mut vbox = builders::VBox::new();
-            // To every row, add what's necessary to center them horizontally 
-            // Add interrow spaincg            
-            for (row_idx, mut row) in col.into_iter().enumerate() {
-                // Center columns as necessary
-                if row.width < col_widths[col_idx] {
-                    row.alignment = match alignment {
-                        ArrayColumnAlign::Centered => Alignment::Centered(row.width),
-                        ArrayColumnAlign::Left     => Alignment::Left,
-                        ArrayColumnAlign::Right    => Alignment::Right(row.width),
-                    };
-                    row.width = col_widths[col_idx];
-                }
-
-                // Add additional strut if required to align rows
-                if row.height < row_heights[row_idx] {
-                    let diff = row_heights[row_idx] - row.height;
-                    vbox.add_node(kern![vert: diff]);
-                }
-
-                // add inter-row spacing.  Since vboxes get their depth from the their
-                // last entry, we manually add the depth from the last row if it exceeds
-                // the row_seperation.
-                // FIXME: This should be actual depth, not additional kerning
-                let node = row.as_node();
-                let mut vert_dist = strut_depth;
-                if row_idx + 1 == num_rows { 
-                    vert_dist = Unit::max(vert_dist, -node.depth); 
-                };
-                vbox.add_node(node);
-                vbox.add_node(kern![vert: vert_dist]);
-            }
-
+            // insert column
             hbox.add_node(vbox.build());
 
-
-            let next_separators = &separators[col_idx + 1];
-
-            // don't add half col separation on the last node if there is a right delimiter
-            // or if next separator starts with @-expression
-            if !(array.right_delimiter.is_some() && col_idx + 1 == num_columns) 
-               && next_separators.first().map_or(true, ColSeparator::is_vert_bars)
-            {
-                hbox.add_node(kern![horz: half_col_sep]);
+            // insert half col sep before if:
+            //   - vbox is not an @-expression
+            //   - if this is the last col, there is no right delimiter
+            if (i_col + 1 != num_columns_at || array.right_delimiter.is_none()) && alignments[i_col].is_some() {
+                hbox.add_node(LayoutNode::horiz_kern(half_col_sep));
             }
-            draw_separators(&mut hbox, &next_separators, &row_heights, strut_depth, config, rule_measurements)?;
+
+            // draw vertical bars after
+            draw_vertical_bars(&mut hbox, n_vertical_bars[i_col + 1], rule_measurements);
         }
-
-
 
         if array.right_delimiter.is_none() {
-            hbox.add_node(kern![horz: config.ctx.constants.null_delimiter_space * config.font_size]);
+            hbox.add_node(LayoutNode::horiz_kern(null_delimiter_space));
         }
+
 
         // TODO: Reference array vertical alignment (optional [bt] arguments)
         // Vertically center the array on axis.
@@ -963,6 +998,31 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         Ok(())
     } 
+
 }
+
+
+#[derive(Debug, Clone, Copy)]
+struct RuleMeasurements {
+    rule_width:      Unit<Px>, 
+    total_height:    Unit<Px>, 
+    double_rule_sep: Unit<Px>
+}
+
+#[inline]
+fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_bars: u8, rule_measurements: RuleMeasurements) {
+    if n_bars != 0 {
+        let RuleMeasurements { rule_width, total_height, double_rule_sep } = rule_measurements;
+        let rule_width = rule_width;
+        let total_height = total_height;
+        let double_rule_sep = double_rule_sep;
+        hbox.add_node(rule![width: rule_width, height: total_height]);
+        for _ in 0 .. n_bars - 1 {
+            hbox.add_node(kern![horz: double_rule_sep]);
+            hbox.add_node(rule![width: rule_width, height: total_height]);
+        }
+    }
+}
+
 
 

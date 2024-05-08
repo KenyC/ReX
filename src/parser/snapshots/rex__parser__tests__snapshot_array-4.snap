@@ -67,7 +67,7 @@ Ok(
                         atom_type: Inner,
                     },
                 ),
-                extra_row_sep: None,
+                extra_row_sep: false,
             },
         ),
     ],

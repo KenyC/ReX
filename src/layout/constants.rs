@@ -3,13 +3,25 @@
 use crate::dimensions::{units::{Em, Pt}, Unit};
 
 // From [https://tex.stackexchange.com/questions/48276/latex-specify-font-point-size] & `info latex`
-/// A line or an array row's default total height (depth + height).  
-/// "A rule of thumb is that the baselineskip should be 1.2 times the font size."
+/// Desired distance between two baselines of an array. 
+/// If one line happens to contain extra high items, then the distance between baselines may prove bigger (cf [`LINE_SKIP_LIMIT_ARRAY`]).
+/// "A rule of thumb is that the baselineskip should be 1.2 times the font size." (`info latex`)
 pub const BASELINE_SKIP : Unit<Em> = Unit::<Em>::new(1.2);
 
 
+
+
+// Values obtained by writing `\the\lineskiplimit` and `\the\lineskip` in an array environment
+/// If the distance between the depth of a line (how far below the baseline the text on that line goes) and the height of the following line (how far above the baseline the text on that line goes)
+/// is smaller than this value, [`LINE_SKIP_ARRAY`] is inserted.  
+/// Cf Tex by Topic (chap. 15)
+pub const LINE_SKIP_LIMIT_ARRAY : Unit<Pt> = Unit::new(0.);
+/// Extra space to insert when lines are too close to one another. Cf [`LINE_SKIP_LIMIT_ARRAY`].
+pub const LINE_SKIP_ARRAY : Unit<Pt> = Unit::new(1.);
+
+
 /// Additional line height added to [`BASELINE_SKIP`] in `\begin{aligned}` environment.
-pub const JOT : f64 = 0.25;
+pub const JOT : Unit<Pt> = Unit::new(3.);
 
 
 // The values below are gathered from the definition of the corresponding commands in "article.cls" on a default LateX installation

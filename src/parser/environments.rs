@@ -121,11 +121,11 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         });
 
         let extra_row_sep = match env {
-            Environment::Aligned => Some(AnyUnit::Em(JOT)),
+            Environment::Aligned => true,
             Environment::Array | Environment::Matrix | Environment::PMatrix 
             | Environment::BMatrix | Environment::BbMatrix | Environment::VMatrix 
             | Environment::VvMatrix 
-            => None,
+            => false,
         };
 
         Ok(Array {

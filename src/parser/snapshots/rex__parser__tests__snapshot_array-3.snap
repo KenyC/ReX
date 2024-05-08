@@ -29,7 +29,7 @@ Ok(
                 ],
                 left_delimiter: None,
                 right_delimiter: None,
-                extra_row_sep: None,
+                extra_row_sep: false,
             },
         ),
     ],
