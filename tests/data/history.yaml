@@ -1260,26 +1260,26 @@
   description: "Arrays: array cells should be in textstyle (i.e. limits as subscripts/superscripts)"
   render:
     Ok:
-      width: 49.813334863384557
-      height: 52.51200249418616
+      width: 40.36266774783531
+      height: 29.152001384645698
       render:
         commands:
           - Symbol:
               pos:
                 - 8.799999999999999
-                - 13.89333399323126
-              glyph_id: 3586
+                - 0.4853333563854285
+              glyph_id: 1176
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 33.013334483404957
-                - -20.77333432001372
+                - 23.562667367855707
+                - -9.09333376524349
               glyph_id: 50
               scale: 16.0
           - Symbol:
               pos:
-                - 21.280000592768194
-                - 20.69866764980058
+                - 19.722667185465494
+                - 9.018667095030346
               glyph_id: 49
               scale: 16.0
       img_render_path: "tests/data/imgs/ begin{array}{c}  in-SMS726SsApw.png"

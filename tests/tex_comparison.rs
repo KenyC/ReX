@@ -98,7 +98,6 @@ fn tex_comparison() {
             Some((tex_render, rex_render)) => {
                 let diff_img = diff_img(&tex_render, &rex_render, &mut buffer_diff_img);
                 no_diff_rex_and_tex = no_diff_rex_and_tex && !diff_img;
-                eprintln!("{:?}", &buffer_diff_img[..10]);
                 write!(out_file, r#"<img src="data:image/png;base64,{}">"#, base64_engine.encode(&buffer_diff_img))  
             },
             None => 

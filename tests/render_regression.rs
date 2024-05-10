@@ -110,7 +110,7 @@ fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_r
     const FONT_SIZE : f64 = 16.0;
     // let description = format!("{}: {}", category, description);
 
-    let parse_nodes = rex::parser::parse(equation).unwrap();
+    let parse_nodes = rex::parser::parse(equation).map_err(|e| e.to_string())?;
     let layout_settings = LayoutSettings::new(&ctx).font_size(FONT_SIZE).layout_style(Style::Display);
 
     let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();

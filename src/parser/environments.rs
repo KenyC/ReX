@@ -1,6 +1,7 @@
 use unicode_math::AtomType;
 
 use crate::dimensions::AnyUnit;
+use crate::layout;
 use crate::layout::constants::JOT;
 use crate::parser::error::ParseError;
 use crate::parser::{tokens_as_string, List};
@@ -128,12 +129,21 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             => false,
         };
 
+        let cell_layout_style = match env {
+            Environment::Aligned => layout::Style::Display,
+            Environment::Array | Environment::Matrix | Environment::PMatrix 
+            | Environment::BMatrix | Environment::BbMatrix | Environment::VMatrix 
+            | Environment::VvMatrix 
+            => layout::Style::Text,
+        };
+
         Ok(Array {
             col_format,
             rows,
             left_delimiter,
             right_delimiter,
             extra_row_sep,
+            cell_layout_style,
         })
     }
 

@@ -1,7 +1,7 @@
 //! Nodes are the output of parsing.
 
 use crate::dimensions::AnyUnit;
-use crate::layout::Style;
+use crate::layout::{self, Style};
 use super::color::RGBA;
 use crate::font::AtomType;
 use super::symbols::Symbol;
@@ -116,6 +116,12 @@ pub struct Array {
     /// Whether to add separation between rows.  
     /// In `\begin{aligned} .. \end{aligned}` environments, there is more space between lines
     pub extra_row_sep : bool,
+
+    /// Layout style to render cells with  
+    /// In `\begin{aligned} .. \end{aligned}` environments, the cells are rendered display style, even
+    /// when they are embedded in an environment with text style.
+    /// In `\begin{array} .. \end{array}`, they are rendered in text style
+    pub cell_layout_style : layout::Style,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -703,6 +703,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
     }
 
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
+        let cell_layout_settings = config.layout_style(array.cell_layout_style);
         let normal_baseline_skip = BASELINE_SKIP; 
         let strut_height     = normal_baseline_skip.scale(STRUT_HEIGHT) * config.font_size; 
         let strut_depth      = - normal_baseline_skip.scale(STRUT_DEPTH)  * config.font_size; 
@@ -750,7 +751,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 ColSeparator::VerticalBars(n_bars) => 
                     current_n_vertical_bars += n_bars,
                 ColSeparator::AtExpression(nodes) => {
-                    let node = layout(&nodes, config)?;
+                    let node = layout(&nodes, cell_layout_settings)?;
                     let mut column = Vec::with_capacity(num_rows);
                     for _ in 0 .. num_rows {
                         column.push(node.clone());
@@ -770,7 +771,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                     .and_then(|row| row.get(i))
                 ;  
                 let layout = match cell_node {
-                    Some(cell_node) => layout(&cell_node, config)?,
+                    Some(cell_node) => layout(&cell_node, cell_layout_settings)?,
                     None => Layout::new(),
                 };
                 column.push(layout);
@@ -785,7 +786,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                     ColSeparator::VerticalBars(n_bars) => 
                         current_n_vertical_bars += n_bars,
                     ColSeparator::AtExpression(nodes) => {
-                        let node = layout(&nodes, config)?;
+                        let node = layout(&nodes, cell_layout_settings)?;
                         let mut column = Vec::with_capacity(num_rows);
                         for _ in 0 .. num_rows {
                             column.push(node.clone());
