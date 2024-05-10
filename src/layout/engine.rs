@@ -761,7 +761,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 let square = match row.get(col_idx) {
                     Some(r) => {
                         // record the max height/width for current row/col
-                        let square = layout(r, config)?;
+                        let square = layout(r, config.with_text())?;
                         row_max = Unit::max(square.height, row_max);
                         max_depth = Unit::max(max_depth, -square.depth);
                         col_widths[col_idx] = Unit::max(col_widths[col_idx], square.width);

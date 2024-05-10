@@ -423,6 +423,32 @@
           glyph_id: 126
           scale: 21.333333333333333
   img_render_path: "tests/data/imgs/ text{{} {{} }}-YCit0Wxmweg.png"
+"array cells should be in textstyle (i.e. limits as subscripts/superscripts) - \\begin{array}{c} \\int_0^1 \\end{array}":
+  tex: "\\begin{array}{c} \\int_0^1 \\end{array}"
+  description: "Arrays: array cells should be in textstyle (i.e. limits as subscripts/superscripts)"
+  width: 38.22933441450198
+  height: 29.152001384645698
+  render:
+    commands:
+      - Symbol:
+          pos:
+            - 6.666666666666666
+            - 0.4853333563854285
+          glyph_id: 1176
+          scale: 21.333333333333333
+      - Symbol:
+          pos:
+            - 21.429334034522375
+            - -9.09333376524349
+          glyph_id: 50
+          scale: 16.0
+      - Symbol:
+          pos:
+            - 17.58933385213216
+            - 9.018667095030346
+          glyph_id: 49
+          scale: 16.0
+  img_render_path: "tests/data/imgs/ begin{array}{c}  in-SMS726SsApw.png"
 "array column alignment should be honored - \\begin{array}{c}a\\\\ aa\\\\ aaa\\end{array}":
   tex: "\\begin{array}{c}a\\\\ aa\\\\ aaa\\end{array}"
   description: "Arrays: array column alignment should be honored"
@@ -8578,7 +8604,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  0 -XL7dC3TH-SI.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   0 -XL7dC3TH-SI.png"
 "should render - \\begin{pmatrix}\n  1 & 2 & 3\\\\\n  4 & 5 & 6\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  1 & 2 & 3\\\\\n  4 & 5 & 6\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -8634,7 +8660,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  1 -JDbfQjJKrqU.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   1 -JDbfQjJKrqU.png"
 "should render - \\begin{pmatrix}\n  1 \\\\\n  2 \\\\\n  3 \\\\\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  1 \\\\\n  2 \\\\\n  3 \\\\\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -8708,7 +8734,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 32.02133485426504
           glyph_id: 1439
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  1 -9svv0298TXI.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   1 -9svv0298TXI.png"
 "should render - \\begin{pmatrix}\n  a &\n\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix} \\\\\n  c & d\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a &\n\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix} \\\\\n  c & d\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -8818,7 +8844,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 32.66133488466342
           glyph_id: 1439
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  a -CF535V4pYYs.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   a -CF535V4pYYs.png"
 "should render - \\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -8862,7 +8888,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  a -wcUTMJZDMCE.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   a -wcUTMJZDMCE.png"
 "should render - \\begin{pmatrix}\n  a_1 & b_1 \\\\\n  c_1 & d_1\n\\end{pmatrix}\n\n\\begin{pmatrix}\n  a_2 & b_2 \\\\\n  c_2 & d_2\n\\end{pmatrix}\n\n=\n\n\\begin{pmatrix}\n  a_1 a_2 + b_1 c_2 & a_1 b_2 + b_1 d_2 \\\\\n  c_1 a_2 + d_1 c_2 & c_1 b_2 + d_1 d_2\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a_1 & b_1 \\\\\n  c_1 & d_1\n\\end{pmatrix}\n\n\\begin{pmatrix}\n  a_2 & b_2 \\\\\n  c_2 & d_2\n\\end{pmatrix}\n\n=\n\n\\begin{pmatrix}\n  a_1 a_2 + b_1 c_2 & a_1 b_2 + b_1 d_2 \\\\\n  c_1 a_2 + d_1 c_2 & c_1 b_2 + d_1 d_2\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -9224,7 +9250,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  a_-lc3YQFjIIPw.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   a_-lc3YQFjIIPw.png"
 "should render - \\begin{pmatrix}\n  x & abcdef \\\\\n  abcdef & x\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  x & abcdef \\\\\n  abcdef & x\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -9328,7 +9354,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  x -frxpywHMpSM.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   x -frxpywHMpSM.png"
 "should render - \\begin{pmatrix}\n  x \\\\\n  abcdef\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  x \\\\\n  abcdef\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -9390,7 +9416,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 12.501333927114804
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ begin{pmatrix}\n  x -EGD0r-M9O_w.png"
+  img_render_path: "tests/data/imgs/ begin{pmatrix}   x -EGD0r-M9O_w.png"
 "should render - \\begin{pmatrix}\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -9484,7 +9510,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
             - 43.66933540751536
           glyph_id: 3730
           scale: 21.333333333333333
-  img_render_path: "tests/data/imgs/ frac{\n   begin{pmat-Z299nAz2JqY.png"
+  img_render_path: "tests/data/imgs/ frac{    begin{pmat-Z299nAz2JqY.png"
 "should typeset nucleus as cramped, and baseline unchanged. - \\hat{A^2} A^2":
   tex: "\\hat{A^2} A^2"
   description: "Accents: should typeset nucleus as cramped, and baseline unchanged."

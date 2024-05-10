@@ -227,6 +227,9 @@ Arrays:
     - \begin{array}{|r||c|} 1 & a \\ 2 & b \\ 3 & c \\ \end{array}
     - \begin{array}{l|r} x & 1 \\ y & 2 \\ z & 3 \\ \end{array}
     - \begin{array}{|c|c|} a & b \\ x & y \\ \end{array}
+  - Description: array cells should be in textstyle (i.e. limits as subscripts/superscripts)
+    Snippets:
+    - \begin{array}{c} \int_0^1 \end{array}
   - Description: should render
     Snippets:
     - |
