@@ -4,23 +4,27 @@ expression: "parse(r\"\\mathfrak{F+1}\")"
 ---
 Ok(
     [
-        Symbol(
-            Symbol {
-                codepoint: '𝔉',
-                atom_type: Alpha,
-            },
-        ),
-        Symbol(
-            Symbol {
-                codepoint: '+',
-                atom_type: Binary,
-            },
-        ),
-        Symbol(
-            Symbol {
-                codepoint: '1',
-                atom_type: Alpha,
-            },
+        Group(
+            [
+                Symbol(
+                    Symbol {
+                        codepoint: '𝔉',
+                        atom_type: Alpha,
+                    },
+                ),
+                Symbol(
+                    Symbol {
+                        codepoint: '+',
+                        atom_type: Binary,
+                    },
+                ),
+                Symbol(
+                    Symbol {
+                        codepoint: '1',
+                        atom_type: Alpha,
+                    },
+                ),
+            ],
         ),
     ],
 )

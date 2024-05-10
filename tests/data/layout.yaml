@@ -199,6 +199,17 @@ Spacing:
     - azertyuiopqsdfghjklmwxcvbn
     - arupdhlxbztiqfjmcneyosgkwv
 
+Aligned:
+  - Description: Typical examples
+    Snippets:
+      - \begin{aligned} a=&\frac{1}{2}\sqrt{1-e_3^2} \cos(\gamma),\\ b=&\frac{1}{2}\sqrt{1-e_3^2} \sin(\gamma),\\ c=&\frac{1}{2}(1+e_3).\end{aligned}
+      - \begin{aligned}\cos(t)\cos(\gamma)-\sin(t)\sin(\gamma)=&\cos(t+\gamma),\\ \sin(t)\cos(\gamma)+\cos(t)\sin(\gamma)=&\sin(t+\gamma). \end{aligned}
+  - Description: Example from mathdoc.pdf ; equal sign should have space only in top and bottom row
+    Snippets:
+      - \begin{aligned} 1&=1\\ 1=&1 \\ 1={}&1\end{aligned}
+
+
+
 Arrays:
   - Description: substack
     Snippets:

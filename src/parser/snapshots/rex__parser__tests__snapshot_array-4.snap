@@ -7,17 +7,15 @@ Ok(
         Array(
             Array {
                 col_format: ArrayColumnsFormatting {
-                    columns: [
-                        ArraySingleColumnFormatting {
-                            alignment: Centered,
-                            n_vertical_bars_after: 0,
-                        },
-                        ArraySingleColumnFormatting {
-                            alignment: Centered,
-                            n_vertical_bars_after: 0,
-                        },
+                    alignment: [
+                        Centered,
+                        Centered,
                     ],
-                    n_vertical_bars_before: 0,
+                    separators: [
+                        [],
+                        [],
+                        [],
+                    ],
                 },
                 rows: [
                     [
@@ -69,6 +67,7 @@ Ok(
                         atom_type: Inner,
                     },
                 ),
+                extra_row_sep: false,
             },
         ),
     ],

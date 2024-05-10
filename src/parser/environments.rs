@@ -1,8 +1,14 @@
-use super::lexer::{Lexer, Token};
-use super::macros::CommandCollection;
-use crate::font::{Style, AtomType};
-use crate::parser::{self, optional_argument_with, required_argument_with, ParseNode, symbols::Symbol};
-use crate::error::{ParseResult, ParseError};
+use unicode_math::AtomType;
+
+use crate::dimensions::AnyUnit;
+use crate::layout::constants::JOT;
+use crate::parser::error::ParseError;
+use crate::parser::{tokens_as_string, List};
+
+use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ColSeparator, DummyNode};
+use super::symbols::Symbol;
+use super::{error::ParseResult, nodes::CellContent, textoken::TexToken, Parser};
+use super::{GroupKind, ParseNode};
 
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -14,383 +20,294 @@ pub enum Environment {
     BbMatrix,
     VMatrix,
     VvMatrix,
+    Aligned,
 }
 
 impl Environment {
-    /// Attempt to parse an `&str` type into a an `Enviornment`.
-    pub fn try_from_str(name: &str) -> Option<Environment> {
+    pub fn from_name(name : &str) ->  Option<Self> {
         match name {
-            "array" => Some(Environment::Array),
-            "matrix" => Some(Environment::Matrix),
-            "pmatrix" => Some(Environment::PMatrix),
-            "bmatrix" => Some(Environment::BMatrix),
-            "Bmatrix" => Some(Environment::BbMatrix),
-            "vmatrix" => Some(Environment::VMatrix),
-            "Vmatrix" => Some(Environment::VvMatrix),
-            _ => None,
-        }
-    }
-
-    pub fn name(&self) -> & 'static str {
-        match self {
-            Environment::Array    => "array",
-            Environment::Matrix   => "matrix",
-            Environment::PMatrix  => "pmatrix",
-            Environment::BMatrix  => "bmatrix",
-            Environment::BbMatrix => "Bmatrix",
-            Environment::VMatrix  => "vmatrix",
-            Environment::VvMatrix => "Vmatrix",
-        }
-    }
-
-    /// Parse the enviornment for a given `Environment`.  This can be thought
-    /// of as a parsing primitive.
-    pub fn parse<'a>(&self, lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-        match *self {
-            Environment::Array    => array(lex, local, command_collection),
-            Environment::Matrix   => matrix(lex, local, command_collection),
-            Environment::PMatrix  => matrix_with(lex, local, command_collection, '(', ')'),
-            Environment::BMatrix  => matrix_with(lex, local, command_collection, '[', ']'),
-            Environment::BbMatrix => matrix_with(lex, local, command_collection, '{', '}'),
-            Environment::VMatrix  => matrix_with(lex, local, command_collection, '|', '|'),
-            Environment::VvMatrix => matrix_with(lex, local, command_collection, '\u{2016}', '\u{2016}'),
+            "array"    => Some(Self::Array),
+            "matrix"   => Some(Self::Matrix),
+            "pmatrix"  => Some(Self::PMatrix),
+            "bmatrix"  => Some(Self::BMatrix),
+            "Bmatrix"  => Some(Self::BbMatrix),
+            "vmatrix"  => Some(Self::VMatrix),
+            "Vmatrix"  => Some(Self::VvMatrix),
+            "aligned"  => Some(Self::Aligned),
+            _ => None
         }
     }
 }
 
-/// The horizontal positioning of an array.  These are parsed as an optional
-/// argument for the Array environment. The default value is `Centered` along
-/// the x-axis.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ArrayVerticalAlign {
-    /// Centered along the x-axis.
-    Centered,
 
-    /// Align the top with the baseline.
-    Top,
+impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
+    pub fn parse_environment(&mut self, env : Environment) -> ParseResult<Array> {
+        let mut col_format = None;
 
-    /// Align the bottom with the baseline.
-    Bottom,
-}
+        if let Environment::Array = env {
+            let group = self.token_iter
+                .capture_group()
+                .map_err(|e| match e {
+                    ParseError::ExpectedToken => ParseError::MissingColFormatForArrayEnvironment,
+                    _ => e,
+                })?;
 
-impl Default for ArrayVerticalAlign {
-    fn default() -> ArrayVerticalAlign {
-        ArrayVerticalAlign::Centered
-    }
-}
-
-// TODO: since we use default values, we should make the argument optional?
-/// Array column alignent.  These are parsed as a required macro argument
-/// for the array enviornment. The default value is `Centered`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ArrayColumnAlign {
-    /// Column is centered
-    Centered,
-
-    /// Column is left aligned.
-    Left,
-
-    /// Column is right aligned.
-    Right,
-}
-
-impl Default for ArrayColumnAlign {
-    fn default() -> ArrayColumnAlign {
-        ArrayColumnAlign::Centered
-    }
-}
-
-/// Formatting options for a single column.  This includes both the horizontal
-/// alignment of the column (clr), and optional vertical bar spacers (on the left).
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ArraySingleColumnFormatting {
-    /// The alignment of the column.  Defaults to Centered.
-    pub alignment: ArrayColumnAlign,
-
-    /// The number of vertical marks before column.
-    pub n_vertical_bars_after: u8,
-}
-
-/// The collection of column formatting for an array.  This includes the vertical
-/// alignment for each column in an array along with optional vertical bars
-/// positioned to the right of the last column.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ArrayColumnsFormatting {
-    /// The formatting specifications for each column
-    pub columns: Vec<ArraySingleColumnFormatting>,
-
-    /// The number of vertical marks after the last column.
-    pub n_vertical_bars_before: u8,
-}
-
-impl ArrayColumnsFormatting {
-    /// Returns center formatting for all columns and no marks
-    pub fn default_for(n_cols : usize) -> Self {
-        Self { 
-            columns:    vec![ArraySingleColumnFormatting::default(); n_cols], 
-            n_vertical_bars_before: 0, 
+            let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, group.into_iter());
+            col_format = Some(forked_parser.tokens_as_column_format()?);
         }
-    }
-}
+        let mut rows = self.parse_array_body(env)?;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Array {
-    /// The formatting arguments (clr) for each row.  Default: center.
-    pub col_format: ArrayColumnsFormatting,
+        let left_delimiter;
+        let right_delimiter;
 
-    /// A collection of rows.  Each row consists of one `Vec<Expression>`.
-    pub rows: Vec<Vec<Expression>>,
-
-    /// The left delimiter for the array (optional).
-    pub left_delimiter: Option<Symbol>,
-
-    /// The right delimiter for the array (optional).
-    pub right_delimiter: Option<Symbol>,
-}
-
-
-fn matrix<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, command_collection, None, None)
-}
-
-fn matrix_with<'a>(
-    lex: &mut Lexer<'a>,
-    style: Style,
-    command_collection : &CommandCollection,
-    left_delimiter:  char,
-    right_delimiter: char
-) -> ParseResult<'a, ParseNode> {
-    matrix_common(lex, style, command_collection, Some(left_delimiter), Some(right_delimiter))
-}
-
-fn matrix_common<'a>(
-    lex: &mut Lexer<'a>,
-    style: Style,
-    command_collection : &CommandCollection,
-    left_delimiter:  Option<char>,
-    right_delimiter: Option<char>
-) -> ParseResult<'a, ParseNode> {
-    // matrix bodies are paresed like arrays.
-    let body = array_body(lex, style, command_collection)?;
-    let left_delimiter = left_delimiter.map(|code| {
-                                                Symbol {
-                                                    codepoint: code,
-                                                    atom_type: AtomType::Inner,
-                                                }
-                                            });
-
-    let right_delimiter = right_delimiter.map(|code| {
-                                                  Symbol {
-                                                      codepoint: code,
-                                                      atom_type: AtomType::Inner,
-                                                  }
-                                              });
-
-
-    let n_cols = body.get(0).map_or(0, |v| v.len());
-    Ok(ParseNode::Array(
-        Array {
-            col_format: ArrayColumnsFormatting::default_for(n_cols),
-            rows: body,
-            left_delimiter,
-            right_delimiter,
+        match env {
+            Environment::Array   |
+            Environment::Matrix  | 
+            Environment::Aligned
+            => {
+                left_delimiter  = None;
+                right_delimiter = None;
+            },
+            Environment::PMatrix  => {
+                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ')', atom_type : AtomType::Inner});
+            },
+            Environment::BMatrix  => {
+                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ']', atom_type : AtomType::Inner});
+            },
+            Environment::BbMatrix => {
+                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '}', atom_type : AtomType::Inner});
+            },
+            Environment::VMatrix  => {
+                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
+            },
+            Environment::VvMatrix => {
+                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
+            },
         }
-    ))
-}
 
-/// Parse the column alignments for arrays.  The currently supported formats are:
-///   - `c` center the column
-///   - `r` right align the column
-///   - `l` left align the column
-///   - `|` insert a vertical bar at position.
-///
-/// For example: `\begin{array}{c|c|c}\end{array}`.
-fn array_col<'a>(lex: &mut Lexer<'a>, _: Style, _ : &CommandCollection) -> ParseResult<'a, ArrayColumnsFormatting> {
-    let mut cols = Vec::new();
-
-    lex.consume_whitespace();
-
-    let mut n_vertical_bars_before : u8 = 0;
-    while let Token::Symbol('|') = lex.current() {
-        lex.next();
-        lex.consume_whitespace();
-        n_vertical_bars_before += 1;
-    }
-
-    loop {
-        let alignment;
-
-        match lex.current() {
-            Token::Symbol('c') => alignment = ArrayColumnAlign::Centered,
-            Token::Symbol('r') => alignment = ArrayColumnAlign::Right,
-            Token::Symbol('l') => alignment = ArrayColumnAlign::Left,
-            Token::Symbol('}') => {
-                break;
+        // For the `aligned` ennvironment, we add dummies in even columns (second, fourth, etc.)
+        // which copy the atom_type of the last node of the previous column
+        if let Environment::Aligned = env {
+            for row in rows.iter_mut() {
+                for cell in row.chunks_exact_mut(2) {
+                    let atom_type = cell[0].last().map_or_else(
+                        || AtomType::Ordinary, 
+                        |node| node.atom_type(),
+                    );
+                    cell[1].insert(0, ParseNode::DummyNode(DummyNode { at: atom_type }));
+                }
             }
-            token => return Err(ParseError::UnrecognizedColumnFormat(token)),
-        }
-        
-        lex.next();
-        lex.consume_whitespace();
-
-        let mut n_vertical_bars_after = 0_u8;
-        while let Token::Symbol('|') = lex.current() {
-            lex.next();
-            lex.consume_whitespace();
-            n_vertical_bars_after += 1;
         }
 
-
-        cols.push(ArraySingleColumnFormatting { 
-            alignment, 
-            n_vertical_bars_after,
+        let col_format = col_format.unwrap_or_else(|| {
+            let n_cols = rows.last().map_or(0, |row| row.len());
+            if let Environment::Aligned = env {
+                ArrayColumnsFormatting {
+                    alignment:  [ArrayColumnAlign::Right, ArrayColumnAlign::Left].iter().cycle().cloned().take(n_cols).collect(),
+                    separators: [Vec::new(), vec![ColSeparator::AtExpression(Vec::new())]].iter().cycle().cloned().take(n_cols + 1).collect(),
+                }
+            }
+            else {
+                ArrayColumnsFormatting { 
+                    alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
+                    separators: vec![vec![]; n_cols + 1], 
+                }
+            }
         });
 
-        // lex.next();
-        // lex.consume_whitespace();
+        let extra_row_sep = match env {
+            Environment::Aligned => true,
+            Environment::Array | Environment::Matrix | Environment::PMatrix 
+            | Environment::BMatrix | Environment::BbMatrix | Environment::VMatrix 
+            | Environment::VvMatrix 
+            => false,
+        };
+
+        Ok(Array {
+            col_format,
+            rows,
+            left_delimiter,
+            right_delimiter,
+            extra_row_sep,
+        })
     }
 
-    Ok(ArrayColumnsFormatting {
-       columns: cols,
-       n_vertical_bars_before,
-    })
-}
 
-/// Parse the optional argument in an array environment.  This dictates the
-/// vertical positioning of the array.  The recognized values are `t` to
-/// align the top of the array with the baseline, and `b` to aligne the bottom
-/// of the array to the baseline.
-///
-/// For example: `\begin{array}[t]{cc}..\end{array}`.
-fn array_pos<'a>(lex: &mut Lexer<'a>, _: Style) -> ParseResult<'a, Option<ArrayVerticalAlign>> {
-    let ret = match lex.current() {
-        Token::Symbol('t') => Ok(Some(ArrayVerticalAlign::Top)),
-        Token::Symbol('b') => Ok(Some(ArrayVerticalAlign::Bottom)),
-        token => return Err(ParseError::UnrecognizedVerticalAlignmentArg(token)),
-    };
+    pub fn parse_array_body(&mut self, env : Environment) -> ParseResult<Vec<Vec<CellContent>>> {
+        let mut to_return    = Vec::new();
+        let mut current_line = Vec::new();
 
-    lex.next();
-    ret
-}
+        while {
+            let List {nodes, group} = self.parse_until_end_of_group()?;
 
-/// Array contents are the body of the enviornment.  Columns are seperated
-/// by `&` and a newline is terminated by either:
-///   - `\\[unit]`
-///   - `\cr[unit]`
-/// where a `[unit]` is any recognized dimension which will add (or subtract)
-/// space between the rows.  Note, the last line termination is ignored
-/// if the a line is empty.
-type Expression = Vec<ParseNode>;
-fn array_body<'a>(lex: &mut Lexer<'a>, style: Style, command_collection : &CommandCollection) -> ParseResult<'a, Vec<Vec<Expression>>> {
-    let mut rows: Vec<Vec<Expression>> = Vec::new();
-    let mut current: Vec<Expression> = Vec::new();
-    loop {
-        let expr = parser::expression_until(lex, style, command_collection, Token::Symbol('&'))?;
-        if lex.current() == Token::Command(r"end") {
-            // If the last line is empty, ignore it.
-            if expr.is_empty() && current.is_empty() {
-                break;
+            match group {
+                GroupKind::Env(env_ended) if env == env_ended => {
+                    if !current_line.is_empty() || !nodes.is_empty() {
+                        current_line.push(nodes);
+                        to_return.push(std::mem::take(&mut current_line));
+                    }
+                    false
+                },
+                GroupKind::Align => {
+                    current_line.push(nodes);
+                    true
+                },
+                GroupKind::NewLine => {
+                    current_line.push(nodes);
+                    to_return.push(std::mem::take(&mut current_line));
+                    true
+                },
+
+                _ => return Err(ParseError::UnexpectedEndGroup { expected : vec![GroupKind::Align, GroupKind::NewLine, GroupKind::Env(env)].into_boxed_slice(), got : group }),
             }
-
-            current.push(expr);
-            rows.push(current);
-            break;
         }
+        {}
 
-        current.push(expr);
-        match lex.current() {
-            Token::Symbol('&') => { /* no-op, carry on */ }
-            Token::Command(r"\") |
-            Token::Command(r"cr") => {
-                // TODO: Handle space arguments here.
-                rows.push(current);
-                current = Vec::new();
-            }
-            _ => return Err(ParseError::UnexpectedEof),
-        }
-        lex.next();
+
+        Ok(to_return)
     }
-    Ok(rows)
 }
 
-/// Parse an array environment.  This method assumes that the lexer is currently
-/// positioned after the `\begin{array}` declaration.
-fn array<'a>(lex: &mut Lexer<'a>, local: Style, command_collection : &CommandCollection) -> ParseResult<'a, ParseNode> {
-    let pos = optional_argument_with(lex, local, array_pos)?;
-    let cols = required_argument_with(lex, local, command_collection, array_col)?;
-    let contents = array_body(lex, local, command_collection)?;
-    debug!("Array, pos: {:?}, cols: {:?}", pos, cols);
-    debug!("Contents: {:#?}", contents);
-    Ok(ParseNode::Array(Array {
-                            col_format: cols,
-                            rows: contents,
-                            left_delimiter: None,
-                            right_delimiter: None,
-                        }))
+impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
+    fn tokens_as_column_format(&mut self) -> ParseResult<ArrayColumnsFormatting> {
+        let mut n_vertical_bars_before = 0;
+        let mut current_vertical_bars = &mut n_vertical_bars_before;
+        let mut alignment  = Vec::new();
+        let mut separators = vec![Vec::new()];
+        while let Some(token) = self.token_iter.next_token()? {
+            match token {
+                  TexToken::Char(c@'c') 
+                | TexToken::Char(c@'l') 
+                | TexToken::Char(c@'r') 
+                => {
+                    alignment.push(match c {
+                        'c' => ArrayColumnAlign::Centered,
+                        'l' => ArrayColumnAlign::Left,
+                        'r' => ArrayColumnAlign::Right,
+                        _   => unreachable!(), // This has already been ruled out in the previous match
+                    });
+                    separators.push(Vec::new());
+                },
+                TexToken::Char('|') 
+                => {
+                    // Safe to unwrap b/c `separators` always has at least one element
+                    let current_separators = separators.last_mut().unwrap();
+
+                    match current_separators.last_mut() {
+                        Some(ColSeparator::VerticalBars(bars)) => {
+                            *bars += 1;
+                        },
+                        _ => {
+                            current_separators.push(ColSeparator::VerticalBars(1));
+                        },
+                    }
+                },
+                TexToken::Char('@') => {
+                    let nodes = self.parse_control_seq_argument_as_nodes("@")?;
+                    // Safe to unwrap b/c `separators` always has at least one element
+                    let current_separators = separators.last_mut().unwrap();
+                    current_separators.push(ColSeparator::AtExpression(nodes));
+                }
+                TexToken::Char(_) => {
+                    return Err(ParseError::UnrecognizedArrayColumnFormat);
+                }
+
+                TexToken::WhiteSpace => (),
+
+                TexToken::BeginGroup 
+                | TexToken::EndGroup 
+                | TexToken::ControlSequence(_) 
+                | TexToken::Superscript 
+                | TexToken::Prime { .. } 
+                | TexToken::Alignment 
+                | TexToken::Subscript => return Err(ParseError::UnrecognizedArrayColumnFormat),
+            }
+        }
+        Ok(ArrayColumnsFormatting {
+            alignment,
+            separators,
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{*, array_col};
+    use crate::parser::{macros::CommandCollection, textoken::TokenIterator};
+
+    use super::*;
 
     #[test]
-    fn array_col_test() {
+    fn parse_col_format() {
         let cols = vec![
             ("c", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0}
-                ], 
-                n_vertical_bars_before: 0
+                alignment  : vec![ArrayColumnAlign::Centered], 
+                separators : vec![vec![], vec![]],
             }),
             ("||l", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left, n_vertical_bars_after : 0},
-                ], 
-                n_vertical_bars_before: 2
+                alignment  : vec![ArrayColumnAlign::Left], 
+                separators : vec![vec![ColSeparator::VerticalBars(2)], vec![]],
             }),
             ("||c|l", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 0},
-                ], 
-                n_vertical_bars_before: 2
+                alignment  : vec![ArrayColumnAlign::Centered, ArrayColumnAlign::Left], 
+                separators : vec![vec![ColSeparator::VerticalBars(2)], vec![ColSeparator::VerticalBars(1)], vec![]],
             }),
             ("|  |c l|l|", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Centered, n_vertical_bars_after : 0},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,     n_vertical_bars_after : 1},
+                alignment  : vec![
+                    ArrayColumnAlign::Centered, 
+                    ArrayColumnAlign::Left, 
+                    ArrayColumnAlign::Left
                 ], 
-                n_vertical_bars_before: 2
+                separators : vec![
+                    vec![ColSeparator::VerticalBars(2)], 
+                    vec![],
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(1)], 
+                ],
             }),
             (" |  r| l|| | |r||  ", 
             ArrayColumnsFormatting {
-                columns : vec![
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 1},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Left,  n_vertical_bars_after : 4},
-                    ArraySingleColumnFormatting {alignment : ArrayColumnAlign::Right, n_vertical_bars_after : 2},
+                alignment  : vec![
+                    ArrayColumnAlign::Right, 
+                    ArrayColumnAlign::Left, 
+                    ArrayColumnAlign::Right,
                 ], 
-                n_vertical_bars_before: 1
+                separators : vec![
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(1)], 
+                    vec![ColSeparator::VerticalBars(4)], 
+                    vec![ColSeparator::VerticalBars(2)], 
+                ],
             }),
         ];
 
         for (string, col_format) in cols {
-            let mut string = string.to_string();
-            string.push('}');
-
-            let mut lexer  = Lexer::new(&string);
-            let style = Style::new();
+            let command_collection = CommandCollection::new();
+            let mut parser = Parser::new(&command_collection, string);
 
             assert_eq!(
-                array_col(&mut lexer, style, &CommandCollection::default()).unwrap(),
-                col_format,
+                parser.tokens_as_column_format(),
+                Ok(col_format),
             );
 
         }
         
+    }
+
+
+    #[test]
+    fn good_arrays() {
+        let collection = crate::parser::macros::CommandCollection::default();
+        let mut parser = Parser::new(&collection, r"1&2\\3&4\end{pmatrix}");
+        let result = parser.parse_environment(Environment::PMatrix);
+        result.unwrap();
     }
 }

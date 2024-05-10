@@ -21,6 +21,7 @@ mod builders;
 mod convert;
 pub mod engine;
 pub mod spacing;
+pub mod constants;
 
 use crate::font::common::GlyphId;
 use crate::parser::color::RGBA;
@@ -33,7 +34,7 @@ use crate::dimensions::units::{Px, Em, FontSize, Ratio};
 
 /// Contains a set of [`LayoutNode`s](crate::layout::LayoutNode) that defines the position of glyphs and rules (i.e. filled rectangles) and certain measurements useful for rendering.
 /// It serves as input to [`Renderer::render`](crate::render::Renderer::render).
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Layout<'f, F> {
     /// The children nodes contained in the layout
     /// By default, they are laid out, horizontally as a horizontal box.
@@ -50,6 +51,20 @@ pub struct Layout<'f, F> {
     /// How to horizontally lay out children nodes
     pub alignment: Alignment,
 }
+
+impl<'f, F> Clone for Layout<'f, F> {
+    fn clone(&self) -> Self {
+        Self { 
+            contents:  self.contents.clone(),
+            width:     self.width,
+            height:    self.height,
+            depth:     self.depth,
+            offset:    self.offset,
+            alignment: self.alignment 
+        }
+    }
+}
+
 
 impl<'f, F> Default for Layout<'f, F> {
     fn default() -> Self {
@@ -428,6 +443,27 @@ impl<'f, F> fmt::Debug for LayoutNode<'f, F> {
 
 
 impl<'f, F> LayoutNode<'f, F> {
+    /// A node of the given height and zero width to be used as vertical kern 
+    /// (aka vertical space) between nodes
+    fn vert_kern(height : Unit<Px>) -> Self {
+        LayoutNode {
+            width:  Unit::ZERO,
+            height,
+            depth:  Unit::ZERO,
+            node:   LayoutVariant::Kern,
+        }
+    }
+    
+    /// A node of the given width and zero height to be used as horizontal kern 
+    /// (aka horizontal space) between nodes
+    fn horiz_kern(width : Unit<Px>) -> Self {
+        LayoutNode {
+            width,
+            height: Unit::ZERO,
+            depth:  Unit::ZERO,
+            node:   LayoutVariant::Kern,
+        }
+    }
     
     /// Center the vertical about the axis.
     /// For now this ignores offsets if already applied,

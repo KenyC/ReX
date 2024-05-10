@@ -201,6 +201,7 @@ pub mod error;
 pub mod dimensions;
 #[deny(missing_docs)]
 pub mod layout;
+#[warn(missing_docs)]
 pub mod parser;
 #[deny(missing_docs)]
 pub mod render;
@@ -214,7 +215,7 @@ use crate::{layout::{LayoutSettings, Style}, parser::parse};
 
 
 /// Render a LateX formula to a given a surface `backend`, given a math font provided by `font_context`.
-pub fn render<'a, F : MathFont, B : Backend<F>>(formula : & 'a str, backend : &mut B, font_context: &FontContext<'_, F>) -> Result<(), crate::error::Error<'a>> {
+pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, font_context: &FontContext<'_, F>) -> Result<(), crate::error::Error> {
     const DEFAULT_FONT_SIZE : f64 = 16.;
 
     let parse_nodes = parse(formula)?;

@@ -35,20 +35,43 @@ r##"<!DOCTYPE html>
     .diff-array img {
         border: solid 1pt black;
     }
+    .content {
+        display: none;
+    }
     </style>
 </head>
 <body>"##;
 
-pub const HTML_REPORT_FOOTER: &'static str = r"</body></html>";
+pub const HTML_REPORT_FOOTER: &'static str = r##"
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    } 
+</script>
+</body>
+</html>"##;
 
 fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
     write_equation_header(f, old);
 
     let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
 
-    let render_old = old.img_render_path.as_ref()
+    let render_old = old.render.as_ref().ok()
+        .and_then(|render| render.img_render_path.as_ref())
         .map(|path| std::fs::read(path).expect("Couldn't open file"));
-    let render_new = new.img_render_path.as_ref()
+    let render_new = new.render.as_ref().ok()
+        .and_then(|render| render.img_render_path.as_ref())
         .map(|path| std::fs::read(path).expect("Couldn't open file"));
 
 
@@ -59,6 +82,7 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
 
 
 
+    let diff_raw = diff_debug(&old.render, &new.render);
 
 
     writeln!(
@@ -81,6 +105,14 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
         engine.encode(render_new.as_ref().map(Vec::as_slice).unwrap_or_else(|| include_bytes!("../../resources/couldnt_render.png"))),
     ).unwrap();
 
+    if let Err(e) = &new.render {
+        writeln!(f, r#"<p>New failed to render, returned error: <pre>{}</pre></p>"#, e).unwrap();
+    }
+    if let Err(e) = &old.render {
+        writeln!(f, r#"<p>Old failed to render, returned error: <pre>{}</pre></p>"#, e).unwrap();
+    }
+    
+
     if let Some((old_img, new_img)) = Option::zip(render_old, render_new) {
         diff_img(&old_img, &new_img, &mut buffer_diff_img);
         writeln!(
@@ -101,13 +133,43 @@ fn write_equation_diff<W: Write>(f: &mut W, old: &Equation, new: &Equation) {
         ).unwrap();
     }
 
+    writeln!(f, r#"
+        <button type="button" class="collapsible">See raw diff between renders</button>
+        <pre class="content">{}</pre>
+    "#,
+        diff_raw
+    ).unwrap();
+
+}
+
+fn diff_debug<D : std::fmt::Debug>(x : &D, y : &D) -> String {
+    let debug_render_x = format!("{:#?}", x);
+    let debug_render_y = format!("{:#?}", y);
+    let text_diff = similar::TextDiff::from_lines(
+        &debug_render_x,
+        &debug_render_y,
+    );
+
+    let mut to_return = String::new();
+
+    for change in text_diff.iter_all_changes() {
+        let sign = match change.tag() {
+            similar::ChangeTag::Delete => "-",
+            similar::ChangeTag::Insert => "+",
+            similar::ChangeTag::Equal  => "=",
+        };
+        to_return.push_str(
+            &format!("{}{}", sign, change)
+        );
+    }
+    to_return
 }
 
 fn write_equation<W: Write>(f: &mut W, eq: &Equation,) {
     write_equation_header(f, eq);
 
     let render : Vec<u8>;
-    if let Some(path) = eq.img_render_path.as_ref() {
+    if let Some(path) = eq.render.as_ref().ok().and_then(|render| render.img_render_path.as_ref()) {
         eprintln!("{}", path.as_os_str().to_str().unwrap());
         render = std::fs::read(path).unwrap();
     }

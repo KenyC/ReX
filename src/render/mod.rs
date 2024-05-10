@@ -139,7 +139,7 @@ impl Renderer {
     }
 
     /// Parses and lays out the given string
-    pub fn layout<'s, 'a, 'f, F : MathFont>(&self, tex: &'s str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error<'s>> {
+    pub fn layout<'a, 'f, F : MathFont>(&self, tex: &str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error> {
         use crate::parser::parse;
         use crate::layout::engine::layout;
 

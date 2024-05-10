@@ -115,7 +115,7 @@ fn tex_comparison() {
    assert!(no_diff_rex_and_tex);
 }
 
-fn compile_rex_sample<'a, 's>(sample: &'s str, font_context : & FontContext<'a, TtfMathFont>) -> Result<Vec<u8>, rex::error::Error<'s>> {
+fn compile_rex_sample<'a>(sample: &str, font_context : & FontContext<'a, TtfMathFont>) -> Result<Vec<u8>, rex::error::Error> {
     // parse
     let nodes = rex::parser::parse(sample)?;
 

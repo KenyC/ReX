@@ -4,11 +4,15 @@ expression: "parse(r\"\\mathfrak A\")"
 ---
 Ok(
     [
-        Symbol(
-            Symbol {
-                codepoint: '𝔄',
-                atom_type: Alpha,
-            },
+        Group(
+            [
+                Symbol(
+                    Symbol {
+                        codepoint: '𝔄',
+                        atom_type: Alpha,
+                    },
+                ),
+            ],
         ),
     ],
 )

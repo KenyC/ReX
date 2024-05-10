@@ -1,325 +1,432 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
-use std::unreachable;
+use std::pin::Pin;
 
-use crate::{error::ParseError, parser::lexer::{Lexer, Token}};
+use crate::parser::error::ParseError;
+
+use super::{error::ParseResult, textoken::{TexToken, TokenIterator}};
+
+
 
 
 /// A collection of custom commands. You can find a macro with the given name using [`CommandCollection::query`].
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct CommandCollection(Vec<(String, CustomCommand)>);
+pub struct CommandCollection(Vec<CustomCommand>);
 
 
 
 impl CommandCollection {
-    /// Returns a reference to the macro with the given name, if there is a macro with that name
-    pub fn query(&self, name : &str) -> Option<&CustomCommand> {
-        for (macro_name, custom_cmd) in self.0.iter() {
-            if macro_name == name {
-                return Some(custom_cmd);
-            }
-        }
-        None
+    /// Creates a new empty [`CommandCollection`]    
+    pub const fn new() -> Self {
+        Self(Vec::new())
     }
 
-    // TODO: is failure the right behavior here? rather than overwrite
-    /// Inserts a new command into the collection.  
-    /// If a command of that name already exists, the insertion fails.
-    pub fn insert(&mut self, name : &str, command : CustomCommand) -> Option<()> {
-        if self.query(name).is_none() {
-            self.0.push((name.to_string(), command));
-            Some(())
-        }
-        else {
-            None
-        }
-    }
 
-    /// Parse a series of `\newcommand{...}[]{fezefzezf}` into a command collection
-    pub fn parse(command_definitions : &str) -> Result<Self, ParseError> {
-        let mut lexer = Lexer::new(command_definitions);
-        let mut to_return = CommandCollection::default();
-
-
-        while lexer.current() != Token::EOF {
-            match lexer.current() {
-                Token::Command("newcommand") => (),
-                Token::Symbol(_) | Token::Command(_) => 
-                    return Err(ParseError::ExpectedNewCommand(lexer.current())),
-                Token::WhiteSpace => {
-                    lexer.consume_whitespace();
-                    continue;
-                },
-                Token::EOF => unreachable!("already checked above"),
-            };
-
-
-            // -- parse command name
-            lexer.consume_whitespace();
-            lexer.next();
-            let token_command_name;
-            if let Ok(inner) = lexer.group() {
-                let mut lexer = Lexer::new(inner);
-                lexer.consume_whitespace();
-                token_command_name = lexer.current();
-            }
-            else {
-                token_command_name = lexer.current();
-            }
-
-            let command_name = match token_command_name {
-                Token::Command(name) => name,
-                tok => return Err(ParseError::ExpectedCommandName(tok)),
-            };
-
-            // -- parse number of arguments
-            lexer.next().expect_symbol('[')?;
-            lexer.next();
-            let alphanumeric = lexer.alphanumeric();
-            let n_args = alphanumeric.parse::<usize>().ok().ok_or(ParseError::ExpectedNumber(alphanumeric))?;
-            lexer.current().expect_symbol(']')?;
-
-
-            // -- parse definition body
-            lexer.next();
-            let definition = lexer.group()?;
-
-            // TODO : more specific error message?
-            let custom_command = CustomCommand::parse(definition).ok_or(ParseError::CannotParseCommandDefinition(definition))?;
-
-            if custom_command.n_args != n_args {
-                return Err(ParseError::IncorrectNumberOfArguments(custom_command.n_args, n_args));
-            }
-            to_return.insert(command_name, custom_command);
-
-
-            lexer.next();
-        }
-
-        Ok(to_return)
+    /// Retrieves a method by name
+    pub fn get<'s>(& 's self, name : &str) -> Option<& 's CustomCommand> {
+        self.0
+            .iter()
+            .find(|command| command.name() == name)
     }
 }
 
 
-
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CommandToken {
+    NormalToken(TexToken<'static>),
+    OwnedCommand(String),
+    ArgSlot(usize),
+}
 
 /// A custom LateX command, as defined by e.g. \newcommand.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CustomCommand {
-    n_args  : usize,
-    chunks  : Vec<ChunkCommand>,
+    n_args : usize,
+    name : String,
+
+    // !! This should all be private
+    expansion : Vec<CommandToken>,
 }
 
-impl CustomCommand {
-    /// Parse a string of the form "... #1 ... #23 .. #45" containing pounds followed by numbers
-    /// Retrieves the argument numbers and the string in between each pound-number combination
-    pub fn parse(body : &str) -> Option<Self> {
-        let mut chunks : Vec<ChunkCommand> = Vec::new();
-        let mut current_string_start = 0;
-        enum ParseState {
-            ReadStringEscape, 
-            ReadNumber,
-            ReadString,
-        }
-        use ParseState::*;
-        let mut state = ReadString;
-        let mut arg_no_max = 0;
+struct ExpansionIterator<'args, 'token> {
+    token_remaining : & 'token [CommandToken],
+    args : & 'args [Vec<TexToken<'token>>],
+    arg_currently_output : Option<& 'args [TexToken<'token>]>,
+}
 
-        for (index, character) in body.char_indices() {
-            state = match (state, character) {
-                (ReadStringEscape, _) => ReadString,
-                (ReadString, '\\')    => ReadStringEscape,
-                (ReadString, '#')     => {
-                    if index != current_string_start {
-                        chunks.push(ChunkCommand::Text(String::from(&body[current_string_start .. index])));
-                    }
-                    current_string_start = index + '#'.len_utf8();
-                    ReadNumber
-                },
-                (ReadNumber, c) if !c.is_ascii_digit() => {
-                    if index != current_string_start {
-                        let arg_no = body[current_string_start .. index].parse::<usize>().ok()?;
-                        if arg_no > arg_no_max { arg_no_max = arg_no; }
-                        // LaTeX's args are one-indexed, we prefer zero-indexing
-                        chunks.push(ChunkCommand::ArgSlot(arg_no - 1));
-                        current_string_start = index;
-                        match c {
-                            '\\' => ReadStringEscape,
-                            '#'  => {current_string_start += '#'.len_utf8(); ReadNumber},
-                            _    => ReadString
-                        }
+impl<'arg, 'a> Iterator for ExpansionIterator<'arg, 'a> {
+    type Item = TexToken<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let Self { token_remaining, args, arg_currently_output } = self;
+        let (first_token, rest) = token_remaining.split_first()?;
+        match first_token {
+            CommandToken::NormalToken(token) => {*token_remaining = rest; Some(token.clone())},
+            CommandToken::OwnedCommand(name) => {*token_remaining = rest; Some(TexToken::ControlSequence(name))},
+            CommandToken::ArgSlot(i)         => 
+                if let Some(tokens) = arg_currently_output {
+                    if let Some((first_token, rest)) = tokens.split_first() {
+                        arg_currently_output.replace(rest);
+                        Some(first_token.clone())
                     }
                     else {
-                        return None;
+                        *arg_currently_output = None;
+                        *token_remaining = rest;
+                        self.next()
                     }
                 }
-                (s, _) => s,
-            };
+                else {
+                    *arg_currently_output = Some(args[*i].as_slice());
+                    self.next()
+                }
+            ,
         }
+    }
+}
 
-        match state {
-            ReadString | ReadStringEscape => {
-                chunks.push(ChunkCommand::Text(String::from(&body[current_string_start .. ])));
-            }
-            ReadNumber if body.len() == current_string_start => return None,
-            ReadNumber => {
-                let arg_no = body[current_string_start .. ].parse::<usize>().ok()?;
-                if arg_no > arg_no_max { arg_no_max = arg_no; }
-                // LaTeX's args are one-indexed, we prefer zero-indexing
-                chunks.push(ChunkCommand::ArgSlot(arg_no - 1));
-            }
-            _ => (),
-        }
 
-        
-        Some(Self { 
-            n_args: arg_no_max, 
-            chunks, 
-        })
+
+impl CustomCommand {
+    pub fn empty_command(name : &str, n_args : usize) -> Self {
+        Self { n_args, name: name.to_string(), expansion: Vec::new() }
     }
 
-
-    /// This method returns the string obtained by replacing the argument slots with the provided values.
-    /// This method does not check if the number of arguments given is correct and may panic if provided with too few arguments
-    pub fn apply(&self, args : &[&str]) -> String {
-        // This string is added on both sides of arguments to prevent 
-        // expansion like "\wrapbraces{a}" => "\lbracea\brace" (syntax error)
-        // With guards, the macro is expanded as "\lbrace{}a{}\rbrace"
-        const GUARD: &str = "{}";
-        const ARG_GUARD_SIZE:   usize = 2 * GUARD.len();
-        const FINAL_GUARD_SIZE: usize = GUARD.len();
-        let string_size : usize = self.chunks
-            .iter()
-            .map(|chunk| match chunk {
-                ChunkCommand::ArgSlot(i) => args[*i].len() + ARG_GUARD_SIZE,
-                ChunkCommand::Text(text) => text.len(),
-            })
-            .sum::<usize>()
-            + FINAL_GUARD_SIZE
-        ;
-
-        let mut to_return = String::with_capacity(string_size);
-
-        for chunk in self.chunks.iter() {
-            match chunk {
-                ChunkCommand::ArgSlot(i) => {
-                    to_return.push_str(GUARD);
-                    to_return.push_str(args[*i]);
-                    to_return.push_str(GUARD);
-                },
-                ChunkCommand::Text(text) => to_return.push_str(text),
-            };
-        }
-        to_return.push_str(GUARD);
-        to_return
-    }
-
-
-    /// Number of arguments required by command
     pub fn n_args(&self) -> usize {
         self.n_args
     }
+
+    fn expand_iter<'args, 'token>(& 'token self, args : & 'args [Vec<TexToken<'token>>]) -> ExpansionIterator<'args, 'token> {
+        let Self { expansion, .. } = self;
+        ExpansionIterator { 
+            token_remaining: expansion.as_slice(), 
+            args, 
+            arg_currently_output: None,
+        }
+    }
+    // fn expand<'a, 'arg, 't>(& 'a self, args : & 'arg [Vec<TexToken<'t>>]) -> ExpansionIterator<'a, 'arg, 't> {
+    //     todo!()
+    // }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum ChunkCommand {
-    ArgSlot(usize),
-    Text(String),
+pub struct ExpandedTokenIter<'a, I : Iterator<Item = TexToken<'a>>> {
+    command_collection : & 'a CommandCollection,
+    token_iter : I,
+    /// token obtained from macro expansion
+    expanded_token : Vec<TexToken<'a>>, 
 }
+
+impl<'a, I : Iterator<Item = TexToken<'a>>> Iterator for ExpandedTokenIter<'a, I> {
+    type Item = TexToken<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_token().ok().flatten()
+    }
+}
+
+impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
+
+    /// Get next token from the iterator
+    pub fn next_token(&mut self) -> ParseResult<Option<TexToken<'a>>> {
+        if let Some(token) = self.produce_next_token() {
+            if let TexToken::ControlSequence(command) = token {
+                if let Some(command) = self.command_collection.get(command) {
+                    let tokens: Vec<Vec<TexToken<'a>>> = self.gather_args_of_command(command)?;
+                    let token_slice : & [Vec<TexToken<'a>>] = tokens.as_slice();
+                    // TODO: something not to have to do reversals
+                    let mut expanded_tokens : Vec<TexToken<'a>> = command.expand_iter(token_slice).collect();
+                    self.expanded_token.reserve(expanded_tokens.len());
+                    while let Some(token) = expanded_tokens.pop() {
+                        self.expanded_token.push(token)
+                    }
+                    self.next_token()
+                }
+                else {
+                    Ok(Some(token))
+                }
+            }
+            else {
+                Ok(Some(token))
+            }
+        }
+        else {
+            Ok(None)            
+        }
+    }
+
+    /// From a regular token iterator, creates one that expands macros.
+    pub fn new<'command : 'a>(command_collection: & 'command CommandCollection, token_iter: I) -> Self {
+        Self { command_collection, token_iter, expanded_token: Vec::new() }
+    }
+
+
+    fn produce_next_token(&mut self) -> Option<TexToken<'a>> {
+        Option::or_else(
+            self.expanded_token.pop(),
+            || self.token_iter.next(),
+        )
+    }
+
+    fn gather_args_of_command(&mut self, command : &CustomCommand) -> ParseResult<Vec<Vec<TexToken<'a>>>> {
+        let n_args = command.n_args();
+        let mut args : Vec<Vec<TexToken>> = Vec::with_capacity(n_args);
+        for i in 0 .. n_args {
+            let arg = self
+                .capture_group()
+                .map_err(|e| match e {
+                    ParseError::ExpectedToken => ParseError::MissingArgForMacro { expected: n_args, got: i },
+                    _ => e,
+                })?;
+            args.push(arg);
+        }
+        Ok(args)
+    }
+
+    pub fn capture_group(&mut self) -> ParseResult<Vec<TexToken<'a>>> {
+        let mut arg = Vec::with_capacity(1);
+        let mut token = self.next_token()?
+            .ok_or_else(|| ParseError::ExpectedToken)?;
+        while let TexToken::WhiteSpace = token {
+            token = self.next_token()?
+                .ok_or_else(|| ParseError::ExpectedToken)?;
+        }
+        if let TexToken::BeginGroup = token {
+            let mut n_open_paren : u32 = 1;
+            while n_open_paren != 0 {
+                let token = self.next_token()?
+                    .ok_or(ParseError::UnmatchedBrackets)?;
+                if let TexToken::BeginGroup = token {
+                    n_open_paren += 1;
+                }
+                else if let TexToken::EndGroup = token {
+                    n_open_paren -= 1;
+                }
+
+                arg.push(token);
+            }
+            arg.pop(); // the last bracket shouldn't be added
+        }
+        // otherwise the given token is the argument
+        else {
+            arg.push(token);
+        }
+        Ok(arg)
+    }
+
+}
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn parse_custom_command() {
-        use super::ChunkCommand::*;
-        let command_def = "I love #1 and 2";
-        let expected = Some(CustomCommand {
-            n_args: 1,
-            chunks: vec![Text("I love ".to_string()), ArgSlot(0), Text(" and 2".to_string()),],
-        });
-        assert_eq!(CustomCommand::parse(command_def), expected);
+    impl CustomCommand {
+        fn test_command1(name : &str) -> Self {
+            let expansion = vec![
+                CommandToken::NormalToken(TexToken::Char('x')),
+                CommandToken::ArgSlot(0),
+                CommandToken::NormalToken(TexToken::Char('y')),
+                CommandToken::ArgSlot(1),
+                CommandToken::OwnedCommand("cmd".to_string()),
+                CommandToken::NormalToken(TexToken::Char('z')),
+                CommandToken::ArgSlot(0),
+            ];
+            Self {
+                n_args: 2,
+                name: name.to_string(),
+                expansion,
+            }          
+        }
 
-        let command_def = "#45#1";
-        let expected = Some(CustomCommand {
-            n_args: 45,
-            chunks: vec![ArgSlot(44), ArgSlot(0),],
-        });
-        assert_eq!(CustomCommand::parse(command_def), expected);
+        fn test_command2(name : &str) -> Self {
+            let expansion = vec![
+                CommandToken::NormalToken(TexToken::Char('x')),
+                CommandToken::ArgSlot(0),
+                CommandToken::NormalToken(TexToken::Char('y')),
+                CommandToken::ArgSlot(1),
+                CommandToken::NormalToken(TexToken::Char('z')),
+            ];
+            Self {
+                n_args: 2,
+                name: name.to_string(),
+                expansion,
+            }          
+        }
+
+        fn test_command3(name : &str) -> Self {
+            let expansion = vec![
+                CommandToken::NormalToken(TexToken::Char('o')),
+                CommandToken::ArgSlot(0),
+                CommandToken::NormalToken(TexToken::Char('c')),
+            ];
+            Self {
+                n_args: 1,
+                name: name.to_string(),
+                expansion,
+            }          
+        }
+    }
+
+    impl CommandCollection {
+        fn test_collection() -> Self {
+            Self(vec![
+                CustomCommand::test_command1("testone"), 
+                CustomCommand::test_command2("testtwo"), 
+                CustomCommand::test_command3("testtri"), 
+            ])
+        }
     }
 
     #[test]
-    fn apply_custom_command() {
-        use super::ChunkCommand::*;
-        let command_def = "I love #1 and 2";
-        let expected = CustomCommand {
-            n_args: 1,
-            chunks: vec![Text("I love ".to_string()), ArgSlot(0), Text(" and 2".to_string()),],
-        };
-        let custom_command = CustomCommand::parse(command_def).unwrap();
-        assert_eq!(custom_command, expected);
-        let result = custom_command.apply(&["custard",]);
-        assert_eq!(result, "I love {}custard{} and 2{}");
+    fn check_expansion_iterator() {
+        let command_collection = CommandCollection::test_collection();
 
-        let command_def = r"\left\lbrace #1\middle| #2\right\rbrace";
-        let custom_command = CustomCommand::parse(command_def).unwrap();
-        let result = custom_command.apply(&["x + 2", "x"]);
-        assert_eq!(result, r"\left\lbrace {}x + 2{}\middle| {}x{}\right\rbrace{}");
+        let input_iterator  = TokenIterator::new(r"a\testtwo{b}{c}d");
+        let output_iterator = ExpandedTokenIter::new(&command_collection, input_iterator);
+        let tokens : Vec<_> = output_iterator.collect();
+        let expected = vec![
+            TexToken::Char('a'),
+            TexToken::Char('x'),
+            TexToken::Char('b'),
+            TexToken::Char('y'),
+            TexToken::Char('c'),
+            TexToken::Char('z'),
+            TexToken::Char('d'),
+        ];
+        assert_eq!(tokens, expected);
+    
+        let input_iterator  = TokenIterator::new(r"a\testtwo bcd");
+        let output_iterator = ExpandedTokenIter::new(&command_collection, input_iterator);
+        let tokens : Vec<_> = output_iterator.collect();
+        assert_eq!(tokens, expected);
+
+        let input_iterator  = TokenIterator::new(r"a\testtwo{b}cd");
+        let output_iterator = ExpandedTokenIter::new(&command_collection, input_iterator);
+        let tokens : Vec<_> = output_iterator.collect();
+        assert_eq!(tokens, expected);
+
+        let input_iterator  = TokenIterator::new(r"a\testtwo{b} cd");
+        let output_iterator = ExpandedTokenIter::new(&command_collection, input_iterator);
+        let tokens : Vec<_> = output_iterator.collect();
+        assert_eq!(tokens, expected);
+
+        let input_iterator  = TokenIterator::new(r"a\testtri{\testtri b}c");
+        let output_iterator = ExpandedTokenIter::new(&command_collection, input_iterator);
+        let tokens : Vec<_> = output_iterator.collect();
+        let expected = vec![
+            TexToken::Char('a'),
+            TexToken::Char('o'),
+            TexToken::Char('o'),
+            TexToken::Char('b'),
+            TexToken::Char('c'),
+            TexToken::Char('c'),
+            TexToken::Char('c'),
+        ];
+        assert_eq!(tokens, expected);
+
     }
 
     #[test]
-    fn parse_command_file() {
-        use super::ChunkCommand::*;
+    fn check_macro_expansion() {
+        let args = vec![
+            vec![TexToken::Char('a'), TexToken::Char('b'),],
+            vec![TexToken::Char('c'), TexToken::Char('d'),],
+        ];
+        let command = CustomCommand::test_command1("test");
 
-        let file = include_str!("macros_test_files/ok1.tex");
+        let expected = vec![
+            TexToken::Char('x'),
+            TexToken::Char('a'), TexToken::Char('b'),
+            TexToken::Char('y'),
+            TexToken::Char('c'), TexToken::Char('d'),
+            TexToken::ControlSequence("cmd"),
+            TexToken::Char('z'),
+            TexToken::Char('a'), TexToken::Char('b'),
+        ];
 
-        let expected = CommandCollection(vec![
-            ("dbb".to_string(), CustomCommand { n_args : 1, chunks: vec![
-                Text(r"\left\lBrack".to_string()),
-                ArgSlot(0),
-                Text(r"\right\rBrack".to_string()),
-            ]}),
-            ("quo".to_string(), CustomCommand { n_args : 1, chunks: vec![
-                Text(r"``\mathrm{".to_string()),
-                ArgSlot(0),
-                Text(r"}''".to_string()),
-            ]}),
-            ("poly".to_string(), CustomCommand { n_args : 3, chunks: vec![
-                ArgSlot(0),
-                Text(r"x^2 + ".to_string()),
-                ArgSlot(1),
-                Text(r"x + ".to_string()),
-                ArgSlot(2),
-                Text(r" = 0".to_string()),
-            ]})
-        ]);
-        let got = CommandCollection::parse(file).unwrap();
-        assert_eq!(expected, got);
+        let result : Vec<_> = command.expand_iter(&args).collect();
+        assert_eq!(result, expected);
+    
+        let args = vec![
+            vec![],
+            vec![TexToken::Char('c'), TexToken::Char('d'),],
+        ];
+        let expected = vec![
+            TexToken::Char('x'),
+            TexToken::Char('y'),
+            TexToken::Char('c'), TexToken::Char('d'),
+            TexToken::ControlSequence("cmd"),
+            TexToken::Char('z'),
+        ];
+
+        let result : Vec<_> = command.expand_iter(&args).collect();
+        assert_eq!(result, expected);
+    }
 
 
-        let file = include_str!("macros_test_files/ok2.tex");
+    #[test]
+    fn check_gather_args() {
+        let command = CustomCommand::empty_command("bla", 3);
+        let collection = CommandCollection::new();
 
-        let expected = CommandCollection(vec![
-            ("dbb".to_string(), CustomCommand { n_args : 1, chunks: vec![
-                Text(r"\left\lBrack".to_string()),
-                ArgSlot(0),
-                Text(r"\right\rBrack".to_string()),
-            ]}),
-            ("poly".to_string(), CustomCommand { n_args : 3, chunks: vec![
-                ArgSlot(0),
-                Text(r"x^2 + ".to_string()),
-                ArgSlot(1),
-                Text(r"x + ".to_string()),
-                ArgSlot(2),
-                Text(r" = 0".to_string()),
-            ]}),
-        ]);
-        let got = CommandCollection::parse(file).unwrap();
-        assert_eq!(expected, got);
+        let underlying_string = "abc";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_ok());
+        let arg_commands = arg_commands.unwrap();
+        assert!(arg_commands.len() == 3);
+
+
+        let underlying_string = "{a}b{c}";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_ok());
+        let arg_commands = arg_commands.unwrap();
+        assert!(arg_commands.len() == 3);
+
+        let underlying_string = "{{a}b}{c}d";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_ok());
+        let arg_commands = arg_commands.unwrap();
+        assert!(arg_commands.len() == 3);
+
+
+        let underlying_string = r"{{a}b\}c}de";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_ok());
+        let arg_commands = arg_commands.unwrap();
+        assert!(arg_commands.len() == 3);
+
+
+
+        // ERRORED INPUT
+        let underlying_string = "{abc";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_err());
+
+        let underlying_string = "{ab}c";
+        let token_iter = TokenIterator::new(underlying_string);
+
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        let arg_commands = expanded_token_iter.gather_args_of_command(&command);
+        assert!(arg_commands.is_err());
 
 
     }

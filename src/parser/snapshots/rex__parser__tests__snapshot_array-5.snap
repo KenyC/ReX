@@ -7,17 +7,19 @@ Ok(
         Array(
             Array {
                 col_format: ArrayColumnsFormatting {
-                    columns: [
-                        ArraySingleColumnFormatting {
-                            alignment: Centered,
-                            n_vertical_bars_after: 1,
-                        },
-                        ArraySingleColumnFormatting {
-                            alignment: Left,
-                            n_vertical_bars_after: 0,
-                        },
+                    alignment: [
+                        Centered,
+                        Left,
                     ],
-                    n_vertical_bars_before: 0,
+                    separators: [
+                        [],
+                        [
+                            VerticalBars(
+                                1,
+                            ),
+                        ],
+                        [],
+                    ],
                 },
                 rows: [
                     [
@@ -77,6 +79,7 @@ Ok(
                 ],
                 left_delimiter: None,
                 right_delimiter: None,
+                extra_row_sep: false,
             },
         ),
     ],
