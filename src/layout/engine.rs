@@ -934,7 +934,8 @@ impl<'f, F : MathFont> Layout<'f, F> {
             // insert half col sep before if:
             //   - vbox is not an @-expression
             //   - if this is the first col, there is no left delimiter
-            if (i_col != 0 || array.left_delimiter.is_none()) && alignments[i_col].is_some() {
+            //   - if not, preceding col is not @-expr
+            if alignments[i_col].is_some() && i_col.checked_sub(1).map_or(array.left_delimiter.is_none(), |prec_i| alignments[prec_i].is_some()) {
                 hbox.add_node(LayoutNode::horiz_kern(half_col_sep));
             }
 
@@ -944,7 +945,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             // insert half col sep before if:
             //   - vbox is not an @-expression
             //   - if this is the last col, there is no right delimiter
-            if (i_col + 1 != num_columns_at || array.right_delimiter.is_none()) && alignments[i_col].is_some() {
+            if alignments[i_col].is_some() && alignments.get(i_col + 1).map_or(array.right_delimiter.is_none(), Option::is_some) {
                 hbox.add_node(LayoutNode::horiz_kern(half_col_sep));
             }
 
