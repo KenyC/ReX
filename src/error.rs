@@ -7,7 +7,7 @@ use crate::dimensions::AnyUnit;
 use crate::font::common::GlyphId;
 use crate::parser::error::ParseError;
 use std::fmt;
-use crate::font::AtomType;
+use crate::font::TexSymbolType;
 use crate::parser::symbols::Symbol;
 
 /// Result type for the [`LayoutError`]

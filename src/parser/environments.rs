@@ -1,4 +1,4 @@
-use unicode_math::AtomType;
+use unicode_math::TexSymbolType;
 
 use crate::dimensions::AnyUnit;
 use crate::layout;
@@ -70,24 +70,24 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 right_delimiter = None;
             },
             Environment::PMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : ')', atom_type : AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '(', atom_type : TexSymbolType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ')', atom_type : TexSymbolType::Inner});
             },
             Environment::BMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : ']', atom_type : AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '[', atom_type : TexSymbolType::Inner});
+                right_delimiter = Some(Symbol {codepoint : ']', atom_type : TexSymbolType::Inner});
             },
             Environment::BbMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '}', atom_type : AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : TexSymbolType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '}', atom_type : TexSymbolType::Inner});
             },
             Environment::VMatrix  => {
-                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '|', atom_type : AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '|', atom_type : TexSymbolType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '|', atom_type : TexSymbolType::Inner});
             },
             Environment::VvMatrix => {
-                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
-                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : AtomType::Inner});
+                left_delimiter  = Some(Symbol {codepoint : '\u{2016}', atom_type : TexSymbolType::Inner});
+                right_delimiter = Some(Symbol {codepoint : '\u{2016}', atom_type : TexSymbolType::Inner});
             },
         }
 
@@ -97,7 +97,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             for row in rows.iter_mut() {
                 for cell in row.chunks_exact_mut(2) {
                     let atom_type = cell[0].last().map_or_else(
-                        || AtomType::Ordinary, 
+                        || TexSymbolType::Ordinary, 
                         |node| node.atom_type(),
                     );
                     cell[1].insert(0, ParseNode::DummyNode(DummyNode { at: atom_type }));

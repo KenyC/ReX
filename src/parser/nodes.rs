@@ -3,7 +3,7 @@
 use crate::dimensions::AnyUnit;
 use crate::layout::{self, Style};
 use super::color::RGBA;
-use crate::font::AtomType;
+use crate::font::TexSymbolType;
 use super::symbols::Symbol;
 
 /// Nodes are the output of parsing a LateX formula ; they can then be arranged in space with [`crate::layout::engine::layout`].
@@ -143,7 +143,7 @@ impl ColSeparator {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Stack {
     /// The type of the resulting stack.
-    pub atom_type: AtomType,
+    pub atom_type: TexSymbolType,
     /// Lines of formulas to stack on top of each other.
     pub lines: Vec<Vec<ParseNode>>,
 }
@@ -198,14 +198,14 @@ impl Scripts {
 #[derive(Clone, Debug, PartialEq)]
 pub struct DummyNode {
     /// Atom type of the dummy node
-    pub at: AtomType,
+    pub at: TexSymbolType,
 }
 
 /// Cf [`ParseNode::AtomChange`]
 #[derive(Clone, Debug, PartialEq)]
 pub struct AtomChange {
     /// New atom type
-    pub at: AtomType,
+    pub at: TexSymbolType,
     /// Inner nodes
     pub inner: Vec<ParseNode>,
 }
@@ -308,7 +308,7 @@ impl ParseNode {
     }
 
     /// sets atom type
-    pub fn set_atom_type(&mut self, at: AtomType) {
+    pub fn set_atom_type(&mut self, at: TexSymbolType) {
         match *self {
             ParseNode::Symbol(ref mut sym) => sym.atom_type = at,
             ParseNode::Scripts(Scripts { ref mut base, .. }) => {
@@ -324,31 +324,31 @@ impl ParseNode {
 
 
     /// Get atom type of parse node
-    pub fn atom_type(&self) -> AtomType {
+    pub fn atom_type(&self) -> TexSymbolType {
         match *self {
             ParseNode::Symbol(ref sym)  => sym.atom_type,
-            ParseNode::Delimited(_)     => AtomType::Inner,
-            ParseNode::Radical(_)       => AtomType::Alpha,
-            ParseNode::PlainText(_)     => AtomType::Alpha,
-            ParseNode::GenFraction(_)   => AtomType::Inner,
-            ParseNode::Group(_)         => AtomType::Alpha,
+            ParseNode::Delimited(_)     => TexSymbolType::Inner,
+            ParseNode::Radical(_)       => TexSymbolType::Alpha,
+            ParseNode::PlainText(_)     => TexSymbolType::Alpha,
+            ParseNode::GenFraction(_)   => TexSymbolType::Inner,
+            ParseNode::Group(_)         => TexSymbolType::Alpha,
             ParseNode::Scripts(ref scr) => scr.base.as_ref()
                 .map(|base| base.atom_type())
-                .unwrap_or(AtomType::Alpha),
+                .unwrap_or(TexSymbolType::Alpha),
 
-            ParseNode::Rule(_)          => AtomType::Alpha,
-            ParseNode::Kerning(_)       => AtomType::Transparent,
+            ParseNode::Rule(_)          => TexSymbolType::Alpha,
+            ParseNode::Kerning(_)       => TexSymbolType::Transparent,
             ParseNode::Accent(ref acc)  => acc.nucleus.first()
                 .map(|acc| acc.atom_type())
-                .unwrap_or(AtomType::Alpha),
+                .unwrap_or(TexSymbolType::Alpha),
 
-            ParseNode::Style(_)         => AtomType::Transparent,
+            ParseNode::Style(_)         => TexSymbolType::Transparent,
             ParseNode::AtomChange(ref ac) => ac.at,
             ParseNode::Color(ref clr)     => clr.inner.first()
                 .map(|first| first.atom_type())
-                .unwrap_or(AtomType::Alpha),
+                .unwrap_or(TexSymbolType::Alpha),
 
-            ParseNode::Array(_)      => AtomType::Inner,
+            ParseNode::Array(_)      => TexSymbolType::Inner,
             ParseNode::Stack(ref s)  => s.atom_type,
 
             ParseNode::DummyNode(ref dummy) => dummy.at,

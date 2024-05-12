@@ -1,5 +1,8 @@
+/// An enum representing the desired category of a symbol
+/// A symbol's category determines its spacing relative to each other, e.g `1+23` ought to be typeset with some space between + and 2, but very little between 2 and 3.
+/// The category also determines whether something can be `\left` or `\right` delimiter
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AtomType {
+pub enum TexSymbolType {
     Punctuation,
     Ordinary,
     Open,
@@ -29,7 +32,7 @@ pub struct Symbol {
     pub codepoint: char,
     pub name: &'static str,
     pub description: &'static str,
-    pub atom_type: AtomType,
+    pub atom_type: TexSymbolType,
 }
 
 pub const SYMBOLS: &'static [Symbol] = &include!(concat!(env!("OUT_DIR"), "/symbols.rs"));

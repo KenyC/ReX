@@ -15,7 +15,7 @@ use crate::font::MathFont;
 use crate::font::{
     kerning::{superscript_kern, subscript_kern},
     VariantGlyph,
-    AtomType
+    TexSymbolType
 };
 use crate::layout::builders::{HBox, VBox};
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
@@ -30,13 +30,13 @@ use crate::error::{LayoutResult, LayoutError};
 
 /// Entry point to our recursive algorithm
 pub fn layout<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
-    layout_recurse(nodes, config, AtomType::Transparent)
+    layout_recurse(nodes, config, TexSymbolType::Transparent)
 }
 
 /// This method takes the parsing nodes and layouts them to layout nodes.
-fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: AtomType) -> LayoutResult<Layout<'f, F>> {
+fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: LayoutSettings<'a, 'f, F>, parent_next: TexSymbolType) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
-    let mut prev = AtomType::Transparent;
+    let mut prev = None;
     let mut italic_correction = None;
 
     for idx in 0..nodes.len() {
@@ -51,20 +51,30 @@ fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: Lay
         };
 
         let mut current = node.atom_type();
-        if current == AtomType::Binary {
-            if prev == AtomType::Transparent || prev == AtomType::Binary ||
-               prev == AtomType::Relation || prev == AtomType::Open ||
-               prev == AtomType::Punctuation {
-                current = AtomType::Alpha;
-            } else if let AtomType::Operator(_) = prev {
-                current = AtomType::Alpha;
-            } else if next == AtomType::Relation || next == AtomType::Close ||
-                      next == AtomType::Punctuation {
-                current = AtomType::Alpha;
+        if current == TexSymbolType::Binary {
+            if let 
+                  None 
+                | Some(TexSymbolType::Binary) 
+                | Some(TexSymbolType::Relation) 
+                | Some(TexSymbolType::Open) 
+                | Some(TexSymbolType::Punctuation) 
+                | Some(TexSymbolType::Operator(_)) = prev {
+                current = TexSymbolType::Alpha;
+            } else if let 
+                  TexSymbolType::Relation 
+                | TexSymbolType::Close 
+                | TexSymbolType::Punctuation = next {
+                current = TexSymbolType::Alpha;
             }
         }
 
-        let sp = atom_space(prev, current, config.style);
+        let sp = 
+            if let Some(prev) = prev 
+            { atom_space(prev, current, config.style) }
+            else 
+            { Spacing::None }
+        ;
+
         let italic_correction_to_apply = italic_correction.take();
         if sp != Spacing::None {
             let kern = sp.to_length().scaled(config);
@@ -94,7 +104,11 @@ fn layout_recurse<'a, 'f: 'a, F : MathFont>(nodes: &[ParseNode], mut config: Lay
             },
             _ => layout.dispatch(config.clone(), node, next)?,
         }
-        prev = current;
+
+        // Transparent items should be ignored for parsing rules
+        if current != TexSymbolType::Transparent {
+            prev = Some(current);
+        }
     }
 
     Ok(layout.finalize())
@@ -112,13 +126,13 @@ fn must_apply_italic_correction_before(node: &ParseNode) -> bool {
 // TODO: this should return layout result
 fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
     let mut layout = Layout::new();
-    layout.dispatch(config, node, AtomType::Transparent);
+    layout.dispatch(config, node, TexSymbolType::Transparent);
     layout.finalize()
 }
 
 impl<'f, F : MathFont> Layout<'f, F> {
 
-    fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, F>, node: &ParseNode, next: AtomType) -> LayoutResult<()> {
+    fn dispatch<'a>(&mut self, config: LayoutSettings<'a, 'f, F>, node: &ParseNode, next: TexSymbolType) -> LayoutResult<()> {
         match *node {
             ParseNode::Symbol(symbol) => self.add_node(self.symbol(symbol, config)?),
             ParseNode::Scripts(ref script) => self.scripts(script, config)?,
@@ -162,7 +176,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // Operators are handled specially.  We may need to find a larger
         // symbol and vertical center it.
         match sym.atom_type {
-            AtomType::Operator(_) => self.largeop(sym, config),
+            TexSymbolType::Operator(_) => self.largeop(sym, config),
             _ => config.ctx.glyph(sym.codepoint)?.as_layout(config)
         }
     }
@@ -332,7 +346,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // We use a different algoirthm for handling scripts for operators with limits.
         // This is where he handle Operators with limits.
         if let Some(ref b) = scripts.base {
-            if AtomType::Operator(true) == b.atom_type() {
+            if TexSymbolType::Operator(true) == b.atom_type() {
                 self.operator_limits(base, sup, sub, config);
                 return Ok(());
             }
@@ -356,7 +370,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             // TODO: These checks should be recursive?
             let mut height = base.height;
             if let Some(ref b) = scripts.base {
-                if b.atom_type() != AtomType::Operator(false) {
+                if b.atom_type() != TexSymbolType::Operator(false) {
                     // For accents whose base is a simple symbol we do not take
                     // the accent into account while positioning the superscript.
                     if let ParseNode::Accent(ref acc) = **b {
@@ -398,7 +412,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             // kerning values found in the kerning font table
             if let Some(ref b) = scripts.base {
                 if let Some(base_sym) = base.is_symbol() {
-                    if AtomType::Operator(false) == b.atom_type() {
+                    if TexSymbolType::Operator(false) == b.atom_type() {
                         // This recently changed in LuaTeX.  See `nolimitsmode`.
                         // This needs to be the glyph information _after_ layout for base.
                         sub_kern = -config.ctx.glyph_from_gid(base_sym.gid)?.italics.scaled(config);

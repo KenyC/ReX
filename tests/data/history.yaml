@@ -2078,7 +2078,7 @@
   description: "Spacing: color should be transparent to atom spacing"
   render:
     Ok:
-      width: 153.64978321807255
+      width: 158.39052395881329
       height: 15.125334051748116
       render:
         commands:
@@ -2120,19 +2120,19 @@
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 100.32829965430278
+                - 105.06904039504352
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 119.68237442247295
+                - 124.42311516321368
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 139.0364491906431
+                - 143.77718993138385
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
@@ -4320,7 +4320,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Operators: should display appropriate limits"
   render:
     Ok:
-      width: 32.72960155457258
+      width: 34.862934887905918
       height: 22.41600106470286
       render:
         commands:
@@ -4344,19 +4344,19 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 17.47200082987547
+                - 19.605334163208803
                 - 0.0
               glyph_id: 1176
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 26.329601250588895
+                - 28.462934583922228
                 - -6.329600300639866
               glyph_id: 50
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 24.025601141154767
+                - 26.1589344744881
                 - 5.702400270849466
               glyph_id: 49
               scale: 12.799999999999999
@@ -5112,7 +5112,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should handle delimiters"
   render:
     Ok:
-      width: 181.36178605424034
+      width: 177.80623049868476
       height: 52.480002492666248
       render:
         commands:
@@ -5178,61 +5178,61 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 94.23644858267572
+                - 90.68089302712017
                 - 12.501333927114804
               glyph_id: 3729
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 110.23644934263494
+                - 106.68089378707939
                 - -12.373333921035128
               glyph_id: 2507
               scale: 21.333333333333333
           - Rule:
               pos:
-                - 110.23644934263494
+                - 106.68089378707939
                 - -5.3333335866530719
               width: 11.562667215863863
               height: 0.0
           - Symbol:
               pos:
-                - 110.80178270282016
+                - 107.2462271472646
                 - 14.933334042628605
               glyph_id: 2512
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 121.79911655849881
+                - 118.24356100294325
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 137.79911731845804
+                - 134.24356176290247
                 - 12.501333927114804
               glyph_id: 3729
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 153.79911807841726
+                - 150.24356252286169
                 - -12.373333921035128
               glyph_id: 2507
               scale: 21.333333333333333
           - Rule:
               pos:
-                - 153.79911807841726
+                - 150.24356252286169
                 - -5.3333335866530719
               width: 11.562667215863863
               height: 0.0
           - Symbol:
               pos:
-                - 154.3644514386025
+                - 150.80889588304692
                 - 14.933334042628605
               glyph_id: 2512
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 165.3617852942811
+                - 161.80622973872554
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
@@ -5242,7 +5242,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should handle delimiters"
   render:
     Ok:
-      width: 143.94311761028238
+      width: 140.3875620547268
       height: 39.36000186949968
       render:
         commands:
@@ -5308,61 +5308,61 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 75.52711436069674
+                - 71.97155880514119
                 - 8.394667065391939
               glyph_id: 3681
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 88.09244829085138
+                - 84.53689273529582
                 - -10.240000486373902
               glyph_id: 2507
               scale: 16.0
           - Rule:
               pos:
-                - 88.09244829085138
+                - 84.53689273529582
                 - -5.333333586653073
               width: 8.672000411897898
               height: 0.0
           - Symbol:
               pos:
-                - 88.5164483109903
+                - 84.96089275543474
                 - 10.240000486373902
               glyph_id: 2512
               scale: 16.0
           - Symbol:
               pos:
-                - 96.76444870274928
+                - 93.20889314719372
                 - 8.394667065391939
               glyph_id: 3682
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 109.73511598548956
+                - 106.179560429934
                 - 8.394667065391939
               glyph_id: 3681
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 122.3004499156442
+                - 118.74489436008864
                 - -10.240000486373902
               glyph_id: 2507
               scale: 16.0
           - Rule:
               pos:
-                - 122.3004499156442
+                - 118.74489436008864
                 - -5.333333586653073
               width: 8.672000411897898
               height: 0.0
           - Symbol:
               pos:
-                - 122.72444993578312
+                - 119.16889438022756
                 - 10.240000486373902
               glyph_id: 2512
               scale: 16.0
           - Symbol:
               pos:
-                - 130.9724503275421
+                - 127.41689477198654
                 - 8.394667065391939
               glyph_id: 3682
               scale: 21.333333333333333
@@ -5464,7 +5464,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should handle display/textstyle"
   render:
     Ok:
-      width: 66.84444647100237
+      width: 63.2888909154468
       height: 41.72800198197365
       render:
         commands:
@@ -5506,37 +5506,37 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 39.11111212439007
+                - 35.55555656883451
                 - -12.373333921035134
               glyph_id: 50
               scale: 21.333333333333333
           - Rule:
               pos:
-                - 39.11111212439007
+                - 35.55555656883451
                 - -6.037333620091283
               width: 10.666667173306147
               height: 1.4080000668764115
           - Symbol:
               pos:
-                - 39.11111212439007
+                - 35.55555656883451
                 - 14.933334042628602
               glyph_id: 51
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 54.04444596436288
+                - 50.48889040880732
                 - -12.373333921035134
               glyph_id: 50
               scale: 21.333333333333333
           - Rule:
               pos:
-                - 54.04444596436288
+                - 50.48889040880732
                 - -6.037333620091283
               width: 10.666667173306147
               height: 1.4080000668764115
           - Symbol:
               pos:
-                - 54.04444596436288
+                - 50.48889040880732
                 - 14.933334042628602
               glyph_id: 51
               scale: 21.333333333333333
@@ -5546,7 +5546,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should handle display/textstyle"
   render:
     Ok:
-      width: 56.17777929769622
+      width: 52.62222374214066
       height: 31.296001486480237
       render:
         commands:
@@ -5588,37 +5588,37 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 33.777778537737
+                - 30.222222982181444
                 - -10.240000486373902
               glyph_id: 50
               scale: 16.0
           - Rule:
               pos:
-                - 33.777778537737
+                - 30.222222982181444
                 - -6.037333620091279
               width: 8.00000037997961
               height: 1.4080000668764115
           - Symbol:
               pos:
-                - 33.777778537737
+                - 30.222222982181444
                 - 10.240000486373902
               glyph_id: 51
               scale: 16.0
           - Symbol:
               pos:
-                - 46.044445584383279
+                - 42.48889002882772
                 - -10.240000486373902
               glyph_id: 50
               scale: 16.0
           - Rule:
               pos:
-                - 46.044445584383279
+                - 42.48889002882772
                 - -6.037333620091279
               width: 8.00000037997961
               height: 1.4080000668764115
           - Symbol:
               pos:
-                - 46.044445584383279
+                - 42.48889002882772
                 - 10.240000486373902
               glyph_id: 51
               scale: 16.0
@@ -7262,7 +7262,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Samples: should look good"
   render:
     Ok:
-      width: 157.31911748564904
+      width: 160.8746730412046
       height: 43.024002043530348
       render:
         commands:
@@ -7322,55 +7322,55 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 66.97955831471416
+                - 70.53511387026971
                 - 0.0
               glyph_id: 116
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 75.27822537554634
+                - 78.8337809311019
                 - 0.0
               glyph_id: 106
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 81.20889232390457
+                - 84.76444787946012
                 - 0.0
               glyph_id: 111
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 91.8755594972107
+                - 95.43111505276626
                 - 0.0
               glyph_id: 41
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 98.9795598346326
+                - 102.53511539018816
                 - 0.0
               glyph_id: 2520
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 110.71289372526936
+                - 114.26844928082491
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 128.68267201880614
+                - 132.23822757436168
                 - -14.634667361776032
               glyph_id: 64
               scale: 16.0
           - Symbol:
               pos:
-                - 124.92800517380236
+                - 128.48356072935793
                 - 1.7763568394002506e-15
               glyph_id: 62
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 146.6524503123429
+                - 150.20800586789847
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
@@ -8050,7 +8050,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should properly scale"
   render:
     Ok:
-      width: 55.64444593903091
+      width: 52.08889038347535
       height: 41.72800198197365
       render:
         commands:
@@ -8092,37 +8092,37 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 36.444445331063537
+                - 32.88888977550798
                 - -7.680000364780428
               glyph_id: 50
               scale: 12.799999999999999
           - Rule:
               pos:
-                - 36.444445331063537
+                - 32.88888977550798
                 - -4.528000215068461
               width: 6.4000003039836879
               height: 1.0560000501573086
           - Symbol:
               pos:
-                - 36.444445331063537
+                - 32.88888977550798
                 - 7.680000364780424
               glyph_id: 51
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 47.11111230171389
+                - 43.55555674615833
                 - -6.144000291824341
               glyph_id: 50
               scale: 12.799999999999999
           - Rule:
               pos:
-                - 47.11111230171389
+                - 43.55555674615833
                 - -3.622400172054767
               width: 6.4000003039836879
               height: 0.8448000401258469
           - Symbol:
               pos:
-                - 47.11111230171389
+                - 43.55555674615833
                 - 6.720000319182871
               glyph_id: 51
               scale: 12.799999999999999
@@ -8132,7 +8132,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Fractions: should properly scale"
   render:
     Ok:
-      width: 112.82987037921949
+      width: 109.27431482366392
       height: 58.6666694531838
       render:
         commands:
@@ -8198,61 +8198,61 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 70.36800220236184
+                - 66.81244664680628
                 - -9.680000459775324
               glyph_id: 1176
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 81.3589359564086
+                - 77.80338040085305
                 - -9.680000459775324
               glyph_id: 2520
               scale: 12.799999999999999
           - Rule:
               pos:
-                - 70.36800220236184
+                - 66.81244664680628
                 - -4.528000215068455
               width: 18.030934088428816
               height: 1.0560000501573086
           - Symbol:
               pos:
-                - 70.36800220236184
+                - 66.81244664680628
                 - 8.13120038621128
               glyph_id: 1176
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 81.3589359564086
+                - 77.80338040085305
                 - 8.13120038621128
               glyph_id: 2520
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 92.66560295745734
+                - 89.11004740190177
                 - -8.56320040673017
               glyph_id: 1176
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 103.6565367115041
+                - 100.10098115594853
                 - -8.56320040673017
               glyph_id: 2520
               scale: 12.799999999999999
           - Rule:
               pos:
-                - 92.66560295745734
+                - 89.11004740190177
                 - -3.622400172054763
               width: 18.030934088428816
               height: 0.8448000401258469
           - Symbol:
               pos:
-                - 92.66560295745734
+                - 89.11004740190177
                 - 8.614400409162048
               glyph_id: 1176
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 103.6565367115041
+                - 100.10098115594853
                 - 8.614400409162048
               glyph_id: 2520
               scale: 12.799999999999999
@@ -9246,7 +9246,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Scripts: should properly scale operators with limits"
   render:
     Ok:
-      width: 73.38453681891163
+      width: 81.74009237446718
       height: 62.261336290587987
       render:
         commands:
@@ -9270,55 +9270,55 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 32.976001566275957
+                - 36.53155712183151
                 - -22.677334410448866
               glyph_id: 2507
               scale: 16.0
           - Symbol:
               pos:
-                - 27.562667975823083
+                - 31.11822353137864
                 - 3.552713678800501e-15
               glyph_id: 1150
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 33.3120015822351
+                - 36.867557137790658
                 - 19.541334261496865
               glyph_id: 49
               scale: 16.0
           - Symbol:
               pos:
-                - 50.90453575116892
+                - 57.12675797339114
                 - -17.008000807836653
               glyph_id: 2507
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 47.06133556862672
+                - 53.28355779084894
                 - 0.0
               glyph_id: 1150
               scale: 16.0
           - Symbol:
               pos:
-                - 51.17333576393624
+                - 57.39555798615846
                 - 15.196800721809267
               glyph_id: 49
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 64.06613637631138
+                - 72.42169193186693
                 - -13.606400646269322
               glyph_id: 2507
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 61.685336263229448
+                - 70.040891818785
                 - -1.7763568394002506e-15
               glyph_id: 1150
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 64.33493638907869
+                - 72.69049194463425
                 - 13.8880006596446
               glyph_id: 49
               scale: 12.799999999999999

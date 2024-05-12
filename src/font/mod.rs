@@ -13,7 +13,7 @@ pub mod common;
 mod style;
 //mod unit;
 
-pub use unicode_math::AtomType;
+pub use unicode_math::TexSymbolType;
 pub use style::style_symbol;
 
 

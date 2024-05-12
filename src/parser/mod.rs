@@ -11,7 +11,7 @@ pub mod environments;
 mod textoken;
 mod control_sequence;
 
-use unicode_math::AtomType;
+use unicode_math::TexSymbolType;
 
 use crate::dimensions::AnyUnit;
 use crate::error::ParseResult;
@@ -161,7 +161,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         NumberOfPrimes::Double => '″',
                         NumberOfPrimes::Triple => '‴',
                     };
-                    let symbol = Symbol { codepoint, atom_type: AtomType::Ordinary };
+                    let symbol = Symbol { codepoint, atom_type: TexSymbolType::Ordinary };
                     results.push(ParseNode::Symbol(symbol));
                 },
                 TexToken::WhiteSpace => { },
@@ -280,13 +280,13 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         // TODO: not sure what to name the boolean
                         TextOperator(op_name, accent_placement) => {
                             results.push(ParseNode::AtomChange(nodes::AtomChange {
-                                at: AtomType::Operator(accent_placement),
+                                at: TexSymbolType::Operator(accent_placement),
                                 inner: 
                                     op_name
                                     .chars()
                                     .map(|c| ParseNode::Symbol(Symbol {
                                         codepoint: c,
-                                        atom_type: AtomType::Ordinary,
+                                        atom_type: TexSymbolType::Ordinary,
                                     }))
                                     .collect()
                                     ,
@@ -329,8 +329,8 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                     .last_mut()
                                     .ok_or(ParseError::LimitControlSequenceMustBeAfterOperator)?
                             ;
-                            if let AtomType::Operator(_) = node.atom_type() {
-                                node.set_atom_type(AtomType::Operator(add_limits))
+                            if let TexSymbolType::Operator(_) = node.atom_type() {
+                                node.set_atom_type(TexSymbolType::Operator(add_limits))
                             }
                             else {
                                 return Err(ParseError::LimitControlSequenceMustBeAfterOperator);
@@ -416,9 +416,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         },
                         SymbolCommand(mut symbol) => {
                             match symbol.atom_type {
-                                  AtomType::Accent 
-                                | AtomType::Over   
-                                | AtomType::Under  => {
+                                  TexSymbolType::Accent 
+                                | TexSymbolType::Over   
+                                | TexSymbolType::Under  => {
                                     let nucleus = self.parse_required_argument_as_nodes()?;
                                     results.push(ParseNode::Accent(Accent {
                                         symbol,
@@ -575,16 +575,16 @@ pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &Comman
 /// Helper function for determining an atomtype based on a given codepoint.
 /// This is primarily used for characters while processing, so may give false
 /// negatives when used for other things.
-fn codepoint_atom_type(codepoint: char) -> Option<AtomType> {
+fn codepoint_atom_type(codepoint: char) -> Option<TexSymbolType> {
     Some(match codepoint {
-             'a' ..= 'z' | 'A' ..= 'Z' | '0' ..= '9' | 'Α' ..= 'Ω' | 'α' ..= 'ω' => AtomType::Alpha,
-             '*' | '+' | '-' => AtomType::Binary,
-             '[' | '(' => AtomType::Open,
-             ']' | ')' | '?' | '!' => AtomType::Close,
-             '=' | '<' | '>' | ':' => AtomType::Relation,
-             ',' | ';' => AtomType::Punctuation,
-             '|' => AtomType::Fence,
-             '/' | '@' | '.' | '"' => AtomType::Alpha,
+             'a' ..= 'z' | 'A' ..= 'Z' | '0' ..= '9' | 'Α' ..= 'Ω' | 'α' ..= 'ω' => TexSymbolType::Alpha,
+             '*' | '+' | '-' => TexSymbolType::Binary,
+             '[' | '(' => TexSymbolType::Open,
+             ']' | ')' | '?' | '!' => TexSymbolType::Close,
+             '=' | '<' | '>' | ':' => TexSymbolType::Relation,
+             ',' | ';' => TexSymbolType::Punctuation,
+             '|' => TexSymbolType::Fence,
+             '/' | '@' | '.' | '"' => TexSymbolType::Alpha,
              _ => return None,
          })
 }

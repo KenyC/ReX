@@ -68,6 +68,7 @@ Ok(
                     },
                 ),
                 extra_row_sep: false,
+                cell_layout_style: Text,
             },
         ),
     ],

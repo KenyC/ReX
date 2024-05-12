@@ -157,20 +157,20 @@ fn build_symbol_table() {
     for line in source.lines() {
         if let Some(c) = re.captures(line) {
             writeln!(out,
-                r"    Symbol {{ codepoint: '\u{{{}}}', name: {:?}, atom_type: AtomType::{}, description: {:?} }},",
+                r"    Symbol {{ codepoint: '\u{{{}}}', name: {:?}, atom_type: TexSymbolType::{}, description: {:?} }},",
                 &c[1], &c[2], atom_from_tex(&c[2], &c[3]), &c[4]
             ).unwrap();
         }
     }
     for (character, name, atom_type, description) in SUPPLEMENTAL_SYMBOLS {
         writeln!(out,
-            r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: AtomType::{}, description: {:?} }},",
+            r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: TexSymbolType::{}, description: {:?} }},",
             character, name, atom_from_tex(name, atom_type), description,
         ).unwrap();
     }
     for (name, cp) in GREEK {
         writeln!(out,
-            r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: AtomType::Alpha, description: {:?} }},",
+            r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: TexSymbolType::Alpha, description: {:?} }},",
             cp, name, name
         ).unwrap();
     }

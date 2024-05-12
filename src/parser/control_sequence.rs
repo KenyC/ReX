@@ -1,4 +1,4 @@
-use unicode_math::AtomType;
+use unicode_math::TexSymbolType;
 
 use crate::{dimensions::AnyUnit, font::{Family, Weight}, layout::Style as LayoutStyle, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
 
@@ -17,12 +17,12 @@ pub enum PrimitiveControlSequence {
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
     /// Represents `\limits` and `\nolimits` control sequences (cf [here](https://texfaq.org/FAQ-limits))
     Limits(bool),
-    DelimiterSize(u8, AtomType),
+    DelimiterSize(u8, TexSymbolType),
     Kerning(AnyUnit),
     StyleCommand(LayoutStyle),
-    AtomChange(AtomType),
+    AtomChange(TexSymbolType),
     TextOperator(&'static str, bool),
-    SubStack(AtomType),
+    SubStack(TexSymbolType),
     SymbolCommand(Symbol),
     StyleChange { family: Option<Family>, weight: Option<Weight>, takes_arg : bool },
     BeginEnv,
@@ -45,8 +45,8 @@ impl PrimitiveControlSequence {
 
     fn parse_command_name(name: &str) -> Option<Self> {
         // TODO: use a lookup table
-        const OPEN_PAREN  : Option<Symbol> = Some(Symbol { codepoint : '(', atom_type : AtomType::Open  });
-        const CLOSE_PAREN : Option<Symbol> = Some(Symbol { codepoint : ')', atom_type : AtomType::Close });
+        const OPEN_PAREN  : Option<Symbol> = Some(Symbol { codepoint : '(', atom_type : TexSymbolType::Open  });
+        const CLOSE_PAREN : Option<Symbol> = Some(Symbol { codepoint : ')', atom_type : TexSymbolType::Close });
         Some(match name {
             "frac"   => Self::Fraction(None, None,              BarThickness::Default, MathStyle::NoChange),
             "tfrac"  => Self::Fraction(None, None,              BarThickness::Default, MathStyle::Text),
@@ -56,7 +56,7 @@ impl PrimitiveControlSequence {
             "dbinom" => Self::Fraction(OPEN_PAREN, CLOSE_PAREN, BarThickness::None,    MathStyle::Display),
 
             // Stacking commands
-            "substack" => Self::SubStack(AtomType::Inner),
+            "substack" => Self::SubStack(TexSymbolType::Inner),
 
             // Radical commands
             "sqrt" => Self::Radical,
@@ -81,22 +81,22 @@ impl PrimitiveControlSequence {
 
 
             // Delimiter size commands
-            "bigl"  => Self::DelimiterSize(1, AtomType::Open),
-            "Bigl"  => Self::DelimiterSize(2, AtomType::Open),
-            "biggl" => Self::DelimiterSize(3, AtomType::Open),
-            "Biggl" => Self::DelimiterSize(4, AtomType::Open),
-            "bigr"  => Self::DelimiterSize(1, AtomType::Close),
-            "Bigr"  => Self::DelimiterSize(2, AtomType::Close),
-            "biggr" => Self::DelimiterSize(3, AtomType::Close),
-            "Biggr" => Self::DelimiterSize(4, AtomType::Close),
-            "bigm"  => Self::DelimiterSize(1, AtomType::Relation),
-            "Bigm"  => Self::DelimiterSize(2, AtomType::Relation),
-            "biggm" => Self::DelimiterSize(3, AtomType::Relation),
-            "Biggm" => Self::DelimiterSize(4, AtomType::Relation),
-            "big"   => Self::DelimiterSize(1, AtomType::Ordinary),
-            "Big"   => Self::DelimiterSize(2, AtomType::Ordinary),
-            "bigg"  => Self::DelimiterSize(3, AtomType::Ordinary),
-            "Bigg"  => Self::DelimiterSize(4, AtomType::Ordinary),
+            "bigl"  => Self::DelimiterSize(1, TexSymbolType::Open),
+            "Bigl"  => Self::DelimiterSize(2, TexSymbolType::Open),
+            "biggl" => Self::DelimiterSize(3, TexSymbolType::Open),
+            "Biggl" => Self::DelimiterSize(4, TexSymbolType::Open),
+            "bigr"  => Self::DelimiterSize(1, TexSymbolType::Close),
+            "Bigr"  => Self::DelimiterSize(2, TexSymbolType::Close),
+            "biggr" => Self::DelimiterSize(3, TexSymbolType::Close),
+            "Biggr" => Self::DelimiterSize(4, TexSymbolType::Close),
+            "bigm"  => Self::DelimiterSize(1, TexSymbolType::Relation),
+            "Bigm"  => Self::DelimiterSize(2, TexSymbolType::Relation),
+            "biggm" => Self::DelimiterSize(3, TexSymbolType::Relation),
+            "Biggm" => Self::DelimiterSize(4, TexSymbolType::Relation),
+            "big"   => Self::DelimiterSize(1, TexSymbolType::Ordinary),
+            "Big"   => Self::DelimiterSize(2, TexSymbolType::Ordinary),
+            "bigg"  => Self::DelimiterSize(3, TexSymbolType::Ordinary),
+            "Bigg"  => Self::DelimiterSize(4, TexSymbolType::Ordinary),
 
             // Spacing related commands
             "!"     => Self::Kerning(AnyUnit::Em(-3f64/18f64)),
@@ -117,9 +117,9 @@ impl PrimitiveControlSequence {
             "text"              => Self::Text,
 
             // Atom-type changes
-            "mathop"  => Self::AtomChange(AtomType::Operator(false)),
-            "mathrel" => Self::AtomChange(AtomType::Relation),
-            "mathord" => Self::AtomChange(AtomType::Alpha),
+            "mathop"  => Self::AtomChange(TexSymbolType::Operator(false)),
+            "mathrel" => Self::AtomChange(TexSymbolType::Relation),
+            "mathord" => Self::AtomChange(TexSymbolType::Alpha),
 
             // Color related
             "color"   => Self::Color,
