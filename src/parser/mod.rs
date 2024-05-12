@@ -17,6 +17,8 @@ use crate::dimensions::AnyUnit;
 use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
+use crate::layout;
+use crate::layout::constants;
 use crate::parser::control_sequence::parse_color;
 use crate::parser::nodes::Accent;
 use crate::parser::nodes::Delimited;
@@ -264,7 +266,22 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 bar_thickness, style,
                             }));
                         },
-                        DelimiterSize(_, _) => todo!(),
+                        ExtendedDelimiter(delimiter_size, atom_type) => {
+                            let mut delimiter = self.parse_next_token_as_delimiter()?;
+                            match delimiter.atom_type {
+                                TexSymbolType::Open | TexSymbolType::Close | TexSymbolType::Fence 
+                                => (),
+                                _ => return Err(ParseError::ExpectedDelimiter),
+                            }
+                            delimiter.atom_type = atom_type;
+
+                            let height_enclosed_content = AnyUnit::from(delimiter_size.to_size());
+
+                            results.push(ParseNode::ExtendedDelimiter(nodes::ExtendedDelimiter::new(
+                                delimiter,
+                                height_enclosed_content
+                            )));
+                        },
                         Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
                         },
@@ -460,7 +477,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     }
 
     fn parse_next_token_as_delimiter(&mut self) -> ParseResult<Symbol> {
-        let token = self.token_iter.next_token()?.ok_or_else(|| ParseError::ExpectedDelimiter)?;
+        let token = self.token_iter.next_token()?.ok_or_else(|| ParseError::ExpectedSymbolForCommand)?;
         match token {
             TexToken::Char(c) => {
                 self.char_to_symbol(c)
@@ -475,13 +492,13 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         self.style_symbol_with_current_style(&mut symbol); 
                         Ok(symbol)
                     },
-                    _ => Err(ParseError::ExpectedDelimiter),
+                    _ => Err(ParseError::ExpectedSymbolForCommand),
                 }
             },
               TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
             | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
             | TexToken::Prime { .. }
-            => Err(ParseError::ExpectedDelimiter),
+            => Err(ParseError::ExpectedSymbolForCommand),
         }
     }
 
@@ -754,7 +771,6 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"1\33"));
     }
 
-    #[ignore = "unsupported as of yet ; no correponding node"]
     #[test]
     fn snapshot_delimiter() {
         // success
@@ -763,10 +779,12 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\Bigl\langle"));
         insta::assert_debug_snapshot!(parse(r"\Biggr|"));
         insta::assert_debug_snapshot!(parse(r"\Bigl\lBrack"));
-
-        // failure
         insta::assert_debug_snapshot!(parse(r"\bigr\lBrack"));
         insta::assert_debug_snapshot!(parse(r"\Bigl\rangle"));
+
+        // failure
+        insta::assert_debug_snapshot!(parse(r"\biggl1"));
+        insta::assert_debug_snapshot!(parse(r"\Bigm="));
     }
 
     #[test]

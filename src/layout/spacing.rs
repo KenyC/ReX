@@ -76,7 +76,6 @@ impl TryFrom<TexSymbolType> for AtomType {
 /// determines how much spacing should occur between the two
 /// symbols.
 pub fn atom_space(left: TexSymbolType, right: TexSymbolType, style: Style) -> Spacing {
-    eprintln!("{:?} {:?}", left, right);
     let left  = AtomType::try_from(left).ok();
     let right = AtomType::try_from(right).ok();
 

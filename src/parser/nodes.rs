@@ -16,6 +16,8 @@ pub enum ParseNode {
     Symbol(Symbol),
     /// A group of nodes enclosed by '\left' and '\right'
     Delimited(Delimited),
+    /// A delimiter with a user-specified height (created by `\bigl`, `\bigg`, etc.)
+    ExtendedDelimiter(ExtendedDelimiter),    
     /// A group of nodes enclosed by a '\sqrt' square root radical.
     Radical(Radical),
     /// A fraction with some nodes as numerator and some other nodes in the denominator
@@ -169,6 +171,24 @@ impl Delimited {
     /// Nodes delimited by left, middle and right in the order that they appear.
     pub fn inners(&self) -> &[Vec<ParseNode>] 
     { self.inners.as_ref() }
+}
+
+/// Cf [`ParseNode::ExtendedDelimiter`]
+#[derive(Debug, PartialEq, Clone)]
+pub struct ExtendedDelimiter {
+    /// Symbol to use, its atom type is the atom type of the whole expression
+    pub symbol : Symbol,
+    /// Height of the content this delimiter is meant to enclose  
+    /// The shape and size of an extended delimiter like `(` are computed by assuming it will enclose a content of size `height_enclosed_content`, 
+    /// as if it were in `\left(\rule{0pt}{<height_enclosed_content>}\right.`
+    pub height_enclosed_content : AnyUnit,
+}
+
+impl ExtendedDelimiter {
+    /// Creates a new delimiter from t
+    pub fn new(symbol: Symbol, height_enclosed_content: AnyUnit) -> Self {
+        Self { symbol, height_enclosed_content }
+    }
 }
 
 /// Cf [`ParseNode::Scripts`]
@@ -352,7 +372,7 @@ impl ParseNode {
             ParseNode::Stack(ref s)  => s.atom_type,
 
             ParseNode::DummyNode(ref dummy) => dummy.at,
-
+            ParseNode::ExtendedDelimiter(ExtendedDelimiter { symbol, .. }) => symbol.atom_type,
             // // DEPRECATED
             // ParseNode::Extend(_,_)   => AtomType::Inner,
         }

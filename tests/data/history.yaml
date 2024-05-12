@@ -189,6 +189,122 @@
               glyph_id: 50
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ begin{aligned} 1&=1-5goydCal1mM.png"
+"Fixed size delimiter should work - \\big\\langle w, V(z)\\big\\rangle_E":
+  tex: "\\big\\langle w, V(z)\\big\\rangle_E"
+  description: "Delimiters: Fixed size delimiter should work"
+  render:
+    Ok:
+      width: 103.42756029922102
+      height: 27.306667963663736
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 4.288000203669071
+              glyph_id: 3660
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 12.330667252341906
+                - 0.0
+              glyph_id: 2519
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 28.864001370966436
+                - 0.0
+              glyph_id: 45
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 37.75289051317507
+                - 0.0
+              glyph_id: 2493
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 54.8195579904649
+                - 0.0
+              glyph_id: 41
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 61.923558327886798
+                - 0.0
+              glyph_id: 2522
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 72.56889216684633
+                - 0.0
+              glyph_id: 42
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 79.67289250426822
+                - 4.288000203669071
+              glyph_id: 3661
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 92.00355975661013
+                - 8.853333753844101
+              glyph_id: 2476
+              scale: 16.0
+      img_render_path: tests/data/imgs/ big langle w  V(z) --1fGpQHU_RU.png
+"Fixed size delimiter should work - \\bigl(\\Bigl(\\biggl(\\Biggl(":
+  tex: "\\bigl(\\Bigl(\\biggl(\\Biggl("
+  description: "Delimiters: Fixed size delimiter should work"
+  render:
+    Ok:
+      width: 52.82133584221204
+      height: 72.08533675720293
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 4.288000203669071
+              glyph_id: 3613
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 9.984000474214554
+                - 12.501333927114804
+              glyph_id: 3729
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 25.984001234173776
+                - 16.60800078883767
+              glyph_id: 3776
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 43.221335386236507
+                - -19.936000946909176
+              glyph_id: 1434
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 43.221335386236507
+                - -3.0186668100456268
+              glyph_id: 1435
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 43.221335386236507
+                - 13.898667326817922
+              glyph_id: 1435
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 43.221335386236507
+                - 30.70933479194841
+              glyph_id: 1436
+              scale: 21.333333333333333
+      img_render_path: tests/data/imgs/ bigl( Bigl( biggl( -NgteRmph4sA.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - (+2)":
   tex: (+2)
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"

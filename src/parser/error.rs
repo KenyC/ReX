@@ -55,6 +55,8 @@ pub enum ParseError {
     /// it can only contain the characters `c`, `l`, `r`, whitespaces, braces, `|`  or macros that ultimately expand to one of these.
     UnrecognizedArrayColumnFormat,
     /// The token immediately following `\left`, `\middle` and `\right` isn't a symbol
+    ExpectedSymbolForCommand,
+    /// The symbol immediately following `\big`, `\Bigl`, etc. is not Open, Close or Fence symbol type (delimiter types)
     ExpectedDelimiter,
     /// The token immediately following `\left` is not of atom type [`AtomType::Open`] or  [`AtomType::Fence`]
     ExpectedOpenDelimiter,
@@ -62,6 +64,7 @@ pub enum ParseError {
     ExpectedMiddleDelimiter,
     /// The token immediately following `\middle` is not of atom type [`AtomType::Close`]
     ExpectedClosingDelimiter,
+
     /// The command `\limits` and `\nolimits` must be placed right after an operator (or a macro that expands into something that ends in an operator)
     LimitControlSequenceMustBeAfterOperator,
 }
@@ -108,8 +111,10 @@ impl fmt::Display for ParseError {
                 write!(f, "Unknown environment '{}'", env_name),
             UnrecognizedArrayColumnFormat => 
                 write!(f, "Unrecognized character in column format"),
+            ExpectedSymbolForCommand => 
+                write!(f, r"Token after '\left', '\middle', '\right', '\big', etc. is not a symbol"),
             ExpectedDelimiter => 
-                write!(f, r"Token after '\left', '\middle' or '\right' is a not symbol"),
+                write!(f, r"Token after '\big', '\bigl', '\bigg', '\big', etc. is not a delimiter"),
             ExpectedOpenDelimiter => 
                 write!(f, r"Token after '\left' is a not an open symbol"),
             ExpectedMiddleDelimiter => 

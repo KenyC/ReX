@@ -1,17 +1,17 @@
 ---
 source: src/parser/mod.rs
-expression: "parse(r\"\\Bigl\\rangle\")"
+expression: "parse(r\"\\biggl(\")"
 ---
 Ok(
     [
         ExtendedDelimiter(
             ExtendedDelimiter {
                 symbol: Symbol {
-                    codepoint: '⟩',
+                    codepoint: '(',
                     atom_type: Open,
                 },
                 height_enclosed_content: Em(
-                    1.275,
+                    1.7,
                 ),
             },
         ),

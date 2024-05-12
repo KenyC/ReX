@@ -2,9 +2,18 @@
 source: src/parser/mod.rs
 expression: "parse(r\"\\bigr\\lBrack\")"
 ---
-Err(
-    ExpectedAtomType(
-        Close,
-        Open,
-    ),
+Ok(
+    [
+        ExtendedDelimiter(
+            ExtendedDelimiter {
+                symbol: Symbol {
+                    codepoint: '⟦',
+                    atom_type: Close,
+                },
+                height_enclosed_content: Em(
+                    0.85,
+                ),
+            },
+        ),
+    ],
 )

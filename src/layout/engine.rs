@@ -21,7 +21,7 @@ use crate::layout::builders::{HBox, VBox};
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
+use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
 use crate::dimensions::{AnyUnit, Unit};
 use crate::dimensions::units::{Px, Em, Pt, FUnit};
@@ -138,6 +138,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             ParseNode::Scripts(ref script) => self.scripts(script, config)?,
             ParseNode::Radical(ref rad) => self.radical(rad, config)?,
             ParseNode::Delimited(ref delim) => self.delimited(delim, config)?,
+            ParseNode::ExtendedDelimiter(ref delim) => self.extended_delimiter(delim, config)?,
             ParseNode::Accent(ref acc) => self.accent(acc, config)?,
             ParseNode::GenFraction(ref f) => self.frac(f, config)?,
             ParseNode::Stack(ref stack) => self.substack(stack, config)?,
@@ -263,65 +264,13 @@ impl<'f, F : MathFont> Layout<'f, F> {
         }
 
 
-        let min_height = config.ctx.constants.delimited_sub_formula_min_height * config.font_size;
-        let null_delimiter_space = config.ctx.constants.null_delimiter_space * config.font_size;
-
-
-
-        #[derive(Debug, Clone, Copy)]
-        struct ExtensionMetrics {
-            axis:      Unit<Px>,
-            clearance: Unit<FUnit>,
-        }
-
-        let mut extension_metrics = None;
-
-        // Only extend if we meet a certain size
-        // TODO: This quick height check doesn't seem to be strong enough,
-        // reference: http://tug.org/pipermail/luatex/2010-July/001745.html
-        if Unit::max(max_height, -min_depth) > min_height.scale(0.5) {
-            let axis = config.ctx.constants.axis_height * config.font_size;
-
-            let inner_size = Unit::max(max_height - axis, axis - min_depth).scale(2.0);
-            let clearance_px  = Unit::max(
-                inner_size.scale(config.ctx.constants.delimiter_factor),
-                max_height - min_depth - config.ctx.constants.delimiter_short_fall * config.font_size
-            );
-            let clearance = config.to_font(clearance_px);
-
-            extension_metrics = Some(ExtensionMetrics {axis, clearance,})
-        };
-
-        #[inline]
-        fn make_delimiter<'a, 'f, F : MathFont>(
-            symbol : Symbol, 
-            extension_metrics: &Option<ExtensionMetrics>, 
-            null_delimiter_space: Unit<Px>,
-            config: LayoutSettings<'a, 'f, F>
-        ) -> Result<LayoutNode<'f, F>, LayoutError> {
-            if symbol.codepoint == '.' {
-                Ok(kern!(horz: null_delimiter_space))
-            }
-            else if let Some(metrics) = extension_metrics {
-                Ok(config.ctx
-                    .vert_variant(symbol.codepoint, metrics.clearance)?
-                    .as_layout(config)?
-                    .centered(metrics.axis))
-            }
-            else {
-                config.ctx
-                    .glyph(symbol.codepoint)?
-                    .as_layout(config)
-            }
-        }
-
         let delimiters = delim.delimiters();
         for (symbol, inner) in Iterator::zip(delimiters.iter(), inners)  {
-            self.add_node(make_delimiter(*symbol, &extension_metrics, null_delimiter_space, config)?);
+            self.add_node(extend_delimiter(*symbol, max_height, min_depth, config)?);
             self.add_node(inner);
         }
         let right_symbol = delimiters.last().unwrap();
-        self.add_node(make_delimiter(*right_symbol, &extension_metrics, null_delimiter_space, config)?);
+        self.add_node(extend_delimiter(*right_symbol, max_height, min_depth, config)?);
 
         Ok(())
     }
@@ -716,6 +665,16 @@ impl<'f, F : MathFont> Layout<'f, F> {
         Ok(())
     }
 
+    fn extended_delimiter<'a>(&mut self, delim: &ExtendedDelimiter, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
+        let ExtendedDelimiter { symbol, height_enclosed_content }  = delim; 
+
+        let height_enclosed_content = height_enclosed_content.scaled(config);
+
+        self.add_node(extend_delimiter(*symbol, height_enclosed_content, Unit::ZERO, config)?);
+        Ok(())
+    }
+
+
     fn array<'a>(&mut self, array: &Array, config: LayoutSettings<'a, 'f, F>) -> Result<(), LayoutError> {
         let cell_layout_settings = config.layout_style(array.cell_layout_style);
         let normal_baseline_skip = BASELINE_SKIP; 
@@ -1041,3 +1000,43 @@ fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_bars: u8, rule_measurem
 
 
 
+fn extend_delimiter<'a, 'f, F : MathFont>(
+    symbol : Symbol, 
+    height_content: Unit<Px>,
+    depth_content:  Unit<Px>, 
+    config: LayoutSettings<'a, 'f, F>
+) -> Result<LayoutNode<'f, F>, LayoutError> {
+    let min_height = config.ctx.constants.delimited_sub_formula_min_height * config.font_size;
+    let null_delimiter_space = config.ctx.constants.null_delimiter_space * config.font_size;
+
+    if symbol.codepoint == '.' {
+        return Ok(kern!(horz: null_delimiter_space));
+    }
+
+
+    // Only extend if we meet a certain size
+    // TODO: This quick height check doesn't seem to be strong enough,
+    // reference: http://tug.org/pipermail/luatex/2010-July/001745.html
+    if Unit::max(height_content, -depth_content) > min_height.scale(0.5) {
+        let axis = config.ctx.constants.axis_height * config.font_size;
+
+        let inner_size = Unit::max(height_content - axis, axis - depth_content).scale(2.0);
+        let clearance_px  = Unit::max(
+            inner_size.scale(config.ctx.constants.delimiter_factor),
+            height_content - depth_content - config.ctx.constants.delimiter_short_fall * config.font_size
+        );
+        let clearance = config.to_font(clearance_px);
+
+        Ok(
+            config.ctx
+            .vert_variant(symbol.codepoint, clearance)?
+            .as_layout(config)?
+            .centered(axis)
+        )
+    }
+    else {
+        config.ctx
+            .glyph(symbol.codepoint)?
+            .as_layout(config)
+    }
+}

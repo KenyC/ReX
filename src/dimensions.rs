@@ -9,7 +9,7 @@ use std::cmp::{PartialEq, PartialOrd};
 use std::fmt::{Display, Debug};
 use std::iter::Sum;
 
-use self::units::{Ratio, Inch, Px, Pt};
+use self::units::{Em, Inch, Pt, Px, Ratio};
 pub mod units;
 
 /// A f64 value with its unit represented in the type
@@ -312,5 +312,17 @@ impl Display for AnyUnit {
             AnyUnit::Em(value) => write!(f, "{}em", value),
             AnyUnit::Px(value) => write!(f, "{}px", value),
         }
+    }
+}
+
+impl From<Unit<Em>> for AnyUnit {
+    fn from(value: Unit<Em>) -> Self {
+        Self::Em(value.unitless(Em))
+    }
+}
+
+impl From<Unit<Px>> for AnyUnit {
+    fn from(value: Unit<Px>) -> Self {
+        Self::Px(value.unitless(Px))
     }
 }

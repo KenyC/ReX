@@ -30,6 +30,11 @@ Delimiters:
       - \left(\begin{array}{c}1\\1\\1\\1\\1\end{array}\right)
       - \left(\begin{array}{c}1\\1\\1\\1\\1\\1\\1\\1\\1\end{array}\right)
 
+  - Description: Fixed size delimiter should work 
+    Snippets:
+      - \bigl(\Bigl(\biggl(\Biggl(
+      - \big\langle w, V(z)\big\rangle_E
+
   - Description: middle renders correctly
     Snippets:
       - \left\{ x \in \mathbb{R}\,\middle|\, x \geq 0\right\}

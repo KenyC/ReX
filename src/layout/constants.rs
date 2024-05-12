@@ -2,6 +2,14 @@
 
 use crate::dimensions::{units::{Em, Pt}, Unit};
 
+/// Determines how large `\big` makes a delimiter.
+/// More precisely, in TeX, `\big(` is actually `\left( ... \right.` where the `...` is a box of a certain height and null width. 
+/// [`BIG_HEIGHT`] tells the size of the enclosed box.
+// In "Tex By Topic" by van Eijhkout (section 21.2.4), this value is 8.5pt. 
+// However, experiments reveal that the size is font size dependent and that the value above is only valid for 10pt font size. 
+// Hence the value here is chosen to ensure 8.5pt at a 10pt font size.
+pub const BIG_HEIGHT : Unit<Em> = Unit::<Em>::new(0.85);
+
 // From [https://tex.stackexchange.com/questions/48276/latex-specify-font-point-size] & `info latex`
 /// Desired distance between two baselines of an array. 
 /// If one line happens to contain extra high items, then the distance between baselines may prove bigger (cf [`LINE_SKIP_LIMIT_ARRAY`]).

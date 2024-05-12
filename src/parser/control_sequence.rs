@@ -1,6 +1,6 @@
 use unicode_math::TexSymbolType;
 
-use crate::{dimensions::AnyUnit, font::{Family, Weight}, layout::Style as LayoutStyle, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
+use crate::{dimensions::{units::Em, AnyUnit, Unit}, font::{Family, Weight}, layout::{constants, Style as LayoutStyle}, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
 
 use super::{error::{ParseError, ParseResult}, macros::CommandCollection, nodes::Color, textoken::TexToken, Parser};
 
@@ -17,7 +17,7 @@ pub enum PrimitiveControlSequence {
     Fraction(Option<Symbol>, Option<Symbol>, BarThickness, MathStyle),
     /// Represents `\limits` and `\nolimits` control sequences (cf [here](https://texfaq.org/FAQ-limits))
     Limits(bool),
-    DelimiterSize(u8, TexSymbolType),
+    ExtendedDelimiter(DelimiterSize, TexSymbolType),
     Kerning(AnyUnit),
     StyleCommand(LayoutStyle),
     AtomChange(TexSymbolType),
@@ -31,6 +31,31 @@ pub enum PrimitiveControlSequence {
     Middle,
     Right,
     Text,
+}
+
+
+/// Delimiter size (as offered by `\big`, `\bigg`, etc.)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DelimiterSize {
+    /// The smallest "big" size, a size of 0.85em
+    Big,
+    /// 1.5 times the size of [`DelimiterSize::Big`]
+    BBig,
+    /// 2 times the size of [`DelimiterSize::Big`]
+    Bigg,
+    /// 2.5 times the size of [`DelimiterSize::Big`]
+    BBigg,
+}
+
+impl DelimiterSize {
+    pub fn to_size(self) -> Unit<Em> {
+        constants::BIG_HEIGHT.scale(match self {
+            DelimiterSize::Big   => 1.0,
+            DelimiterSize::BBig  => 1.5,
+            DelimiterSize::Bigg  => 2.0,
+            DelimiterSize::BBigg => 2.5,
+        })
+    }
 }
 
 
@@ -81,22 +106,22 @@ impl PrimitiveControlSequence {
 
 
             // Delimiter size commands
-            "bigl"  => Self::DelimiterSize(1, TexSymbolType::Open),
-            "Bigl"  => Self::DelimiterSize(2, TexSymbolType::Open),
-            "biggl" => Self::DelimiterSize(3, TexSymbolType::Open),
-            "Biggl" => Self::DelimiterSize(4, TexSymbolType::Open),
-            "bigr"  => Self::DelimiterSize(1, TexSymbolType::Close),
-            "Bigr"  => Self::DelimiterSize(2, TexSymbolType::Close),
-            "biggr" => Self::DelimiterSize(3, TexSymbolType::Close),
-            "Biggr" => Self::DelimiterSize(4, TexSymbolType::Close),
-            "bigm"  => Self::DelimiterSize(1, TexSymbolType::Relation),
-            "Bigm"  => Self::DelimiterSize(2, TexSymbolType::Relation),
-            "biggm" => Self::DelimiterSize(3, TexSymbolType::Relation),
-            "Biggm" => Self::DelimiterSize(4, TexSymbolType::Relation),
-            "big"   => Self::DelimiterSize(1, TexSymbolType::Ordinary),
-            "Big"   => Self::DelimiterSize(2, TexSymbolType::Ordinary),
-            "bigg"  => Self::DelimiterSize(3, TexSymbolType::Ordinary),
-            "Bigg"  => Self::DelimiterSize(4, TexSymbolType::Ordinary),
+            "bigl"  => Self::ExtendedDelimiter(DelimiterSize::Big,   TexSymbolType::Open),
+            "Bigl"  => Self::ExtendedDelimiter(DelimiterSize::BBig,  TexSymbolType::Open),
+            "biggl" => Self::ExtendedDelimiter(DelimiterSize::Bigg,  TexSymbolType::Open),
+            "Biggl" => Self::ExtendedDelimiter(DelimiterSize::BBigg, TexSymbolType::Open),
+            "bigr"  => Self::ExtendedDelimiter(DelimiterSize::Big,   TexSymbolType::Close),
+            "Bigr"  => Self::ExtendedDelimiter(DelimiterSize::BBig,  TexSymbolType::Close),
+            "biggr" => Self::ExtendedDelimiter(DelimiterSize::Bigg,  TexSymbolType::Close),
+            "Biggr" => Self::ExtendedDelimiter(DelimiterSize::BBigg, TexSymbolType::Close),
+            "bigm"  => Self::ExtendedDelimiter(DelimiterSize::Big,   TexSymbolType::Relation),
+            "Bigm"  => Self::ExtendedDelimiter(DelimiterSize::BBig,  TexSymbolType::Relation),
+            "biggm" => Self::ExtendedDelimiter(DelimiterSize::Bigg,  TexSymbolType::Relation),
+            "Biggm" => Self::ExtendedDelimiter(DelimiterSize::BBigg, TexSymbolType::Relation),
+            "big"   => Self::ExtendedDelimiter(DelimiterSize::Big,   TexSymbolType::Ordinary),
+            "Big"   => Self::ExtendedDelimiter(DelimiterSize::BBig,  TexSymbolType::Ordinary),
+            "bigg"  => Self::ExtendedDelimiter(DelimiterSize::Bigg,  TexSymbolType::Ordinary),
+            "Bigg"  => Self::ExtendedDelimiter(DelimiterSize::BBigg, TexSymbolType::Ordinary),
 
             // Spacing related commands
             "!"     => Self::Kerning(AnyUnit::Em(-3f64/18f64)),
