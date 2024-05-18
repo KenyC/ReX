@@ -35,12 +35,12 @@ impl Symbol {
 }
 
 fn symbol(name: &str) -> Option<Symbol> {
-    SYMBOLS.iter().find(|sym| sym.name == name).map(|sym| {
+    SYMBOLS.binary_search_by_key(&name, |symbol| &symbol.name).map(|symbol_index| {
         Symbol {
-            codepoint: sym.codepoint,
-            atom_type: sym.atom_type
+            codepoint: SYMBOLS[symbol_index].codepoint,
+            atom_type: SYMBOLS[symbol_index].atom_type
         }
-    })
+    }).ok()
 }
 
 fn others(name: &str) -> Option<Symbol> {

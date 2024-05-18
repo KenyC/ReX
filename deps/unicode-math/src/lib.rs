@@ -35,6 +35,8 @@ pub struct Symbol {
     pub atom_type: TexSymbolType,
 }
 
+/// List of symbols  
+/// (GUARANTEE: they're listed 'alphabetically', i.e. by byte order, to allow binary search)
 pub const SYMBOLS: &'static [Symbol] = &include!(concat!(env!("OUT_DIR"), "/symbols.rs"));
 
 

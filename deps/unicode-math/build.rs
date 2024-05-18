@@ -1,7 +1,6 @@
 use regex::Regex;
 use std::path::PathBuf;
 use std::{env, fs};
-use std::fmt::Write;
 
 const OPERATOR_LIMITS: &[&str] = &[
     "coprod",
@@ -118,6 +117,7 @@ fn main() {
 }
 
 fn build_alphanumeric_table_reserved_replacements() {
+    use std::fmt::Write;
     println!("cargo:rerun-if-changed=resources/math_alphanumeric_list.html");
 
     let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("math_alphanumeric_list.html");
@@ -146,36 +146,62 @@ fn build_alphanumeric_table_reserved_replacements() {
 }
 
 fn build_symbol_table() {
+    use std::io::Write;
+
     println!("cargo:rerun-if-changed=resources/unicode-math-table.tex");
+    
+    let mut lines = Vec::new();
+
+    let re = Regex::new(r#"\\UnicodeMathSymbol\{"([[:xdigit:]]+)\}\{\\([[:alpha:]]+)\s*\}\{\\([[:alpha:]]+)\}\{([^\}]*)\}%"#).unwrap();
 
     let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("unicode-math-table.tex");
     let source = String::from_utf8(fs::read(&path).unwrap()).unwrap();
-    let mut out = String::new();
-
-    let re = Regex::new(r#"\\UnicodeMathSymbol\{"([[:xdigit:]]+)\}\{\\([[:alpha:]]+)\s*\}\{\\([[:alpha:]]+)\}\{([^\}]*)\}%"#).unwrap();
-    writeln!(out, "[").unwrap();
     for line in source.lines() {
         if let Some(c) = re.captures(line) {
-            writeln!(out,
+            let symbol_name = c[2].to_string();
+            let line = format!(
                 r"    Symbol {{ codepoint: '\u{{{}}}', name: {:?}, atom_type: TexSymbolType::{}, description: {:?} }},",
                 &c[1], &c[2], atom_from_tex(&c[2], &c[3]), &c[4]
-            ).unwrap();
+            );
+            lines.push(Line {line, symbol_name})
         }
     }
+
     for (character, name, atom_type, description) in SUPPLEMENTAL_SYMBOLS {
-        writeln!(out,
+        let symbol_name = name.to_string();
+        let line = format!(
             r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: TexSymbolType::{}, description: {:?} }},",
             character, name, atom_from_tex(name, atom_type), description,
-        ).unwrap();
+        );
+        lines.push(Line {line, symbol_name});
     }
     for (name, cp) in GREEK {
-        writeln!(out,
+        let symbol_name = name.to_string();
+        let line = format!(
             r"    Symbol {{ codepoint: '\u{{{:x}}}', name: {:?}, atom_type: TexSymbolType::Alpha, description: {:?} }},",
             cp, name, name
-        ).unwrap();
+        );
+        lines.push(Line {line, symbol_name});
     }
-    writeln!(out, "]").unwrap();
+
+    lines.sort_by(|line1, line2| Ord::cmp(&line1.symbol_name, &line2.symbol_name));
+
 
     let out_path = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("symbols.rs");
-    fs::write(out_path, out.as_bytes()).unwrap();
+
+    let file = std::fs::File::create(out_path).expect("Couldn't write to file:");
+    let mut out = std::io::BufWriter::new(file);
+    writeln!(out, "[").unwrap();
+    for Line {line, ..} in lines {
+        out.write(line.as_bytes()).unwrap();
+    }
+    writeln!(out, "]").unwrap();
+    out.flush().unwrap();
+
+}
+
+
+struct Line {
+    line : String,
+    symbol_name : String,
 }
