@@ -27,6 +27,10 @@ path = "examples/svg_basic.rs"
 required-features = ["cairo-renderer", "ttfparser-fontparser"]
 
 [[example]]
+name = "stress-test"
+path = "perf/stress_test.rs"
+
+[[example]]
 name = "grid-sample"
 path = "examples/grid_sample.rs"
 required-features = ["femtovg-renderer", "ttfparser-fontparser"]
