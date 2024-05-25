@@ -421,22 +421,43 @@ impl<'f, F> fmt::Debug for LayoutGlyph<'f, F> {
 
 impl<'f, F> fmt::Debug for LayoutNode<'f, F> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.node {
-            LayoutVariant::Grid(ref _grid) =>  write!(f, "Grid(..)"),
-            LayoutVariant::HorizontalBox(ref hb) => write!(f, "HBox({:?})", hb.contents),
-            LayoutVariant::VerticalBox(ref vb) => write!(f, "VBox({:?})", vb.contents),
-            LayoutVariant::Glyph(ref gly) => write!(f, "Glyph({:?})", gly),
-            LayoutVariant::Rule => write!(f, "Rule()"),
-            LayoutVariant::Kern => {
-                let kern = if self.width.is_zero() {
-                    self.height
-                } else {
-                    self.width
-                };
+        if f.alternate() {
+            match self.node {
+                LayoutVariant::Grid(ref _grid)       => write!(f, "Grid(..)"),
+                LayoutVariant::HorizontalBox(ref hb) => write!(f, "HBox({:#?})", hb.contents),
+                LayoutVariant::VerticalBox(ref vb)   => write!(f, "VBox({:#?})", vb.contents),
+                LayoutVariant::Glyph(ref gly)        => write!(f, "Glyph({:#?})", gly),
+                LayoutVariant::Rule                  => write!(f, "Rule()"),
+                LayoutVariant::Kern                  => {
+                    let kern = if self.width.is_zero() {
+                        self.height
+                    } else {
+                        self.width
+                    };
 
-                write!(f, "Kern({:.1})", kern)
+                    write!(f, "Kern({:.1})", kern)
+                }
+                LayoutVariant::Color(ref clr) => write!(f, "Color({:#?}, {:#?})", clr.color, clr.inner),
             }
-            LayoutVariant::Color(ref clr) => write!(f, "Color({:?}, {:?})", clr.color, clr.inner),
+        }
+        else {
+            match self.node {
+                LayoutVariant::Grid(ref _grid)       => write!(f, "Grid(..)"),
+                LayoutVariant::HorizontalBox(ref hb) => write!(f, "HBox({:?})", hb.contents),
+                LayoutVariant::VerticalBox(ref vb)   => write!(f, "VBox({:?})", vb.contents),
+                LayoutVariant::Glyph(ref gly)        => write!(f, "Glyph({:?})", gly),
+                LayoutVariant::Rule                  => write!(f, "Rule()"),
+                LayoutVariant::Kern                  => {
+                    let kern = if self.width.is_zero() {
+                        self.height
+                    } else {
+                        self.width
+                    };
+
+                    write!(f, "Kern({:.1})", kern)
+                }
+                LayoutVariant::Color(ref clr) => write!(f, "Color({:?}, {:?})", clr.color, clr.inner),
+            }
         }
     }
 }
