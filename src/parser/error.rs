@@ -55,7 +55,7 @@ pub enum ParseError {
     /// it can only contain the characters `c`, `l`, `r`, whitespaces, braces, `|`  or macros that ultimately expand to one of these.
     UnrecognizedArrayColumnFormat,
     /// The token immediately following `\left`, `\middle` and `\right` isn't a symbol
-    ExpectedSymbolForCommand,
+    ExpectedSymbolAfterDelimiterCommand,
     /// The symbol immediately following `\big`, `\Bigl`, etc. is not Open, Close or Fence symbol type (delimiter types)
     ExpectedDelimiter,
     /// The token immediately following `\left` is not of atom type [`AtomType::Open`] or  [`AtomType::Fence`]
@@ -111,7 +111,7 @@ impl fmt::Display for ParseError {
                 write!(f, "Unknown environment '{}'", env_name),
             UnrecognizedArrayColumnFormat => 
                 write!(f, "Unrecognized character in column format"),
-            ExpectedSymbolForCommand => 
+            ExpectedSymbolAfterDelimiterCommand => 
                 write!(f, r"Token after '\left', '\middle', '\right', '\big', etc. is not a symbol"),
             ExpectedDelimiter => 
                 write!(f, r"Token after '\big', '\bigl', '\bigg', '\big', etc. is not a delimiter"),

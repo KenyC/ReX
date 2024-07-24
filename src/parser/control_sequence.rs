@@ -206,6 +206,99 @@ impl PrimitiveControlSequence {
             _ => return None
         })
     }
+
+    pub fn n_args(command_name : &str) -> Option<usize> {
+        Some(match command_name {
+            "frac"   => 2,
+            "tfrac"  => 2,
+            "dfrac"  => 2,
+            "binom"  => 2,
+            "tbinom" => 2,
+            "dbinom" => 2,
+
+            // Stacking commands
+            "substack" => 1,
+
+            // Radical commands
+            "sqrt" => 1,
+
+            // Style-change command
+            "mathbf"   => 1,
+            "mathit"   => 1,
+            "mathrm"   => 1,
+            "mathscr"  => 1,
+            "mathfrak" => 1,
+            "mathbb"   => 1,
+            "mathsf"   => 1,
+            "mathtt"   => 1,
+            "mathcal"  => 1,
+
+
+
+            // Spacing related commands
+            "!"     => 0,
+            ","     => 0,
+            ":"     => 0,
+            ";"     => 0,
+            " "     => 0,
+            "quad"  => 0,
+            "qquad" => 0,
+            "rule"  => 2,
+
+
+
+            // Atom-type changes
+            "mathop"  => 1,
+            "mathrel" => 1,
+            "mathord" => 1,
+
+            // Color related
+            "color"   => 2,
+            "blue"    => 1,
+            "red"     => 1,
+            "gray"    => 1,
+            "phantom" => 1,
+
+            // Operators with limits
+            "det"     => 0,
+            "gcd"     => 0,
+            "lim"     => 0,
+            "limsup"  => 0,
+            "liminf"  => 0,
+            "sup"     => 0,
+            "supp"    => 0,
+            "inf"     => 0,
+            "max"     => 0,
+            "min"     => 0,
+            "Pr"      => 0,
+
+            // Operators without limits
+            "sin"     => 0,
+            "cos"     => 0,
+            "tan"     => 0,
+            "cot"     => 0,
+            "csc"     => 0,
+            "sec"     => 0,
+            "arcsin"  => 0,
+            "arccos"  => 0,
+            "arctan"  => 0,
+            "sinh"    => 0,
+            "cosh"    => 0,
+            "tanh"    => 0,
+            "arg"     => 0,
+            "deg"     => 0,
+            "dim"     => 0,
+            "exp"     => 0,
+            "hom"     => 0,
+            "Hom"     => 0,
+            "ker"     => 0,
+            "Ker"     => 0,
+            "ln"      => 0,
+            "log"     => 0,
+
+            _ => return None
+        })
+    }
 }
 
 

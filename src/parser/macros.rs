@@ -4,7 +4,7 @@ use std::pin::Pin;
 
 use crate::parser::error::ParseError;
 
-use super::{error::ParseResult, textoken::{TexToken, TokenIterator}};
+use super::{control_sequence::PrimitiveControlSequence, error::ParseResult, textoken::{TexToken, TokenIterator}};
 
 
 
@@ -209,6 +209,17 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
                 arg.push(token);
             }
             arg.pop(); // the last bracket shouldn't be added
+        }
+        else if let TexToken::ControlSequence(command_name) = token {
+            arg.push(token);
+            let n_args = PrimitiveControlSequence::n_args(command_name).unwrap_or(0);
+            for _ in 0 .. n_args {
+                arg.push(TexToken::BeginGroup);
+                for token in self.capture_group()? {
+                    arg.push(token);
+                }
+                arg.push(TexToken::EndGroup);
+            }
         }
         // otherwise the given token is the argument
         else {

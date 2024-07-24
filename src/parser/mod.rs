@@ -477,7 +477,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     }
 
     fn parse_next_token_as_delimiter(&mut self) -> ParseResult<Symbol> {
-        let token = self.token_iter.next_token()?.ok_or_else(|| ParseError::ExpectedSymbolForCommand)?;
+        let token = self.token_iter.next_token()?.ok_or_else(|| ParseError::ExpectedSymbolAfterDelimiterCommand)?;
         match token {
             TexToken::Char(c) => {
                 self.char_to_symbol(c)
@@ -492,13 +492,13 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         self.style_symbol_with_current_style(&mut symbol); 
                         Ok(symbol)
                     },
-                    _ => Err(ParseError::ExpectedSymbolForCommand),
+                    _ => Err(ParseError::ExpectedSymbolAfterDelimiterCommand),
                 }
             },
               TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
             | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
             | TexToken::Prime { .. }
-            => Err(ParseError::ExpectedSymbolForCommand),
+            => Err(ParseError::ExpectedSymbolAfterDelimiterCommand),
         }
     }
 
@@ -664,6 +664,9 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"1^{2^3}"));
         insta::assert_debug_snapshot!(parse(r"{a^b}_c"));
         insta::assert_debug_snapshot!(parse(r"1_{1+1}^{2+1}"));
+
+        // should pass
+        insta::assert_debug_snapshot!(parse(r"1_\mathrm{a}"));
     }
 
 
