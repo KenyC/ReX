@@ -17,8 +17,6 @@ use crate::dimensions::AnyUnit;
 use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
-use crate::layout;
-use crate::layout::constants;
 use crate::parser::control_sequence::parse_color;
 use crate::parser::nodes::Accent;
 use crate::parser::nodes::Delimited;
@@ -27,6 +25,7 @@ use crate::parser::nodes::PlainText;
 use crate::parser::textoken::TexToken;
 use crate::parser::control_sequence::PrimitiveControlSequence;
 
+use self::control_sequence::SpaceKind;
 use self::environments::Environment;
 use self::error::ParseError;
 use self::macros::CommandCollection;
@@ -165,6 +164,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     };
                     let symbol = Symbol { codepoint, atom_type: TexSymbolType::Ordinary };
                     results.push(ParseNode::Symbol(symbol));
+                },
+                TexToken::Tilde => { 
+                    results.push(ParseNode::Kerning(SpaceKind::WordSpace.size()))
                 },
                 TexToken::WhiteSpace => { },
                 TexToken::BeginGroup => {
@@ -497,7 +499,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             },
               TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
             | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
-            | TexToken::Prime { .. }
+            | TexToken::Tilde       | TexToken::Prime { .. }
             => Err(ParseError::ExpectedSymbolAfterDelimiterCommand),
         }
     }
@@ -565,6 +567,7 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
             TexToken::ControlSequence(_) 
             | TexToken::Superscript 
             | TexToken::Subscript 
+            | TexToken::Tilde 
             | TexToken::Alignment
             => return Err(ParseError::ExpectedChars),
         }
@@ -769,6 +772,7 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"5\;2"));
         insta::assert_debug_snapshot!(parse(r"5\:2"));
         insta::assert_debug_snapshot!(parse(r"1\qquad{}33"));
+        insta::assert_debug_snapshot!(parse(r"1~3\ 3"));
 
         // failure
         insta::assert_debug_snapshot!(parse(r"1\33"));

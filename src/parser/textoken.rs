@@ -15,6 +15,8 @@ pub enum TexToken<'a> {
     Subscript,
     // A '&' character
     Alignment,
+    // A '~' character for non-breakable space
+    Tilde,
     WhiteSpace,
     BeginGroup,
     EndGroup,
@@ -90,6 +92,10 @@ impl<'a> Iterator for TokenIterator<'a> {
             '&' => {
                 input_processor.stream = rest;
                 Some(TexToken::Alignment)
+            }
+            '~' => {
+                input_processor.stream = rest;
+                Some(TexToken::Tilde)
             }
             '\'' => {
                 let number_of_primes = if let Some(rest) = rest.strip_prefix("''") {

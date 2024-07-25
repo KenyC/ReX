@@ -124,13 +124,14 @@ impl PrimitiveControlSequence {
             "Bigg"  => Self::ExtendedDelimiter(DelimiterSize::BBigg, TexSymbolType::Ordinary),
 
             // Spacing related commands
-            "!"     => Self::Kerning(AnyUnit::Em(-3f64/18f64)),
-            ","     => Self::Kerning(AnyUnit::Em(3f64/18f64)),
-            ":"     => Self::Kerning(AnyUnit::Em(4f64/18f64)),
-            ";"     => Self::Kerning(AnyUnit::Em(5f64/18f64)),
-            " "     => Self::Kerning(AnyUnit::Em(1f64/4f64)),
-            "quad"  => Self::Kerning(AnyUnit::Em(1.0f64)),
-            "qquad" => Self::Kerning(AnyUnit::Em(2.0f64)),
+            "!"     => Self::Kerning(SpaceKind::NegativeThinMuSkip.size()),
+            ","     => Self::Kerning(SpaceKind::ThinSpace.size()),
+            ":"     => Self::Kerning(SpaceKind::MedSpace.size()),
+            ";"     => Self::Kerning(SpaceKind::ThickSpace.size()),
+            " "     => Self::Kerning(SpaceKind::WordSpace.size()),
+            "quad"  => Self::Kerning(SpaceKind::QuadSpace.size()),
+            "qquad" => Self::Kerning(SpaceKind::DoubleQuadSpace.size()),
+
             "rule"  => Self::Rule,
 
 
@@ -301,6 +302,44 @@ impl PrimitiveControlSequence {
     }
 }
 
+
+#[derive(Debug, Clone, Copy)]
+pub enum SpaceKind {
+   /// Space produced by "\!"     
+   NegativeThinMuSkip,
+
+   /// Space produced by "\,"     
+   ThinSpace,
+
+   /// Space produced by "\:"     
+   MedSpace,
+
+   /// Space produced by "\;"     
+   ThickSpace,
+
+   /// Space produced by "\ "     
+   WordSpace,
+
+   /// Space produced by "\quad"  
+   QuadSpace,
+
+   /// Space produced by "\qquad" 
+   DoubleQuadSpace,
+}
+
+impl SpaceKind {
+    pub fn size(self) -> AnyUnit {
+        match self {
+            SpaceKind::NegativeThinMuSkip => AnyUnit::Em(-3f64/18f64),
+            SpaceKind::ThinSpace          => AnyUnit::Em(3f64/18f64),
+            SpaceKind::MedSpace           => AnyUnit::Em(4f64/18f64),
+            SpaceKind::ThickSpace         => AnyUnit::Em(5f64/18f64),
+            SpaceKind::WordSpace          => AnyUnit::Em(1f64/4f64),
+            SpaceKind::QuadSpace          => AnyUnit::Em(1.0f64),
+            SpaceKind::DoubleQuadSpace    => AnyUnit::Em(2.0f64),
+        }
+    }
+}
 
 
 

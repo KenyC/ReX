@@ -233,6 +233,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 | TexToken::EndGroup 
                 | TexToken::ControlSequence(_) 
                 | TexToken::Superscript 
+                | TexToken::Tilde 
                 | TexToken::Prime { .. } 
                 | TexToken::Alignment 
                 | TexToken::Subscript => return Err(ParseError::UnrecognizedArrayColumnFormat),
