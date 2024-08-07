@@ -55,8 +55,7 @@ impl TryFrom<TexSymbolType> for AtomType {
             TexSymbolType::Binary        => Ok(AtomType::BinOperator),
             TexSymbolType::Relation      => Ok(AtomType::Relation),
             TexSymbolType::Alpha         => Ok(AtomType::Ordinary),
-            // TexSymbolType::Fence         => Ok(AtomType::Ordinary),
-            TexSymbolType::Fence         => Err(()),
+            TexSymbolType::Fence         => Ok(AtomType::Ordinary),
             TexSymbolType::Operator(_)   => Ok(AtomType::Operator),
             TexSymbolType::Inner         => Ok(AtomType::Inner),
             // these ones shouldn't participate in the spacing rules

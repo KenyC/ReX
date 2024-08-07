@@ -125,6 +125,86 @@
               glyph_id: 62
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ begin{array}{l {}l}-4z8RWrJbqe8.png"
+"Bug \\#16 ; fence character should be properly spaced - \\Vert y\\Vert = 1":
+  tex: "\\Vert y\\Vert = 1"
+  description: "Spacing: Bug \\#16 ; fence character should be properly spaced"
+  render:
+    Ok:
+      width: 72.39822498543396
+      height: 18.752000890672208
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 881
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 11.157333863278229
+                - 0.0
+              glyph_id: 2521
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 21.738667699197927
+                - 0.0
+              glyph_id: 881
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 40.00711267358727
+                - 0.0
+              glyph_id: 62
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 61.731557812127807
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: tests/data/imgs/ Vert y Vert = 1-sMrhHOasKEA.png
+"Bug \\#16 ; fence character should be properly spaced - |x| = 1":
+  tex: "|x| = 1"
+  description: "Spacing: Bug \\#16 ; fence character should be properly spaced"
+  render:
+    Ok:
+      width: 64.88889129542642
+      height: 18.752000890672208
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 125
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 6.826666990915934
+                - 0.0
+              glyph_id: 2520
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 18.560000881552698
+                - 0.0
+              glyph_id: 125
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 32.497778983579738
+                - 0.0
+              glyph_id: 62
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 54.22222412212027
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: tests/data/imgs/ x  = 1-WY15j7BpzXo.png
 "Example from mathdoc.pdf ; equal sign should have space only in top and bottom row - \\begin{aligned} 1&=1\\\\ 1=&1 \\\\ 1={}&1\\end{aligned}":
   tex: "\\begin{aligned} 1&=1\\\\ 1=&1 \\\\ 1={}&1\\end{aligned}"
   description: "Aligned: Example from mathdoc.pdf ; equal sign should have space only in top and bottom row"
@@ -6316,7 +6396,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Samples: should look good"
   render:
     Ok:
-      width: 191.45956397387716
+      width: 198.57067508498828
       height: 65.6000031158328
       render:
         commands:
@@ -6346,67 +6426,67 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 16.0
           - Symbol:
               pos:
-                - 44.71466879049937
+                - 51.825779901610477
                 - 0.0
               glyph_id: 62
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 66.4391139290399
+                - 73.550225040151
                 - 16.45866744841139
               glyph_id: 3749
               scale: 21.333333333333333
           - Rule:
               pos:
-                - 89.39378168599473
+                - 96.50489279710584
                 - -38.261335150649149
               width: 102.06578228788243
               height: 1.4080000668764115
           - Symbol:
               pos:
-                - 89.39378168599473
+                - 96.50489279710584
                 - 13.130667290339872
               glyph_id: 3586
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 117.16267172495523
+                - 124.27378283606635
                 - 3.552713678800501e-15
               glyph_id: 2503
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 131.56267240891854
+                - 138.67378352002965
                 - -6.250666963557396
               glyph_id: 51
               scale: 16.0
           - Symbol:
               pos:
-                - 139.56267278889815
+                - 146.67378390000926
                 - 3.552713678800501e-15
               glyph_id: 41
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 146.66667312632004
+                - 153.77778423743116
                 - 3.552713678800501e-15
               glyph_id: 2520
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 158.4000070169568
+                - 165.51111812806793
                 - 3.552713678800501e-15
               glyph_id: 42
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 169.05956290993425
+                - 176.17067402104537
                 - 3.552713678800501e-15
               glyph_id: 101
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 179.72623008324039
+                - 186.8373411943515
                 - 3.552713678800501e-15
               glyph_id: 2520
               scale: 21.333333333333333

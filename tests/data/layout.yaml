@@ -203,6 +203,10 @@ Spacing:
     - abcdefghijklmnopqrstuvwxyz
     - azertyuiopqsdfghjklmwxcvbn
     - arupdhlxbztiqfjmcneyosgkwv
+  - Description: Bug \#16 ; fence character should be properly spaced
+    Snippets:
+    - "|x| = 1"
+    - \Vert y\Vert = 1
 
 Aligned:
   - Description: Typical examples
