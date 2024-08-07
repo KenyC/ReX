@@ -159,7 +159,7 @@ impl<'a, 'f, T : Renderer> FontBackend<crate::font::backend::ttf_parser::TtfMath
 
             fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
                 // println!("curve_to {:?} {:?} {:?} {:?} {:?} {:?}", x1, y1, x2, y2, x, y);
-                self.path.curve_to(x1, y1, x2, y2, x, y);
+                self.path.bezier_to(x1, y1, x2, y2, x, y);
             }
 
             fn close(&mut self) {

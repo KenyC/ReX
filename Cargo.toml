@@ -6,7 +6,7 @@ authors = [
     "Sebastian Köln <s3bk@protonmail.com>",
     "Keny C",
 ]
-edition = "2018"
+edition = "2021"
 
 [features]
 pathfinder-renderer   = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "dep:pathfinder_color", "dep:pathfinder_content", "dep:pathfinder_export"]
@@ -52,7 +52,7 @@ serde = "1.0"
 
 [dependencies.font]
 git = "https://github.com/pdf-rs/font"
-features=["woff"]
+features=["math"]
 optional = true
 
 [dependencies.pathfinder_renderer]
