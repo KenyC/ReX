@@ -244,6 +244,8 @@ pub struct Accent {
     pub symbol: Symbol,
     /// The nodes "below" the accent.
     pub nucleus: Vec<ParseNode>,
+    /// Whether or not the accent should extend horizontally if the nucleus is wide.
+    pub extend: bool,
 }
 
 /// Cf [`ParseNode::Rule`]. While intended to be used as lines, rules can in fact be any rectangle.

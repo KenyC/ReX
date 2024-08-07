@@ -117,8 +117,8 @@ Operators:
 Accents:
   - Description: should properly scale
     Snippets:
-    - \hat A\textstyle\hat A\scriptstyle\hat A\scriptscriptstyle\hat A
-    - \hat{x+y}\textstyle\hat{x+y}\scriptstyle\hat{x+y}\scriptscriptstyle\hat{x+y}
+    - \widehat A\textstyle\widehat A\scriptstyle\widehat A\scriptscriptstyle\widehat A
+    - \widehat{x+y}\textstyle\widehat{x+y}\scriptstyle\widehat{x+y}\scriptscriptstyle\widehat{x+y}
 
   - Description: should extend when possible
     Snippets:

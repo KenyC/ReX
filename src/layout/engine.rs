@@ -199,9 +199,16 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // [ ] The width of the selfing box is the width of the base.
         // [ ] Bottom accents: vertical placement is directly below nucleus,
         //       no correction takes place.
-        // [ ] WideAccent vs Accent: Don't expand Accent types.
+        // [x] WideAccent vs Accent: Don't expand Accent types.
         let base = layout(&acc.nucleus, config.cramped())?;
-        let accent_variant = config.ctx.horz_variant(acc.symbol.codepoint, config.to_font(base.width))?;
+        let symbol = &acc.symbol;
+        let accent_variant =
+            if acc.extend 
+                { config.ctx.horz_variant(symbol.codepoint, config.to_font(base.width))? }
+            // to not extend, we consider the trivial variant glyph where the glyph itself is used as replacement
+            else 
+                { VariantGlyph::Replacement(config.ctx.glyph(symbol.codepoint)?.gid) }
+        ;
         let accent = accent_variant.as_layout(config)?;
 
         // Attachment points for accent & base are calculated by

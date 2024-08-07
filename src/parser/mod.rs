@@ -436,12 +436,15 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         SymbolCommand(mut symbol) => {
                             match symbol.atom_type {
                                   TexSymbolType::Accent 
+                                | TexSymbolType::AccentWide   
                                 | TexSymbolType::Over   
                                 | TexSymbolType::Under  => {
                                     let nucleus = self.parse_required_argument_as_nodes()?;
                                     results.push(ParseNode::Accent(Accent {
                                         symbol,
                                         nucleus,
+                                        // Only "accent" are not extended
+                                        extend: symbol.atom_type != TexSymbolType::Accent,
                                     }));
                                 },
                                 _ => {
