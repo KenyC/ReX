@@ -4,7 +4,6 @@
 //! this function returns a layout. The layout can then be sent to the renderer (cf [`render`](crate::render)) to create a graphical output.
 
 
-use std::io::Write;
 use std::unimplemented;
 
 use super::builders;
@@ -17,14 +16,13 @@ use crate::font::{
     VariantGlyph,
     TexSymbolType
 };
-use crate::layout::builders::{HBox, VBox};
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, ArrayColumnsFormatting, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
+use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
-use crate::dimensions::{AnyUnit, Unit};
-use crate::dimensions::units::{Px, Em, Pt, FUnit};
+use crate::dimensions::Unit;
+use crate::dimensions::units::Px;
 use crate::layout;
 use crate::error::{LayoutResult, LayoutError};
 
@@ -124,10 +122,10 @@ fn must_apply_italic_correction_before(node: &ParseNode) -> bool {
 }
 
 // TODO: this should return layout result
-fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> Layout<'f, F> {
+fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
-    layout.dispatch(config, node, TexSymbolType::Transparent);
-    layout.finalize()
+    layout.dispatch(config, node, TexSymbolType::Transparent)?;
+    Ok(layout.finalize())
 }
 
 impl<'f, F : MathFont> Layout<'f, F> {
@@ -285,7 +283,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // See: https://tug.org/TUGboat/tb27-1/tb86jackowski.pdf
         //      https://www.tug.org/tugboat/tb30-1/tb94vieth.pdf
         let base = match scripts.base {
-            Some(ref base) => layout_node(base, config),
+            Some(ref base) => layout_node(base, config)?,
             None => Layout::new(),
         };
 
@@ -303,7 +301,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
         // This is where he handle Operators with limits.
         if let Some(ref b) = scripts.base {
             if TexSymbolType::Operator(true) == b.atom_type() {
-                self.operator_limits(base, sup, sub, config);
+                self.operator_limits(base, sup, sub, config)?;
                 return Ok(());
             }
         }
@@ -857,7 +855,6 @@ impl<'f, F : MathFont> Layout<'f, F> {
                 if kern > Unit::ZERO {
                     vbox.add_node(LayoutNode::vert_kern(kern));
                 }
-                prev_depth = cell.depth;
 
                 cell.alignment = match alignment {
                     Some(ArrayColumnAlign::Centered) => Alignment::Centered(cell.width),

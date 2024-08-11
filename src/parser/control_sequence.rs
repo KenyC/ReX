@@ -2,7 +2,7 @@ use unicode_math::TexSymbolType;
 
 use crate::{dimensions::{units::Em, AnyUnit, Unit}, font::{Family, Weight}, layout::{constants, Style as LayoutStyle}, parser::{nodes::{BarThickness, MathStyle}, symbols::Symbol}, RGBA};
 
-use super::{error::{ParseError, ParseResult}, macros::CommandCollection, nodes::Color, textoken::TexToken, Parser};
+use super::{error::{ParseError, ParseResult}, textoken::TexToken};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PrimitiveControlSequence {

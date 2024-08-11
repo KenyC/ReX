@@ -526,7 +526,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 }
 
 /// Parses the input as a dimension, e.g. `1cm` or `-2pt or `3.5em`
-fn parse_dimension(mut input_string: &str) -> ParseResult<AnyUnit> {
+fn parse_dimension(input_string: &str) -> ParseResult<AnyUnit> {
     fn is_float_char(character : &char) -> bool {
         character.is_ascii_digit()
         || *character == '-'

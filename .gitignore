@@ -15,6 +15,7 @@ Cargo.lock
 *.log
 *.aux
 *.iml
+build/
 
 .vscode
 

@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::{control_sequence::PrimitiveControlSequence, GroupKind};
+use super::GroupKind;
 
 
 /// Result type for the [`ParseError`]
@@ -25,14 +25,18 @@ pub enum ParseError {
     UnrecognizedColor(Box<str>),
     /// A custom macro is missing an argument
     MissingArgForMacro {
+        /// Expected number of arguments
         expected : usize,
+        /// Number of arguments actually gotten
         got : usize,
     },
     /// The brackets used to enclose a macro's arguments were not matched
     UnmatchedBrackets,
     /// A group (e.g. `{..}`, `\begin{env}..\end{env}`, `&...&`) was ended but there is no correponding begin group
     UnexpectedEndGroup{ 
+        /// The kind of group endings that were expected in that position
         expected: Box<[GroupKind]>,
+        /// The group ending actually encountered by the parser
         got:      GroupKind,
     },
     /// A token or group of token was expected but never came

@@ -189,7 +189,6 @@ extern crate serde_derive;
 
 
 
-#[macro_use]
 extern crate log;
 
 #[macro_use]
@@ -211,13 +210,11 @@ pub mod font;
 use font::{FontContext, MathFont};
 pub use render::*;
 
-use crate::{layout::{LayoutSettings, Style}, parser::parse};
+use crate::{layout::LayoutSettings, parser::parse};
 
 
 /// Render a LateX formula to a given a surface `backend`, given a math font provided by `font_context`.
 pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, font_context: &FontContext<'_, F>) -> Result<(), crate::error::Error> {
-    const DEFAULT_FONT_SIZE : f64 = 16.;
-
     let parse_nodes = parse(formula)?;
 
     let layout_settings = LayoutSettings::new(font_context);
@@ -233,7 +230,7 @@ pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, fo
 
 #[cfg(test)]
 mod tests {
-    use crate::{parser::parse, font::{FontContext, backend::ttf_parser::TtfMathFont}, layout::{Style, LayoutSettings, engine}};
+    use crate::{parser::parse, font::{FontContext, backend::ttf_parser::TtfMathFont}, layout::{LayoutSettings, engine}};
 
     const GARAMOND_MATH_FONT : &[u8] = include_bytes!("../resources/Garamond_Math.otf");
 

@@ -1,10 +1,8 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
-use std::pin::Pin;
-
 use crate::parser::error::ParseError;
 
-use super::{control_sequence::PrimitiveControlSequence, error::ParseResult, textoken::{TexToken, TokenIterator}};
+use super::{control_sequence::PrimitiveControlSequence, error::ParseResult, textoken::TexToken};
 
 
 
@@ -233,6 +231,8 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
 
 #[cfg(test)]
 mod tests {
+    use crate::parser::textoken::TokenIterator;
+
     use super::*;
 
     impl CustomCommand {

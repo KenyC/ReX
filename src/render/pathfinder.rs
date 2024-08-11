@@ -11,7 +11,7 @@ use pathfinder_renderer::{
     paint::{Paint, PaintId},
 };
 use pathfinder_content::{
-    outline::{Outline},
+    outline::Outline,
     stroke::{StrokeStyle, LineCap, LineJoin, OutlineStrokeToFill},
 };
 use pathfinder_geometry::{
@@ -22,7 +22,7 @@ use pathfinder_geometry::{
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
 use crate::{error::FontError, font::common::GlyphId, GraphicsBackend, FontBackend};
-use crate::parser::{color::RGBA};
+use crate::parser::color::RGBA;
 
 fn v_cursor(c: Cursor) -> Vector2F {
     Vector2F::new(c.x as f32, c.y as f32)
@@ -107,9 +107,9 @@ impl<'a> GraphicsBackend for SceneWrapper<'a> {
     }
 }
 
-use super::{Renderer};
+use super::Renderer;
 use crate::font::FontContext;
-use crate::layout::{LayoutSettings, Style};
+use crate::layout::LayoutSettings;
 use pathfinder_export::{Export, FileFormat};
 
 

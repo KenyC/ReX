@@ -1,10 +1,8 @@
 use unicode_math::TexSymbolType;
 
-use crate::dimensions::AnyUnit;
 use crate::layout;
-use crate::layout::constants::JOT;
 use crate::parser::error::ParseError;
-use crate::parser::{tokens_as_string, List};
+use crate::parser::List;
 
 use super::nodes::{Array, ArrayColumnAlign, ArrayColumnsFormatting, ColSeparator, DummyNode};
 use super::symbols::Symbol;
@@ -14,17 +12,33 @@ use super::{GroupKind, ParseNode};
 /// An enumeration of recognized enviornmnets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Environment {
+    /// The `\begin{array}{<col spec>} .. \end{array}` environment
     Array,
+    /// The `\begin{matrix} .. \end{matrix}` environment, an array with centered columns.  
+    /// Except for spacing, equivalent to `\begin{array}{c .. c} .. \end{array}` 
     Matrix,
+    /// The `\begin{pmatrix} .. \end{pmatrix}` environment, an array with centered columns enclosed with parentheses.  
+    ///  Except for spacing, equivalent to `\left(\begin{array}{c .. c} .. \end{array}\right)` 
     PMatrix,
+    /// The `\begin{bmatrix} .. \end{bmatrix}` environment, an array with centered columns enclosed with square brackets.  
+    ///  Roughly equivalent to `\left[\begin{array}{c .. c} .. \end{array}\right]` 
     BMatrix,
+    /// The `\begin{Bmatrix} .. \end{Bmatrix}` environment, an array with centered columns enclosed with curly braces.  
+    ///  Except for spacing, equivalent to `\left\{\begin{array}{c .. c} .. \end{array}\right\}` 
     BbMatrix,
+    /// The `\begin{vmatrix} .. \end{vmatrix}` environment, an array with centered columns enclosed with | delimiters.  
+    ///  Except for spacing, equivalent to `\left|\begin{array}{c .. c} .. \end{array}\right|` 
     VMatrix,
+    /// The `\begin{Vmatrix} .. \end{Vmatrix}` environment, an array with centered columns enclosed with ‖ delimiters (i.e. `\Vert`).  
+    ///  Except for spacing, equivalent to `\left\lVert\begin{array}{c .. c} .. \end{array}\right\rVert` 
     VvMatrix,
+    /// The `\begin{aligned} .. \end{aligned}` environment, an array with alternating right-aligned and left-aligned column, not separated with spaces.  
+    ///  Except for spacing, equivalent to `\left\lVert\begin{array}{rlrl .. rl} .. \end{array}\right\rVert` 
     Aligned,
 }
 
 impl Environment {
+    /// Parse the LaTeX name of the environment. Returns `None` if the name is not an environment we support.
     pub fn from_name(name : &str) ->  Option<Self> {
         match name {
             "array"    => Some(Self::Array),
@@ -42,6 +56,7 @@ impl Environment {
 
 
 impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
+    /// Parses the body and column sepcification of the array environment.
     pub fn parse_environment(&mut self, env : Environment) -> ParseResult<Array> {
         let mut col_format = None;
 
@@ -147,7 +162,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         })
     }
 
-
+    /// Parses the body of an array environment up till the `\end{..}`, including it.
     pub fn parse_array_body(&mut self, env : Environment) -> ParseResult<Vec<Vec<CellContent>>> {
         let mut to_return    = Vec::new();
         let mut current_line = Vec::new();
@@ -185,8 +200,6 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
 impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
     fn tokens_as_column_format(&mut self) -> ParseResult<ArrayColumnsFormatting> {
-        let mut n_vertical_bars_before = 0;
-        let mut current_vertical_bars = &mut n_vertical_bars_before;
         let mut alignment  = Vec::new();
         let mut separators = vec![Vec::new()];
         while let Some(token) = self.token_iter.next_token()? {
@@ -248,7 +261,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{macros::CommandCollection, textoken::TokenIterator};
+    use crate::parser::macros::CommandCollection;
 
     use super::*;
 

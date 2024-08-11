@@ -732,7 +732,7 @@ impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{dimensions::{Unit, units::{FUnit, Ratio, FontSize, Px, Em}}, parser::parse, font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{LayoutSettings, engine::layout, Style}};
+    use crate::{dimensions::{Unit, units::{FUnit, Ratio, FontSize, Px, Em}}, parser::parse, font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{LayoutSettings, engine::layout}};
 
 
     #[test]

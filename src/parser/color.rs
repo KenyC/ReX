@@ -2,9 +2,8 @@
 //! 
 //! Colors can be changed by such commands as "\color{}".
 
-use std::{str::FromStr, convert::TryInto};
+use std::str::FromStr;
 
-use super::error::ParseError;
 
 
 /// A color with alpha values
