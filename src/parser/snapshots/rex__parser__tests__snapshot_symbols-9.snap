@@ -6,7 +6,7 @@ Ok(
     [
         Symbol(
             Symbol {
-                codepoint: '>',
+                codepoint: '≥',
                 atom_type: Relation,
             },
         ),

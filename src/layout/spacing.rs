@@ -58,6 +58,7 @@ impl TryFrom<TexSymbolType> for AtomType {
             TexSymbolType::Fence         => Ok(AtomType::Ordinary),
             TexSymbolType::Operator(_)   => Ok(AtomType::Operator),
             TexSymbolType::Inner         => Ok(AtomType::Inner),
+            TexSymbolType::Radical       => Ok(AtomType::Open),
             // these ones shouldn't participate in the spacing rules
             TexSymbolType::Accent        => Err(()),
             TexSymbolType::AccentWide    => Err(()),

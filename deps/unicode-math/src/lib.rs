@@ -1,43 +1,26 @@
-/// An enum representing the desired category of a symbol
-/// A symbol's category determines its spacing relative to each other, e.g `1+23` ought to be typeset with some space between + and 2, but very little between 2 and 3.
-/// The category also determines whether something can be `\left` or `\right` delimiter
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TexSymbolType {
-    Punctuation,
-    Ordinary,
-    Open,
-    Close,
-    Binary,
-    Relation,
-    Accent,
-    AccentWide,
-    AccentOverlay,
-    BotAccent,
-    BotAccentWide,
-    Alpha,
-    Fence,
-    /// A mathematical operator like `\sum`, 
-    /// the boolean parameter sets whether limits are positioned like exponents or not.
-    /// For instance, in $\sum_0^1$, the 0 and 1 could be placed above and below ∑ (boolean true)
-    /// or like regular exponents, e.g. ∑³, (boolean false).
-    Operator(bool),
-    Over,
-    Under,
-    Inner,
-    Transparent,
-}
+mod common;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Symbol {
-    pub codepoint: char,
-    pub name: &'static str,
-    pub description: &'static str,
-    pub atom_type: TexSymbolType,
-}
+pub use common::{Symbol, TexSymbolType::{self, *}};
+pub use common::OPERATOR_LIMITS;
 
 /// List of symbols  
-/// (GUARANTEE: they're listed 'alphabetically', i.e. by byte order, to allow binary search)
+/// (GUARANTEE: the command's names are listed 'alphabetically', i.e. by byte order, to allow binary search)
 pub const SYMBOLS: &'static [Symbol] = &include!(concat!(env!("OUT_DIR"), "/symbols.rs"));
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_name_in_symbol_are_ordered_and_all_different() {
+        for symbols in SYMBOLS.windows(2) {
+            let first  = &symbols[0];
+            let second = &symbols[1];
+
+            assert!(first.name < second.name, "{} and {}", first.name, second.name);
+        }
+    }
+}
 
 
 pub const MATH_ALPHANUMERIC_TABLE_RESERVED_REPLACEMENTS: &[(u32, u32)] = &include!(concat!(env!("OUT_DIR"), "/math_alphanumeric_table_reserved_replacements.rs"));
