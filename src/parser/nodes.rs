@@ -263,6 +263,7 @@ pub struct Rule {
 pub struct Radical {
     /// The nodes that the root covers
     pub inner: Vec<ParseNode>,
+    pub character: char,
     // pub superscript: Vec<ParseNode>,
 }
 

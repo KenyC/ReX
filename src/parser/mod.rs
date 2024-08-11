@@ -201,9 +201,9 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     ;
                     use PrimitiveControlSequence::*;
                     match command {
-                        Radical => {
+                        Radical(character) => {
                             let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
-                            results.push(ParseNode::Radical(nodes::Radical { inner, }));
+                            results.push(ParseNode::Radical(nodes::Radical { inner, character, }));
                         },
                         Rule => {
                             let width_tokens = self.token_iter.capture_group().map_err(|e| match e {

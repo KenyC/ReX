@@ -6,8 +6,9 @@ use super::{error::{ParseError, ParseResult}, textoken::TexToken};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PrimitiveControlSequence {
-    /// Represents LaTeX `\sqrt{..}`
-    Radical,
+    /// Represents LaTeX `\sqrt{..}` or `\cuberoot{..}` any item with type `\mathradical`.  
+    /// The enclosed argument gives the Unicode corresponding to this character.
+    Radical(char),
     Rule,
     /// Represents ReX's command `\color{..}{..}`
     Color,
@@ -64,7 +65,16 @@ impl PrimitiveControlSequence {
         Option::or_else(
             
             Self::parse_command_name(name),
-            || Symbol::from_name(name).map(PrimitiveControlSequence::SymbolCommand),
+            || Symbol::from_name(name).map(|s| 
+                // special case: if the object is a radical, we give it tis special type
+                // this way the parser can recognize that this symbol needs something to enclose
+                if let TexSymbolType::Radical = s.atom_type {
+                    PrimitiveControlSequence::Radical(s.codepoint)
+                }
+                else {
+                    PrimitiveControlSequence::SymbolCommand(s)
+                }
+            ),
         )
     }
 
@@ -83,8 +93,6 @@ impl PrimitiveControlSequence {
             // Stacking commands
             "substack" => Self::SubStack(TexSymbolType::Inner),
 
-            // Radical commands
-            "sqrt" => Self::Radical,
 
             // Style-change command
             "mathbf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),   takes_arg: true, },

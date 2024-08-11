@@ -8241,6 +8241,86 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               glyph_id: 2520
               scale: 12.799999999999999
       img_render_path: "tests/data/imgs/x^{x^{x^x_x}_{x^x_x}-Z2CqPH7o6gw.png"
+"should other types of radicals - \\cuberoot{1+1}":
+  tex: "\\cuberoot{1+1}"
+  description: "Radicals: should other types of radicals"
+  render:
+    Ok:
+      width: 65.2254841291794
+      height: 26.282667915026346
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.714666700611513
+              glyph_id: 1160
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 19.797334273656209
+                - -20.04266761864225
+              width: 45.428149855523198
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 19.797334273656209
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 35.2047421877031
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 54.55881695587326
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ cuberoot{1+1}-Vjntps3a2x4.png"
+"should other types of radicals - \\fourthroot{1+1}":
+  tex: "\\fourthroot{1+1}"
+  description: "Radicals: should other types of radicals"
+  render:
+    Ok:
+      width: 65.2254841291794
+      height: 26.282667915026346
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.714666700611513
+              glyph_id: 1161
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 19.797334273656209
+                - -20.04266761864225
+              width: 45.428149855523198
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 19.797334273656209
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 35.2047421877031
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 54.55881695587326
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ fourthroot{1+1}-k5z6Vvda1hU.png"
 "should properly scale - \\frac12\\textstyle\\frac12\\scriptstyle\\frac12\\scriptscriptstyle\\frac12":
   tex: "\\frac12\\textstyle\\frac12\\scriptstyle\\frac12\\scriptscriptstyle\\frac12"
   description: "Fractions: should properly scale"

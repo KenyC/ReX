@@ -576,7 +576,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
 
         // determine size of radical glyph
         let inner_height = (contents.height - contents.depth) + gap + rule_thickness;
-        let sqrt = config.ctx.vert_variant('√', config.to_font(inner_height))?.as_layout(config)?;
+        let sqrt = config.ctx.vert_variant(rad.character, config.to_font(inner_height))?.as_layout(config)?;
 
         // pad between radicand and radical bar
         let delta = (sqrt.height - sqrt.depth - inner_height).scale(0.5) + rule_thickness;

@@ -137,6 +137,10 @@ Radicals:
     Snippets:
     - \sqrt2\textstyle\sqrt2\scriptstyle\sqrt2\scriptscriptstyle\sqrt2
     - \sqrt{\int x}\textstyle\sqrt{\int x}\scriptstyle\sqrt{\int x}\scriptscriptstyle\sqrt{\int x}
+  - Description: should other types of radicals
+    Snippets:
+    - \cuberoot{1+1}
+    - \fourthroot{1+1}
 
 Color:
   - Description: should handle scripts and scale properly
