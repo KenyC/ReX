@@ -102,7 +102,7 @@ let font_context = rex::font::FontContext::new(&math_font);
 
 // Step 2: lay out nodes in space
 let font_size : f64 = 10.; // in surface units per em
-let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display);
+let layout_settings = rex::layout::LayoutSettings::new(&font_context);
 let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 ```
 
@@ -121,7 +121,7 @@ The layout contains useful information like the dimension of the formulas. We us
 # 
 # // Step 2: lay out nodes in space
 # let font_size : f64 = 10.; // in surface units per em
-# let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display);
+# let layout_settings = rex::layout::LayoutSettings::new(&font_context);
 # let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 # 
 let size   = layout.size();
@@ -148,7 +148,7 @@ Finally, we may render:
 # 
 # // Step 2: lay out nodes in space
 # let font_size : f64 = 10.; // in surface units per em
-# let layout_settings = rex::layout::LayoutSettings::new(&font_context, font_size, rex::layout::Style::Display); // "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
+# let layout_settings = rex::layout::LayoutSettings::new(&font_context); // "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
 # let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 # 
 # let size   = layout.size();

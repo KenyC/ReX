@@ -37,9 +37,12 @@ use self::symbols::Symbol;
 use self::textoken::NumberOfPrimes;
 use self::textoken::TokenIterator;
 
+/// Different types of implicit TeX groupings (e.g. `{..}` or `\begin{xyz} .. \end{xyz}`)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupKind {
+    /// A group delimited by `{..}'
     BraceGroup,
+    /// A `\begin{..} .. \end{..}` group
     Env(Environment),
     /// a group ended by &
     Align,
@@ -47,7 +50,9 @@ pub enum GroupKind {
     NewLine,
     /// end of file
     EndOfInput,
+    /// A group ended by `\middle`
     MiddleDelimiter,
+    /// A group ended by `\right`
     RightDelimiter,
 }
 
@@ -81,6 +86,8 @@ pub struct Parser<'a, I : Iterator<Item = TexToken<'a>>> {
 }
 
 impl<'a> Parser<'a, TokenIterator<'a>> {
+    /// Creates a new parser from a macro collection and some string input.  
+    /// The parser borrows the command collection and the input string for the same lifetime `'a`.
     pub fn new<'command : 'a, 'input : 'a>(command_collection: & 'command CommandCollection, input: & 'input str) -> Self { 
         Self { 
             token_iter : ExpandedTokenIter::new(command_collection, TokenIterator::new(input)),
@@ -93,6 +100,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
     const EMPTY_COMMAND_COLLECTION : & 'static CommandCollection = &CommandCollection::new();
 
+    /// Creates a parser from a macro collection and an iterator over tokens.
     pub fn from_iter<'command : 'a>(command_collection: & 'command CommandCollection, input: I) -> Self { 
         Self { 
             token_iter : ExpandedTokenIter::new(command_collection, input),
@@ -100,6 +108,8 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         } 
     }
 
+
+    /// Parses the input into an array of [`ParseNode`].
     pub fn parse(&mut self) -> ParseResult<Vec<ParseNode>> {
         let List { nodes, group } = self.parse_until_end_of_group()?;
         if let GroupKind::EndOfInput = group 
@@ -579,12 +589,14 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
 }
 
 
+/// Parses an input into a sequence of [`ParseNode`].
 /// This function is the API entry point for parsing tex.
 pub fn parse(input: &str) -> ParseResult<Vec<ParseNode>> {
     parse_with_custom_commands(input, &CommandCollection::default())
 }
 
 
+/// Like [`parse`], but with a specified macro collection.
 pub fn parse_with_custom_commands<'a>(input: & 'a str, custom_commands : &CommandCollection) -> ParseResult<Vec<ParseNode>> {
     Parser::new(custom_commands, input).parse()
 }

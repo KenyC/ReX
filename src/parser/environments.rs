@@ -1,3 +1,7 @@
+/*!
+ * Module for parsing LaTeX array environments
+ * 
+ */
 use unicode_math::TexSymbolType;
 
 use crate::layout;
@@ -9,7 +13,7 @@ use super::symbols::Symbol;
 use super::{error::ParseResult, nodes::CellContent, textoken::TexToken, Parser};
 use super::{GroupKind, ParseNode};
 
-/// An enumeration of recognized enviornmnets.
+/// An enumeration of recognized environments.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Environment {
     /// The `\begin{array}{<col spec>} .. \end{array}` environment

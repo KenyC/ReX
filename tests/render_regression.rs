@@ -6,7 +6,6 @@ extern crate serde_derive;
 extern crate serde_yaml;
 
 use std::convert::AsRef;
-use std::hash::Hash;
 use std::path::Path;
 use std::collections::BTreeMap;
 use std::fs::File;

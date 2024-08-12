@@ -85,10 +85,12 @@ impl<'arg, 'a> Iterator for ExpansionIterator<'arg, 'a> {
 
 
 impl CustomCommand {
+    /// A macro that does expands to nothing, as could be defined with `\newcommand{\emptycommand}[n]{}`.
     pub fn empty_command(name : &str, n_args : usize) -> Self {
         Self { n_args, name: name.to_string(), expansion: Vec::new() }
     }
 
+    /// Number of arguments required for macro expansion.
     pub fn n_args(&self) -> usize {
         self.n_args
     }
@@ -105,12 +107,13 @@ impl CustomCommand {
     //     todo!()
     // }
 
+    /// Macro name (e.g. `mymacro` for `\newcommand{\mymacro}[2]{zfee}`)
     pub fn name(&self) -> &str {
         &self.name
     }
 }
 
-
+/// Wraps a token iterator, expanding every command token that correspond to a macro.
 pub struct ExpandedTokenIter<'a, I : Iterator<Item = TexToken<'a>>> {
     command_collection : & 'a CommandCollection,
     token_iter : I,
@@ -184,6 +187,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
         Ok(args)
     }
 
+    /// Returns a sequence of token corresponding to the next group in the input.
     pub fn capture_group(&mut self) -> ParseResult<Vec<TexToken<'a>>> {
         let mut arg = Vec::with_capacity(1);
         let mut token = self.next_token()?
@@ -192,36 +196,45 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
             token = self.next_token()?
                 .ok_or_else(|| ParseError::ExpectedToken)?;
         }
-        if let TexToken::BeginGroup = token {
-            let mut n_open_paren : u32 = 1;
-            while n_open_paren != 0 {
-                let token = self.next_token()?
-                    .ok_or(ParseError::UnmatchedBrackets)?;
-                if let TexToken::BeginGroup = token {
-                    n_open_paren += 1;
-                }
-                else if let TexToken::EndGroup = token {
-                    n_open_paren -= 1;
-                }
+        match token {
+            TexToken::BeginGroup => {
+                let mut n_open_paren : u32 = 1;
+                while n_open_paren != 0 {
+                    let token = self.next_token()?
+                        .ok_or(ParseError::UnmatchedBrackets)?;
+                    if let TexToken::BeginGroup = token {
+                        n_open_paren += 1;
+                    }
+                    else if let TexToken::EndGroup = token {
+                        n_open_paren -= 1;
+                    }
 
+                    arg.push(token);
+                }
+                arg.pop(); // the last bracket shouldn't be added
+            },
+            TexToken::ControlSequence(command_name) => {
                 arg.push(token);
-            }
-            arg.pop(); // the last bracket shouldn't be added
-        }
-        else if let TexToken::ControlSequence(command_name) = token {
-            arg.push(token);
-            let n_args = PrimitiveControlSequence::n_args(command_name).unwrap_or(0);
-            for _ in 0 .. n_args {
+                let n_args = PrimitiveControlSequence::n_args(command_name).unwrap_or(0);
+                for _ in 0 .. n_args {
+                    arg.push(TexToken::BeginGroup);
+                    for token in self.capture_group()? {
+                        arg.push(token);
+                    }
+                    arg.push(TexToken::EndGroup);
+                }
+            },
+            TexToken::Superscript | TexToken::Subscript => {
+                arg.push(token);
                 arg.push(TexToken::BeginGroup);
                 for token in self.capture_group()? {
                     arg.push(token);
                 }
                 arg.push(TexToken::EndGroup);
             }
-        }
-        // otherwise the given token is the argument
-        else {
-            arg.push(token);
+            token => {
+               arg.push(token);
+            }
         }
         Ok(arg)
     }

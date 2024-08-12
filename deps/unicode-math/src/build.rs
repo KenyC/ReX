@@ -84,7 +84,7 @@ const GREEK: &[(&str, u32)] = &[
 
 
 fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/build.rs");
     build_symbol_table();
     build_alphanumeric_table_reserved_replacements();
 }

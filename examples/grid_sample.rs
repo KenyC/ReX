@@ -146,7 +146,7 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMat
 fn center_formula(dims: LayoutDimensions, backend: &mut FemtoVGCanvas<OpenGl>) {
     let width   = dims.width  as f32;
     let height  = dims.height as f32;
-    let depth   = dims.depth  as f32;
+    // let depth   = dims.depth  as f32;
     let width_canvas  = WIDTH as f32;
     let height_canvas = HEIGHT as f32;
 

@@ -32,8 +32,9 @@ You may add support for other font parser by implementing the `MathFont` trait a
   - [x] Delimiters and extensible symbols `\left\lbrace x \middle| x = 0 \right\rbrace`
   - [x] Arrays, matrices
   - [x] Sub- and super-scripts
-  - [ ] Text fragment `\text{...}` (even rudimentary support would be good)
-  - [ ] Custom macros
+  - [x] Text fragment `\text{...}`
+  - [x] Custom macros
+  - [ ] Misc. font effects: `\boldsymbol` and `\underline`
 
 
 # Samples

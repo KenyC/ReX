@@ -1,6 +1,6 @@
 use rex::{
     render::Renderer,
-    layout::{LayoutSettings, Style},
+    layout::LayoutSettings,
     font::{FontContext, backend::ttf_parser::TtfMathFont}, cairo::CairoBackend
 };
 use clap::Parser;

@@ -126,15 +126,17 @@ pub struct Array {
     pub cell_layout_style : layout::Style,
 }
 
+/// An enum for the differents elements that can be used to separate columns in TeX.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColSeparator {
-    /// A certain number of vertical bars
+    /// A certain number of vertical bars.
     VerticalBars(u8),
-    /// Nodes to be put between every column
+    /// Nodes to be put between every column.
     AtExpression(Vec<ParseNode>),
 }
 
 impl ColSeparator {
+    /// Checks if the separator is a set of vertical bars.
     pub fn is_vert_bars(&self) -> bool {
         matches!(self, Self::VerticalBars(_))
     }
@@ -263,6 +265,7 @@ pub struct Rule {
 pub struct Radical {
     /// The nodes that the root covers
     pub inner: Vec<ParseNode>,
+    /// The character used to represent the radical (typically U+221A '√', but also '∛' U+221B, etc.)
     pub character: char,
     // pub superscript: Vec<ParseNode>,
 }

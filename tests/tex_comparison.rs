@@ -1,13 +1,11 @@
-use std::{io::{ErrorKind, Write}, path::PathBuf, process::Command};
+use std::{io::Write, path::PathBuf, process::Command};
 
 use base64::Engine;
-use cairo::IoError;
 use raqote::{DrawTarget, Transform};
-use rex::{font::{backend::ttf_parser::TtfMathFont, FontContext, MathFont}, layout::{engine::layout, LayoutSettings}, raqote::RaqoteBackend, Backend, Renderer};
+use rex::{font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{engine::layout, LayoutSettings}, raqote::RaqoteBackend, Renderer};
 
 mod common;
 use common::report::HTML_REPORT_FOOTER;
-use sdl2::libc::difftime;
 
 use crate::common::{img_diff::diff_img, report::HTML_REPORT_HEADER};
 
