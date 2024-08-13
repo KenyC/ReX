@@ -1,7 +1,10 @@
 //! Structure for custom macros (as created by e.g. `\newcommand{..}`)
 
 use crate::parser::error::ParseError;
+use crate::parser::textoken::TokenIterator;
+use crate::parser::tokens_as_string;
 
+use super::Parser;
 use super::{control_sequence::PrimitiveControlSequence, error::ParseResult, textoken::TexToken};
 
 
@@ -14,6 +17,7 @@ pub struct CommandCollection(Vec<CustomCommand>);
 
 
 impl CommandCollection {
+
     /// Creates a new empty [`CommandCollection`]    
     pub const fn new() -> Self {
         Self(Vec::new())
@@ -26,6 +30,34 @@ impl CommandCollection {
             .iter()
             .find(|command| command.name() == name)
     }
+
+
+    pub fn parse(input : &str) -> ParseResult<Self> {
+        let command_collection = CommandCollection::default();
+        let token_iter = TokenIterator::new(input);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&command_collection, token_iter);
+
+        Self::parse_from_iter(&mut expanded_token_iter)
+    }
+
+    fn parse_from_iter<'a, I>(token_iter : &mut ExpandedTokenIter<'a, I>) -> ParseResult<Self> 
+    where I: Iterator<Item = TexToken<'a>> 
+    {
+        let mut definitions = Vec::new();
+        while token_iter.peek_token()? != None {
+            let definition = CustomCommand::parse_macro_definition_from_iter(token_iter)?;
+            definitions.push(definition);
+
+            // Consume whitespace
+            let mut token = token_iter.peek_token()?;
+            while let Some(TexToken::WhiteSpace) = token {
+                token_iter.next_token()?;
+                token = token_iter.peek_token()?;
+            }
+        }
+        Ok(Self(definitions))
+    }
+
 }
 
 
@@ -34,6 +66,45 @@ enum CommandToken {
     NormalToken(TexToken<'static>),
     OwnedCommand(String),
     ArgSlot(usize),
+}
+
+
+#[derive(Debug, Clone)]
+enum TokenConversionError {
+    IllegalParameterNumber
+}
+
+impl<'a> TryFrom<TexToken<'a>> for CommandToken {
+    type Error = TokenConversionError;
+
+    fn try_from(value: TexToken<'a>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            TexToken::Char(c)               => Self::NormalToken(TexToken::Char(c)),
+            TexToken::ControlSequence(name) => Self::OwnedCommand(name.to_string()),
+            TexToken::Superscript           => Self::NormalToken(TexToken::Superscript),
+            TexToken::Subscript             => Self::NormalToken(TexToken::Subscript),
+            TexToken::Alignment             => Self::NormalToken(TexToken::Alignment),
+            TexToken::Tilde                 => Self::NormalToken(TexToken::Tilde),
+            TexToken::WhiteSpace            => Self::NormalToken(TexToken::WhiteSpace),
+            TexToken::Argument(i)           => 
+                match i.checked_sub(1) {
+                    Some(i) => Self::ArgSlot(i),
+                    None    => return Err(TokenConversionError::IllegalParameterNumber),
+                }
+            ,
+            TexToken::BeginGroup            => Self::NormalToken(TexToken::BeginGroup),
+            TexToken::EndGroup              => Self::NormalToken(TexToken::EndGroup),
+            TexToken::Prime(p)              => Self::NormalToken(TexToken::Prime(p)),
+        })
+    }
+}
+
+impl From<TokenConversionError> for ParseError {
+    fn from(value: TokenConversionError) -> Self {
+        match value {
+            TokenConversionError::IllegalParameterNumber => Self::IllegalParameterNumber,
+        }
+    }
 }
 
 /// A custom LateX command, as defined by e.g. \newcommand.
@@ -111,6 +182,64 @@ impl CustomCommand {
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    fn parse_macro_definition_from_iter<'a, I : Iterator<Item = TexToken<'a>>>(token_iter : &mut ExpandedTokenIter<'a, I>) -> ParseResult<Self> {
+        let mut token = token_iter.next_token()?;
+        while let Some(TexToken::WhiteSpace) = token {
+            token = token_iter.next_token()?;
+        }
+
+        match token {
+            Some(TexToken::ControlSequence("newcommand")) => (),
+            _ => {
+                return Err(ParseError::ExpectedNewCommand);
+            },
+        }
+
+
+        let group = token_iter.capture_group()?;
+        let name = match group[..] {
+            [TexToken::ControlSequence(name)] => name,
+            _ => return Err(ParseError::ExpectedMacroName),
+        };
+
+
+        let group = token_iter.capture_optional_group()?;
+
+
+        let n_args : usize = 
+            if let Some(n_arg_group) = group {
+                let n_args_string = tokens_as_string(n_arg_group.into_iter())?;
+                str::parse::<usize>(&n_args_string).map_err(|_| ParseError::ExpectedNumber)?
+            }
+            else 
+            { 0 }
+        ;
+
+        let group = token_iter.capture_group()?;
+
+        let mut expansion = Vec::with_capacity(group.len());
+        // check if any error occurred
+        for token in group {
+            let command_token = CommandToken::try_from(token)?;
+            if let CommandToken::ArgSlot(i) = &command_token {
+                if *i >= n_args {
+                    return Err(ParseError::MoreArgsThanSpecified)
+                }
+            }
+            expansion.push(command_token);
+        }
+
+
+        let custom_command = CustomCommand {
+            n_args,
+            name: name.to_string(),
+            expansion,
+        };
+        
+        Ok(custom_command)
+    }
+
 }
 
 /// Wraps a token iterator, expanding every command token that correspond to a macro.
@@ -157,6 +286,15 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
         else {
             Ok(None)            
         }
+    }
+
+    /// Obtain next token from the iterator and places it back on the expansion stack, so that a next call to either [`ExpandedTokenIter::next_token`] or [`ExpandedTokenIter::peek_token`] will return the same token.
+    pub fn peek_token(&mut self) -> ParseResult<Option<TexToken<'a>>> {
+        let token = self.next_token()?;
+        if let Some(token) = token.clone() {
+            self.expanded_token.push(token);
+        }
+        Ok(token)
     }
 
     /// From a regular token iterator, creates one that expands macros.
@@ -239,11 +377,52 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
         Ok(arg)
     }
 
+    /// Captures a group enclosed in square brackets, if there is one following.  
+    /// Does not move parser forward otherwise.
+    pub fn capture_optional_group(&mut self) -> ParseResult<Option<Vec<TexToken<'a>>>> {
+        let mut token = self.peek_token()?;
+        while let Some(TexToken::WhiteSpace) = token {
+            self.next_token()?;
+            token = self.peek_token()?;
+        }
+
+        // TODO: maybe a dedicated token type for the square bracket
+        // must square bracket be matched when capturing a group ?
+        if let Some(TexToken::Char('[')) = token 
+        { 
+            self.next_token()?;
+        }
+        else {
+            return Ok(None);
+        }
+
+        let mut to_return = Vec::new();
+
+        let mut brackets : u32 = 1;
+        while brackets != 0 {
+            let token = self.next_token()?
+                .ok_or(ParseError::UnmatchedBrackets)?;
+            if let TexToken::Char('[') = token {
+                brackets += 1;
+            }
+            else if let TexToken::Char(']') = token {
+                brackets -= 1;
+            }
+
+            to_return.push(token);
+        }
+        to_return.pop(); // the last bracket shouldn't be added
+
+        Ok(Some(to_return))
+    }
+
 }
 
 
 #[cfg(test)]
 mod tests {
+    use ttf_parser::UnicodeRanges;
+
     use crate::parser::textoken::TokenIterator;
 
     use super::*;
@@ -391,6 +570,81 @@ mod tests {
         assert_eq!(result, expected);
     }
 
+    #[test]
+    fn peek_token_does_not_consume_token() {
+        let collection = CommandCollection::new();
+
+        let underlying_string = "abc";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let peeked_token    = expanded_token_iter.peek_token().unwrap();
+        let consumed_token  = expanded_token_iter.next_token().unwrap();
+        assert_eq!(peeked_token, consumed_token);
+
+
+        let underlying_string = r"\abc{def}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let peeked_token    = expanded_token_iter.peek_token().unwrap();
+        let consumed_token  = expanded_token_iter.next_token().unwrap();
+        assert_eq!(peeked_token, consumed_token);
+
+        let collection = CommandCollection::test_collection();
+
+
+        let underlying_string = r"\testone{d}{ef}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let peeked_token    = expanded_token_iter.peek_token().unwrap();
+        let consumed_token  = expanded_token_iter.next_token().unwrap();
+        assert_eq!(peeked_token, consumed_token);
+    }
+
+    #[test]
+    fn test_capture_optional_group() {
+        let collection = CommandCollection::new();
+
+        let underlying_string = "[abc]ez]";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        
+        let optional_group = expanded_token_iter.capture_optional_group().unwrap();
+
+        assert_eq!(
+            optional_group,
+            Some(vec![
+                TexToken::Char('a'),
+                TexToken::Char('b'),
+                TexToken::Char('c'),
+            ]),
+        );
+
+        let underlying_string = "[ab[c]ez";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        
+        let optional_group = expanded_token_iter.capture_optional_group();
+
+        assert_eq!(
+            optional_group,
+            Err(ParseError::UnmatchedBrackets),
+        );
+
+        let underlying_string = "{ab[c]e}z";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+        
+        let optional_group = expanded_token_iter.capture_optional_group();
+
+        assert_eq!(
+            optional_group,
+            Ok(None),
+        );
+
+    }
 
     #[test]
     fn check_gather_args() {
@@ -453,5 +707,72 @@ mod tests {
         assert!(arg_commands.is_err());
 
 
+    }
+
+
+    #[test]
+    fn test_parse_new_command_definition() {
+        let collection = CommandCollection::default();
+
+        let underlying_string = r"\newcommand{\abc}{}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let command = CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap();
+        assert_eq!(command.name, "abc");
+        assert_eq!(command.expansion, vec![]);
+
+        let underlying_string = r" \newcommand  {\abc}  {}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let command = CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap();
+        assert_eq!(command.name, "abc");
+        assert_eq!(command.expansion, vec![]);
+
+        let underlying_string = r"\newcommand{\abc}[1]{#1}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let command = CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap();
+        assert_eq!(command.name, "abc");
+        assert_eq!(command.expansion, vec![
+            CommandToken::ArgSlot(0)
+        ]);
+
+        let underlying_string = r"\newcommand{\abc}[2]{#1+#2}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        let command = CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap();
+        assert_eq!(command.name, "abc");
+        assert_eq!(command.expansion, vec![
+            CommandToken::ArgSlot(0),
+            CommandToken::NormalToken(TexToken::Char('+')),
+            CommandToken::ArgSlot(1)
+        ]);
+
+        let underlying_string = r"\newcommand{\abc}[2]{#1+#3}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap_err();
+
+        let underlying_string = r"\newcommand{\abc{}}{..}";
+        let token_iter = TokenIterator::new(underlying_string);
+        let mut expanded_token_iter = ExpandedTokenIter::new(&collection, token_iter);
+
+        CustomCommand::parse_macro_definition_from_iter(&mut expanded_token_iter).unwrap_err();
+        
+    }
+
+    #[test]
+    fn test_parse_style_file() {
+        let file = r#"
+        \newcommand{\dbb}[1]{\lBrack #1\rBrack}
+        \newcommand{\coref}[1]{\color{blue}{#1}}
+        "#;
+
+        CommandCollection::parse(file).unwrap();
     }
 }

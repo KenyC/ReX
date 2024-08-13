@@ -13,11 +13,13 @@ pub enum TexToken<'a> {
     ControlSequence(& 'a str),
     Superscript,
     Subscript,
-    // A '&' character
+    /// A '&' character
     Alignment,
-    // A '~' character for non-breakable space
+    /// A '~' character for non-breakable space
     Tilde,
     WhiteSpace,
+    /// In macro definitions, an arguments slot of the form (#12)
+    Argument(usize),
     BeginGroup,
     EndGroup,
     Prime(NumberOfPrimes),
@@ -128,6 +130,16 @@ impl<'a> Iterator for TokenIterator<'a> {
                 input_processor.stream = rest;
                 Some(TexToken::EndGroup)                
             }
+            '#' => {
+                if let Some((rest, arg_index)) = split_string_integer(rest) {
+                    input_processor.stream = rest;
+                    Some(TexToken::Argument(arg_index))
+                }
+                else {
+                    input_processor.stream = rest;
+                    Some(TexToken::Char('#'))
+                }
+            }
             c => {
                 // a plain old character
                 input_processor.stream = rest;
@@ -135,6 +147,12 @@ impl<'a> Iterator for TokenIterator<'a> {
             }
         }
     }
+}
+
+fn split_string_integer(stream: &str) -> Option<(&str, usize)> {
+    let (number, _) = stream.split_once(|c : char| !c.is_ascii_digit()).unwrap_or((stream, stream));
+    let arg_index = str::parse::<usize>(number).ok()?;
+    Some((&stream[number.len() ..], arg_index))
 }
 
 pub struct InputProcessor<'a> {
@@ -246,5 +264,18 @@ mod tests {
                 TexToken::Char('d'),
             ]
         );
+    }
+
+    #[test]
+    fn test_macro_arg_token() {
+        let string = r"#48465";
+        let tokens : Vec<_> = InputProcessor::new(string).token_iter().collect();
+
+        assert_eq!(
+            tokens,
+            vec![
+                TexToken::Argument(48465),
+            ]
+        );       
     }
 }

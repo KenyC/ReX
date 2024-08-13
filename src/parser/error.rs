@@ -71,6 +71,18 @@ pub enum ParseError {
 
     /// The command `\limits` and `\nolimits` must be placed right after an operator (or a macro that expands into something that ends in an operator)
     LimitControlSequenceMustBeAfterOperator,
+    /// In parsing a style file, the parser expected a `\newcommand` but either got end of input or a different type of token.
+    ExpectedNewCommand,
+    /// In parsing a formula, the parser encountered an argument like #123 as used in macro definition, but it wasn't in a macro definition environment.
+    UnexpectedMacroArgument,
+    /// The number following '#' in the macro parameter is 0. Macro parameter numbers start with 1.
+    IllegalParameterNumber,
+    /// In the macro definition `\newcommand{..}[s]{..}`, s wasn't a number.
+    ExpectedNumber,
+    /// A macro parameter appeared whose number is higher than the number of argumetns listed in the command.
+    MoreArgsThanSpecified,
+    /// In the first argument of `\newcommand`, expected the name of a command.
+    ExpectedMacroName,
 }
 
 
@@ -127,6 +139,18 @@ impl fmt::Display for ParseError {
                 write!(f, r"Token after '\end' is a not a middle symbol"),
             LimitControlSequenceMustBeAfterOperator => 
                 write!(f, r"'\limits' or '\nolimits' isn't placed after an operator"),
+            ExpectedNewCommand => 
+                write!(f, r"Expected a '\newcommand'"),
+            UnexpectedMacroArgument =>
+                write!(f, r"Unexpected macro argument"),
+            IllegalParameterNumber =>
+                write!(f, r"Illegal parameter number"),
+            ExpectedNumber =>
+                write!(f, r"`\newcommand` argument is not a number"),
+            MoreArgsThanSpecified =>
+                write!(f, r"Macro parameter number is higher than the number of arguments listed in macro"),
+            ExpectedMacroName =>
+                write!(f, r"First argument of \newcommand should be the name of a macro"),
         }
     }
 }

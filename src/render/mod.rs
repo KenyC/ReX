@@ -17,10 +17,11 @@
 //!  - FemtoVG backend : `femtovg-renderer` (render to screen using OpenGL)
 //!  - Raqote backend : `raqote-renderer` (render to screen, png)
 //! 
-//! ## Caveat on coordinate systems
+//! ## Caveat on coordinate systems and units
 //! 
-//! The top is oriented along -Y. So in particular, the Y coordinate of the position of a superscript is less than the Y coordinate of its base.
-//! Glyph outlines in font files are often given with the opposite convention: the top of the glyph has the highest Y coordinate. Some adjustment needs to be made when implementing e.g. [`FontBackend`].
+//!   1. The coordinates in [`GraphicsBackend`] and [`FontBackend`] are given in pixels.
+//!   2. The top is oriented along -Y. So in particular, the Y coordinate of the position of a superscript is less than the Y coordinate of its base.
+//!      Glyph outlines in font files are often given with the opposite convention: the top of the glyph has the highest Y coordinate. Some adjustment needs to be made when implementing e.g. [`FontBackend`].
 
 
 use crate::error::Error;

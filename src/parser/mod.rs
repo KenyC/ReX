@@ -465,6 +465,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         },
                     }
                 },
+                TexToken::Argument(i) => return Err(ParseError::UnexpectedMacroArgument),
             }
         }
 
@@ -512,7 +513,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             },
               TexToken::Superscript | TexToken::Subscript  | TexToken::Alignment 
             | TexToken::WhiteSpace  | TexToken::BeginGroup | TexToken::EndGroup 
-            | TexToken::Tilde       | TexToken::Prime { .. }
+            | TexToken::Argument(_) | TexToken::Tilde      | TexToken::Prime { .. }
             => Err(ParseError::ExpectedSymbolAfterDelimiterCommand),
         }
     }
@@ -575,13 +576,14 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
             },
             TexToken::ControlSequence("{") => to_return.push('{'), 
             TexToken::ControlSequence("}") => to_return.push('}'),
-            TexToken::BeginGroup
-            | TexToken::EndGroup  => (), 
+            TexToken::BeginGroup | TexToken::EndGroup => (), 
+            
             TexToken::ControlSequence(_) 
             | TexToken::Superscript 
             | TexToken::Subscript 
             | TexToken::Tilde 
             | TexToken::Alignment
+            | TexToken::Argument(_)
             => return Err(ParseError::ExpectedChars),
         }
     }
