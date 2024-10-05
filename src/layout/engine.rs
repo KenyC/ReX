@@ -243,15 +243,50 @@ impl<'f, F : MathFont> Layout<'f, F> {
             VariantGlyph::Constructable(_, _) => accent.width.scale(0.5),
         };
 
-        // Do not place the accent any further than you would if given
-        // an `x` character in the current style.
-        let delta = -Unit::min(base.height, config.ctx.constants.accent_base_height.scaled(config));
 
-        // By not placing an offset on this vbox, we are assured that the
-        // baseline will match the baseline of `base.as_node()`
-        self.add_node(vbox!(hbox!(kern!(horz: base_offset - acc_offset), accent),
-                            kern!(vert: delta),
-                            base.as_node()));
+
+        let mut hbox = builders::HBox::new();
+        hbox.add_node(LayoutNode {
+            width: base_offset - acc_offset,
+            height: Unit::ZERO,
+            depth: Unit::ZERO,
+            node: LayoutVariant::Kern,
+        });
+        hbox.add_node(accent);
+        let hbox_node = hbox.build();
+
+
+        let mut vbox = builders::VBox::new();
+
+        if acc.under {
+            let delta = base.depth;
+
+            vbox.add_node(base.as_node());
+            vbox.add_node(LayoutNode {
+                width: Unit::ZERO,
+                height: -delta,
+                depth:  Unit::ZERO,
+                node: LayoutVariant::Kern,
+            });
+            vbox.add_node(hbox_node);
+        }
+        else {
+            // Do not place the accent any further than you would if given
+            // an `x` character in the current style.
+            let delta = -Unit::min(base.height, config.ctx.constants.accent_base_height.scaled(config));
+
+            // By not placing an offset on this vbox, we are assured that the
+            // baseline will match the baseline of `base.as_node()`
+            vbox.add_node(hbox_node);
+            vbox.add_node(LayoutNode {
+                width: Unit::ZERO,
+                height: delta,
+                depth: Unit::ZERO,
+                node: LayoutVariant::Kern,
+            });
+            vbox.add_node(base.as_node());
+        }
+        self.add_node(vbox.build());
         
         Ok(())
     }

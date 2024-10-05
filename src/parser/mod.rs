@@ -455,6 +455,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                         nucleus,
                                         // Only "accent" are not extended
                                         extend: symbol.atom_type != TexSymbolType::Accent,
+                                        under:  symbol.atom_type == TexSymbolType::Under,
                                     }));
                                 },
                                 _ => {
