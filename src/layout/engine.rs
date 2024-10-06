@@ -243,49 +243,83 @@ impl<'f, F : MathFont> Layout<'f, F> {
             VariantGlyph::Constructable(_, _) => accent.width.scale(0.5),
         };
 
+        // We want "accent_offset" and "base_offset" to be aligned
+        //      accent_offset
+        //      <->
+        //      [-+------]
+        // [------+-]
+        // <------>
+        // base_offset
+        //
+        // We compute which of the base and the accent extend the most (i) to the left, (ii) to the right
+        // We add spaces accordingly the make both match in width
+
+        let diff_offsets = base_offset - acc_offset;
+
+        let accent_node; 
+        let base_node;
+        let base_depth  = base.depth;
+        let base_height = base.height;
+        if diff_offsets > Unit::ZERO {
+            let mut hbox_accent = builders::HBox::new();
+            hbox_accent.add_node(LayoutNode {
+                width:  base_offset - acc_offset,
+                height: Unit::ZERO,
+                depth:  Unit::ZERO,
+                node:   LayoutVariant::Kern,
+            });
+            hbox_accent.add_node(accent);
+
+            base_node = base.as_node();
+            accent_node = hbox_accent.build();
+        }
+        else {
+            let mut hbox_base = builders::HBox::new();
+            hbox_base.add_node(LayoutNode {
+                width:  - diff_offsets,
+                height: Unit::ZERO,
+                depth:  Unit::ZERO,
+                node:   LayoutVariant::Kern,
+            });
+            hbox_base.add_node(base.as_node());
+
+            base_node = hbox_base.build();
+            accent_node = accent;
+        }
 
 
-        let mut hbox = builders::HBox::new();
-        hbox.add_node(LayoutNode {
-            width: base_offset - acc_offset,
-            height: Unit::ZERO,
-            depth: Unit::ZERO,
-            node: LayoutVariant::Kern,
-        });
-        hbox.add_node(accent);
-        let hbox_node = hbox.build();
 
 
         let mut vbox = builders::VBox::new();
 
         if acc.under {
-            let delta = -base.depth;
+            let delta = - base_depth;
 
-            vbox.add_node(base.as_node());
+            vbox.add_node(base_node);
             vbox.add_node(LayoutNode {
                 width: Unit::ZERO,
                 height: delta,
                 depth:  Unit::ZERO,
                 node: LayoutVariant::Kern,
             });
-            vbox.add_node(hbox_node);
+            vbox.add_node(accent_node);
             vbox.set_offset(delta);
         }
         else {
             // Do not place the accent any further than you would if given
             // an `x` character in the current style.
-            let delta = -Unit::min(base.height, config.ctx.constants.accent_base_height.scaled(config));
+            let delta = -Unit::min(base_height, config.ctx.constants.accent_base_height.scaled(config));
 
             // By not placing an offset on this vbox, we are assured that the
             // baseline will match the baseline of `base.as_node()`
-            vbox.add_node(hbox_node);
+            vbox.add_node(accent_node);
             vbox.add_node(LayoutNode {
                 width: Unit::ZERO,
                 height: delta,
                 depth: Unit::ZERO,
                 node: LayoutVariant::Kern,
             });
-            vbox.add_node(base.as_node());
+            vbox.add_node(base_node);
         }
         self.add_node(vbox.build());
         
