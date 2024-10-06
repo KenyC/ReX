@@ -55,12 +55,17 @@ fn main() {
     // -- parse
     let parse_nodes = rex::parser::parse(&formula).unwrap();
 
+    if debug {
+        eprintln!("{:#?}", parse_nodes);
+    }
 
 
     // -- layout
     let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();
 
-
+    if debug {
+        eprintln!("{:#?}", layout.clone().as_node());
+    }
 
     // -- create Cairo surface & context
     let dims = layout.size();
