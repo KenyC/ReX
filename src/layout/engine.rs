@@ -259,16 +259,17 @@ impl<'f, F : MathFont> Layout<'f, F> {
         let mut vbox = builders::VBox::new();
 
         if acc.under {
-            let delta = base.depth;
+            let delta = -base.depth;
 
             vbox.add_node(base.as_node());
             vbox.add_node(LayoutNode {
                 width: Unit::ZERO,
-                height: -delta,
+                height: delta,
                 depth:  Unit::ZERO,
                 node: LayoutVariant::Kern,
             });
             vbox.add_node(hbox_node);
+            vbox.set_offset(delta);
         }
         else {
             // Do not place the accent any further than you would if given
