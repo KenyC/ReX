@@ -3327,6 +3327,190 @@
               glyph_id: 126
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ left { x  in  mathb-Bb4AdLt7y4k.png"
+"position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - 1-\\overbrace{\\frac 12}":
+  tex: "1-\\overbrace{\\frac 12}"
+  description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
+  render:
+    Ok:
+      width: 56.09481702882934
+      height: 52.99200251698494
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 15.407407914046888
+                - 0.0
+              glyph_id: 1151
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 34.76148268221705
+                - -17.194667483369515
+              glyph_id: 1469
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 40.094816268870129
+                - -12.373333921035137
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 40.094816268870129
+                - -6.037333620091286
+              width: 10.666667173306147
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 40.094816268870129
+                - 14.933334042628598
+              glyph_id: 51
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/1- overbrace{ frac 1-qe3V27eURr0.png"
+"position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - 1-\\underbrace{\\frac 12}":
+  tex: "1-\\underbrace{\\frac 12}"
+  description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
+  render:
+    Ok:
+      width: 56.09481702882934
+      height: 48.72533564766248
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 15.407407914046888
+                - 0.0
+              glyph_id: 1151
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 40.094816268870129
+                - -12.373333921035137
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 40.094816268870129
+                - -6.037333620091286
+              width: 10.666667173306147
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 40.094816268870129
+                - 14.933334042628598
+              glyph_id: 51
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 34.76148268221705
+                - 10.666667173306143
+              glyph_id: 1470
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/1- underbrace{ frac -fFPZ3MbVOZ4.png"
+"position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - \\frac1{\\overbrace{\\frac 12}}":
+  tex: "\\frac1{\\overbrace{\\frac 12}}"
+  description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
+  render:
+    Ok:
+      width: 25.60000101327896
+      height: 68.94933660825093
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 7.466666919986407
+                - -12.373333921035126
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 2.1333333333333335
+                - -6.0373336200912759
+              width: 21.333334346612295
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 2.1333333333333335
+                - 20.458667638401196
+              glyph_id: 1469
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 8.800000316649675
+                - 21.674667696158097
+              glyph_id: 50
+              scale: 16.0
+          - Rule:
+              pos:
+                - 8.800000316649675
+                - 25.87733456244072
+              width: 8.00000037997961
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 8.800000316649675
+                - 42.1546686689059
+              glyph_id: 51
+              scale: 16.0
+      img_render_path: "tests/data/imgs/ frac1{ overbrace{ f-b1TgOE9l99E.png"
+"position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - \\frac1{\\underbrace{\\frac 12}}":
+  tex: "\\frac1{\\underbrace{\\frac 12}}"
+  description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
+  render:
+    Ok:
+      width: 25.60000101327896
+      height: 64.68266973892847
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 7.466666919986407
+                - -12.373333921035126
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 2.1333333333333335
+                - -6.0373336200912759
+              width: 21.333334346612295
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 8.800000316649675
+                - 10.410667161146805
+              glyph_id: 50
+              scale: 16.0
+          - Rule:
+              pos:
+                - 8.800000316649675
+                - 14.613334027429428
+              width: 8.00000037997961
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 8.800000316649675
+                - 30.890668133894608
+              glyph_id: 51
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 2.1333333333333335
+                - 26.62400126457215
+              glyph_id: 1470
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ frac1{ underbrace{ -cGMhKzA44FI.png"
 sequence of letters should look properly spaced - abcdefghijklmnopqrstuvwxyz:
   tex: abcdefghijklmnopqrstuvwxyz
   description: "Spacing: sequence of letters should look properly spaced"
@@ -9218,103 +9402,103 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Accents: should properly scale"
   render:
     Ok:
-      width: 145.9262879622617
+      width: 149.18080708570779
       height: 23.381334443887075
       render:
         commands:
           - Symbol:
               pos:
-                - -1.6272595617230295
+                - 0.0
                 - -2.0693334316213916
               glyph_id: 3824
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 0.0
+                - 1.6272595617230295
                 - 0.0
               glyph_id: 2520
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 16.4740746313775
+                - 18.10133419310053
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 35.82814939954766
+                - 37.45540896127069
                 - 0.0
               glyph_id: 2521
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 46.40948323546736
+                - 49.66400235891342
                 - -2.0693334316213916
               glyph_id: 3824
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 48.03674279719039
+                - 51.29126192063645
                 - 0.0
               glyph_id: 2520
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 64.51081742856789
+                - 67.76533655201397
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 83.86489219673806
+                - 87.11941132018413
                 - 0.0
               glyph_id: 2521
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 98.24148569735526
+                - 101.49600482080132
                 - -1.5520000737160445
               glyph_id: 3739
               scale: 16.0
           - Symbol:
               pos:
-                - 96.07348559438079
+                - 99.32800471782685
                 - 0.0
               glyph_id: 2520
               scale: 16.0
           - Symbol:
               pos:
-                - 104.87348601235836
+                - 108.12800513580442
                 - 0.0
               glyph_id: 44
               scale: 16.0
           - Symbol:
               pos:
-                - 115.83348653293042
+                - 119.08800565637648
                 - 0.0
               glyph_id: 2521
               scale: 16.0
           - Symbol:
               pos:
-                - 125.50388699224978
+                - 128.75840611569584
                 - -1.2416000589728356
               glyph_id: 3739
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 123.7694869098702
+                - 127.02400603331626
                 - -8.881784197001253e-16
               glyph_id: 2520
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 130.80948724425225
+                - 134.0640063676983
                 - -8.881784197001253e-16
               glyph_id: 44
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 139.5774876607099
+                - 142.83200678415597
                 - -8.881784197001253e-16
               glyph_id: 2521
               scale: 12.799999999999999

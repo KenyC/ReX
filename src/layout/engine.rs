@@ -195,7 +195,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
     
     fn accent<'a>(&mut self, acc: &Accent, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
         // [ ] The width of the selfing box is the width of the base.
-        // [ ] Bottom accents: vertical placement is directly below nucleus,
+        // [x] Bottom accents: vertical placement is directly below nucleus,
         //       no correction takes place.
         // [x] WideAccent vs Accent: Don't expand Accent types.
         let base = layout(&acc.nucleus, config.cramped())?;
@@ -293,17 +293,20 @@ impl<'f, F : MathFont> Layout<'f, F> {
         let mut vbox = builders::VBox::new();
 
         if acc.under {
-            let delta = - base_depth;
+            let accent_node_height = accent_node.height;
+
 
             vbox.add_node(base_node);
             vbox.add_node(LayoutNode {
                 width: Unit::ZERO,
-                height: delta,
+                height: - base_depth,
                 depth:  Unit::ZERO,
                 node: LayoutVariant::Kern,
             });
             vbox.add_node(accent_node);
-            vbox.set_offset(delta);
+
+            // node must stand at the same height as basis
+            vbox.set_offset(- base_depth + accent_node_height);
         }
         else {
             // Do not place the accent any further than you would if given
