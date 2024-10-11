@@ -131,6 +131,11 @@ Accents:
     - 1-\overbrace{\frac 12}
     - \frac1{\overbrace{\frac 12}}
 
+  - Description: scripts should be above or below under- and overbrace
+    Snippets:
+    - \underbrace{1+1}_{=2}^{a:=}
+    - x=\overbrace{y-1}^{\omega}
+
   - Description: should typeset nucleus as cramped, and baseline unchanged.
     Snippets:
     - \hat{A^2} A^2

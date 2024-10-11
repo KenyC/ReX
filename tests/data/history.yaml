@@ -3511,6 +3511,122 @@
               glyph_id: 1470
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ frac1{ underbrace{ -cGMhKzA44FI.png"
+"scripts should be above or below under- and overbrace - \\underbrace{1+1}_{=2}^{a:=}":
+  tex: "\\underbrace{1+1}_{=2}^{a:=}"
+  description: "Accents: scripts should be above or below under- and overbrace"
+  render:
+    Ok:
+      width: 49.66400235891342
+      height: 48.70933564690252
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 13.112000622786582
+                - -20.821334322293596
+              glyph_id: 2498
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 21.14400100428611
+                - -20.821334322293596
+              glyph_id: 59
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 25.592001215554775
+                - -20.821334322293596
+              glyph_id: 62
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 2.1179262516951136
+                - 3.552713678800501e-15
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 17.525334165742004
+                - 3.552713678800501e-15
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 36.87940893391217
+                - 3.552713678800501e-15
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 0.0
+                - -3.392000161111351
+              glyph_id: 3807
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 15.352000729180873
+                - 20.544000975787644
+              glyph_id: 62
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 26.31200124975294
+                - 20.544000975787644
+              glyph_id: 51
+              scale: 16.0
+      img_render_path: "tests/data/imgs/ underbrace{1+1}_{=2-rsWQlzn4iTg.png"
+"scripts should be above or below under- and overbrace - x=\\overbrace{y-1}^{\\omega}":
+  tex: "x=\\overbrace{y-1}^{\\omega}"
+  description: "Accents: scripts should be above or below under- and overbrace"
+  render:
+    Ok:
+      width: 90.23289249920183
+      height: 54.501335922007758
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 2520
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 18.84444500174787
+                - 0.0
+              glyph_id: 62
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 59.952891060979
+                - -30.74133479346831
+              glyph_id: 3182
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 40.5688901402884
+                - -4.821333562334374
+              glyph_id: 3806
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 42.72948306067674
+                - 3.552713678800501e-15
+              glyph_id: 2521
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 58.051557637337179
+                - 3.552713678800501e-15
+              glyph_id: 1151
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 77.40563240550734
+                - 3.552713678800501e-15
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/x= overbrace{y-1}^{ -zRLgjeNqcuU.png"
 sequence of letters should look properly spaced - abcdefghijklmnopqrstuvwxyz:
   tex: abcdefghijklmnopqrstuvwxyz
   description: "Spacing: sequence of letters should look properly spaced"
@@ -9344,7 +9460,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Accents: should properly scale"
   render:
     Ok:
-      width: 65.41866977388659
+      width: 73.77422532944215
       height: 21.20533434053262
       render:
         commands:
@@ -9362,37 +9478,37 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 21.78133436789115
+                - 25.336889923446706
                 - -4.629333553214867
               glyph_id: 3691
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 21.333334346612295
+                - 24.888889902167848
                 - 0.0
               glyph_id: 2472
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 46.34666886801521
+                - 52.56889109023742
                 - -3.472000164911151
               glyph_id: 3623
               scale: 16.0
           - Symbol:
               pos:
-                - 42.66666869322459
+                - 48.8888909154468
                 - 0.0
               glyph_id: 2472
               scale: 16.0
           - Symbol:
               pos:
-                - 58.25066943342487
+                - 66.60622498898042
                 - -2.777600131928919
               glyph_id: 3623
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 55.30666929359237
+                - 63.66222484914792
                 - 0.0
               glyph_id: 2472
               scale: 12.799999999999999
@@ -9402,7 +9518,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   description: "Accents: should properly scale"
   render:
     Ok:
-      width: 149.18080708570779
+      width: 157.53636264126335
       height: 23.381334443887075
       render:
         commands:
@@ -9432,73 +9548,73 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 49.66400235891342
+                - 53.21955791446898
                 - -2.0693334316213916
               glyph_id: 3824
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 51.29126192063645
+                - 54.84681747619201
                 - 0.0
               glyph_id: 2520
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 67.76533655201397
+                - 71.3208921075695
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 87.11941132018413
+                - 90.67496687573967
                 - 0.0
               glyph_id: 2521
               scale: 21.333333333333333
           - Symbol:
               pos:
-                - 101.49600482080132
+                - 107.71822704302355
                 - -1.5520000737160445
               glyph_id: 3739
               scale: 16.0
           - Symbol:
               pos:
-                - 99.32800471782685
+                - 105.55022694004907
                 - 0.0
               glyph_id: 2520
               scale: 16.0
           - Symbol:
               pos:
-                - 108.12800513580442
+                - 114.35022735802665
                 - 0.0
               glyph_id: 44
               scale: 16.0
           - Symbol:
               pos:
-                - 119.08800565637648
+                - 125.31022787859871
                 - 0.0
               glyph_id: 2521
               scale: 16.0
           - Symbol:
               pos:
-                - 128.75840611569584
+                - 137.1139616712514
                 - -1.2416000589728356
               glyph_id: 3739
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 127.02400603331626
+                - 135.3795615888718
                 - -8.881784197001253e-16
               glyph_id: 2520
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 134.0640063676983
+                - 142.41956192325388
                 - -8.881784197001253e-16
               glyph_id: 44
               scale: 12.799999999999999
           - Symbol:
               pos:
-                - 142.83200678415597
+                - 151.18756233971153
                 - -8.881784197001253e-16
               glyph_id: 2521
               scale: 12.799999999999999
