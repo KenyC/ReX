@@ -366,7 +366,9 @@ impl ParseNode {
 
             ParseNode::Rule(_)          => TexSymbolType::Alpha,
             ParseNode::Kerning(_)       => TexSymbolType::Transparent,
-            ParseNode::Accent(ref acc)  => acc.nucleus.first()
+            ParseNode::Accent(ref acc) if acc.extend => TexSymbolType::Operator(true),
+            ParseNode::Accent(ref acc) => 
+                acc.nucleus.first()
                 .map(|acc| acc.atom_type())
                 .unwrap_or(TexSymbolType::Alpha),
 
