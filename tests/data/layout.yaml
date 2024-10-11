@@ -124,6 +124,13 @@ Accents:
     Snippets:
     - \mathop{\overbrace{1+2+3+4+5+6}}\limits^{\mathrm{Arithmetic}} = 21
 
+  - Description: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)
+    Snippets:
+    - 1-\underbrace{\frac 12}
+    - \frac1{\underbrace{\frac 12}}
+    - 1-\overbrace{\frac 12}
+    - \frac1{\overbrace{\frac 12}}
+
   - Description: should typeset nucleus as cramped, and baseline unchanged.
     Snippets:
     - \hat{A^2} A^2

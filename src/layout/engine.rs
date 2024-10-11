@@ -195,7 +195,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
     
     fn accent<'a>(&mut self, acc: &Accent, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<()> {
         // [ ] The width of the selfing box is the width of the base.
-        // [ ] Bottom accents: vertical placement is directly below nucleus,
+        // [x] Bottom accents: vertical placement is directly below nucleus,
         //       no correction takes place.
         // [x] WideAccent vs Accent: Don't expand Accent types.
         let base = layout(&acc.nucleus, config.cramped())?;
@@ -243,15 +243,88 @@ impl<'f, F : MathFont> Layout<'f, F> {
             VariantGlyph::Constructable(_, _) => accent.width.scale(0.5),
         };
 
-        // Do not place the accent any further than you would if given
-        // an `x` character in the current style.
-        let delta = -Unit::min(base.height, config.ctx.constants.accent_base_height.scaled(config));
+        // We want "accent_offset" and "base_offset" to be aligned
+        //      accent_offset
+        //      <->
+        //      [-+------]
+        // [------+-]
+        // <------>
+        // base_offset
+        //
+        // We compute which of the base and the accent extend the most (i) to the left, (ii) to the right
+        // We add spaces accordingly the make both match in width
 
-        // By not placing an offset on this vbox, we are assured that the
-        // baseline will match the baseline of `base.as_node()`
-        self.add_node(vbox!(hbox!(kern!(horz: base_offset - acc_offset), accent),
-                            kern!(vert: delta),
-                            base.as_node()));
+        let diff_offsets = base_offset - acc_offset;
+
+        let accent_node; 
+        let base_node;
+        let base_depth  = base.depth;
+        let base_height = base.height;
+        if diff_offsets > Unit::ZERO {
+            let mut hbox_accent = builders::HBox::new();
+            hbox_accent.add_node(LayoutNode {
+                width:  base_offset - acc_offset,
+                height: Unit::ZERO,
+                depth:  Unit::ZERO,
+                node:   LayoutVariant::Kern,
+            });
+            hbox_accent.add_node(accent);
+
+            base_node = base.as_node();
+            accent_node = hbox_accent.build();
+        }
+        else {
+            let mut hbox_base = builders::HBox::new();
+            hbox_base.add_node(LayoutNode {
+                width:  - diff_offsets,
+                height: Unit::ZERO,
+                depth:  Unit::ZERO,
+                node:   LayoutVariant::Kern,
+            });
+            hbox_base.add_node(base.as_node());
+
+            base_node = hbox_base.build();
+            accent_node = accent;
+        }
+
+
+
+
+        let mut vbox = builders::VBox::new();
+
+        if acc.under {
+            let accent_node_height = accent_node.height;
+
+
+            vbox.add_node(base_node);
+            vbox.add_node(LayoutNode {
+                width: Unit::ZERO,
+                height: - base_depth,
+                depth:  Unit::ZERO,
+                node: LayoutVariant::Kern,
+            });
+            vbox.add_node(accent_node);
+
+            // node must stand at the same height as basis
+            vbox.set_offset(- base_depth + accent_node_height);
+        }
+        else {
+            // Do not place the accent any further than you would if given
+            // an `x` character in the current style.
+            let delta = -Unit::min(base_height, config.ctx.constants.accent_base_height.scaled(config));
+
+            // By not placing an offset on this vbox, we are assured that the
+            // baseline will match the baseline of `base.as_node()`
+            vbox.add_node(accent_node);
+            vbox.add_node(LayoutNode {
+                width: Unit::ZERO,
+                height: delta,
+                depth: Unit::ZERO,
+                node: LayoutVariant::Kern,
+            });
+            vbox.add_node(base_node);
+        }
+        self.add_node(vbox.build());
         
         Ok(())
     }
