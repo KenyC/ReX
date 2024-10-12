@@ -306,21 +306,18 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 at, inner,
                             }));
                         },
-                        // TODO: not sure what to name the boolean
-                        TextOperator(op_name, accent_placement) => {
-                            results.push(ParseNode::AtomChange(nodes::AtomChange {
-                                at: TexSymbolType::Operator(accent_placement),
-                                inner: 
-                                    op_name
-                                    .chars()
-                                    .map(|c| ParseNode::Symbol(Symbol {
-                                        codepoint: c,
-                                        atom_type: TexSymbolType::Ordinary,
-                                    }))
-                                    .collect()
-                                    ,
-                            }));
+                        TextOperator(op_name, limits_placement) => {
+                            results.push(make_operator(op_name, limits_placement));
                         },
+                        OperatorName => {
+                            // Capture operator name
+                            let text_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
+                            let op_name = tokens_as_string(text_group.into_iter())?;
+                            results.push(make_operator(&op_name, false));
+                        }
                         SubStack(atom_type) => {
                             let group = self.token_iter.capture_group().map_err(|e| match e {
                                 ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
@@ -535,6 +532,21 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         
         Ok(nodes)
     }
+}
+
+fn make_operator(op_name: &str, limits_placement: bool) -> ParseNode {
+    ParseNode::AtomChange(nodes::AtomChange {
+        at: TexSymbolType::Operator(limits_placement),
+        inner: 
+            op_name
+            .chars()
+            .map(|c| ParseNode::Symbol(Symbol {
+                codepoint: c,
+                atom_type: TexSymbolType::Ordinary,
+            }))
+            .collect()
+        ,
+    })
 }
 
 /// Parses the input as a dimension, e.g. `1cm` or `-2pt or `3.5em`
@@ -842,6 +854,15 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"1\sqrt{\displaystyle s}1"));
     }
 
+    #[test]
+    fn snapshot_operator_name() {
+        // pass
+        insta::assert_debug_snapshot!(parse(r"\operatorname{cof}"));
+        insta::assert_debug_snapshot!(parse(r"\operatorname{a-m}"));
+        
+        // failure
+        insta::assert_debug_snapshot!(parse(r"\operatorname{\frac12}"));
+    }
 
     #[test]
     fn snapshot_primes() {

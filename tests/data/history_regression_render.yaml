@@ -385,6 +385,218 @@
               glyph_id: 1436
               scale: 21.333333333333333
       img_render_path: tests/data/imgs/ bigl( Bigl( biggl( -NgteRmph4sA.png
+"Operator name should behave like other operators - \\operatorname{pre-norm} (x+y)":
+  tex: "\\operatorname{pre-norm} (x+y)"
+  description: "Operators: Operator name should behave like other operators"
+  render:
+    Ok:
+      width: 139.9988210140555
+      height: 19.050667571524778
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 113
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 10.666667173306147
+                - 0.0
+              glyph_id: 115
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 17.77066751072804
+                - 0.0
+              glyph_id: 102
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 27.242667960623899
+                - 0.0
+              glyph_id: 46
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 34.34666829804579
+                - 0.0
+              glyph_id: 111
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 45.01333547135194
+                - 0.0
+              glyph_id: 112
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 55.68000264465808
+                - 0.0
+              glyph_id: 115
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 62.784002982079979
+                - 0.0
+              glyph_id: 110
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 79.38133710374435
+                - 0.0
+              glyph_id: 41
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 86.48533744116624
+                - 0.0
+              glyph_id: 2520
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 102.95941207254373
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 122.31348684071389
+                - 0.0
+              glyph_id: 2521
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 132.8948206766336
+                - 0.0
+              glyph_id: 42
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ operatorname{pre-no-Kh_n5p2JpYo.png"
+"Operator name should behave like other operators - \\operatorname{sin} x + \\operatorname{sin}(x+y) + a\\operatorname{sin} z":
+  tex: "\\operatorname{sin} x + \\operatorname{sin}(x+y) + a\\operatorname{sin} z"
+  description: "Operators: Operator name should behave like other operators"
+  render:
+    Ok:
+      width: 227.24978671388494
+      height: 18.474667544166246
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 116
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 8.298667060832182
+                - 0.0
+              glyph_id: 106
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 14.2293340091904
+                - 0.0
+              glyph_id: 111
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 28.451556738052106
+                - 0.0
+              glyph_id: 2520
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 44.9256313694296
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 64.27970613759976
+                - 0.0
+              glyph_id: 116
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 72.57837319843195
+                - 0.0
+              glyph_id: 106
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 78.50904014679017
+                - 0.0
+              glyph_id: 111
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 89.17570732009631
+                - 0.0
+              glyph_id: 41
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 96.2797076575182
+                - 0.0
+              glyph_id: 2520
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 112.7537822888957
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 132.10785705706588
+                - 0.0
+              glyph_id: 2521
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 142.68919089298559
+                - 0.0
+              glyph_id: 42
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 154.5339319711482
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 173.88800673931838
+                - 0.0
+              glyph_id: 2498
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 188.1528961368733
+                - 0.0
+              glyph_id: 116
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 196.45156319770548
+                - 0.0
+              glyph_id: 106
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 202.38223014606369
+                - 0.0
+              glyph_id: 111
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 216.60445287492539
+                - 0.0
+              glyph_id: 2522
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ operatorname{sin} x-bCn00mijGqQ.png"
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - (+2)":
   tex: (+2)
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"

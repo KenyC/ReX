@@ -26,6 +26,8 @@ pub enum PrimitiveControlSequence {
     SubStack(TexSymbolType),
     SymbolCommand(Symbol),
     StyleChange { family: Option<Family>, weight: Option<Weight>, takes_arg : bool },
+    /// Represents `\operatorname{..}` ; this puts the text in braces as mathrm and appropriately handles space around it.
+    OperatorName,
     BeginEnv,
     EndEnv,
     Left,
@@ -198,6 +200,9 @@ impl PrimitiveControlSequence {
             "Ker"     => Self::TextOperator("Ker", false),
             "ln"      => Self::TextOperator("ln", false),
             "log"     => Self::TextOperator("log", false),
+
+            // Custom operators
+            "operatorname" => Self::OperatorName,
 
             // Environment
             "begin" => Self::BeginEnv,

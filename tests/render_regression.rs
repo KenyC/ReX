@@ -172,7 +172,7 @@ macro_rules! function_name {
 fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDiffs<'a> {
     if old.len() != new.len() {
         eprintln!("Detected a change in the number of tests. Please be sure to run \
-               `cargo test --test {} -- --ignored` to update the test history.", function_name!(save_renders_to_history));
+               `cargo test --all-features -- {} --ignored` to update the test history.", function_name!(save_renders_to_history));
     }
 
     let mut diffs: Vec<(&'a Equation, &'a Equation)> = Vec::new();

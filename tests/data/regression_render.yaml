@@ -114,6 +114,12 @@ Operators:
     - \mathop{\mathrm{lim}}\limits_{x \to \infty}\mathop{\mathrm{lim}}\limits_{M \to \infty}
     - \mathop{\mathrm{lim\,sup}}\limits_{x \to \infty}\mathop{\mathrm{lim\,sup}}\limits_{M \to \infty}
 
+  - Description: Operator name should behave like other operators
+    Snippets:
+    - \operatorname{sin} x + \operatorname{sin}(x+y) + a\operatorname{sin} z
+    - \operatorname{pre-norm} (x+y)
+    
+
 Accents:
   - Description: should properly scale
     Snippets:
