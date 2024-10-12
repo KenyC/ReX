@@ -466,7 +466,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         },
                     }
                 },
-                TexToken::Argument(i) => return Err(ParseError::UnexpectedMacroArgument),
+                TexToken::Argument(_) => return Err(ParseError::UnexpectedMacroArgument),
             }
         }
 

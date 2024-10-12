@@ -24,10 +24,10 @@ use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::layout::{LayoutSettings, Style};
 use rex::raqote::RaqoteBackend;
 
-const LAYOUT_YAML: &str = "tests/data/layout.yaml";
-const LAYOUT_HTML: &str = "tests/out/layout.html";
+const REGRESSION_RENDER_YAML: &str = "tests/data/regression_render.yaml";
+const REGRESSION_RENDER_OUT_HTML: &str = "tests/out/regression_render.html";
 
-const HISTORY_META_FILE: &str = "tests/data/history.yaml";
+const HISTORY_META_FILE: &str = "tests/data/history_regression_render.yaml";
 const HISTORY_IMG_DIR:   &str = "tests/data/imgs/";
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -160,11 +160,19 @@ fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_r
 }
 
 
+macro_rules! function_name {
+    ($func:expr) => {{
+        // Force the function to be used so the compiler checks if it exists
+        let _ = $func as fn();
+        stringify!($func)
+    }};
+}
+
 
 fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDiffs<'a> {
     if old.len() != new.len() {
         eprintln!("Detected a change in the number of tests. Please be sure to run \
-               `cargo test --test layout -- --ignored` to update the test history.");
+               `cargo test --test {} -- --ignored` to update the test history.", function_name!(save_renders_to_history));
     }
 
     let mut diffs: Vec<(&'a Equation, &'a Equation)> = Vec::new();
@@ -195,7 +203,7 @@ fn render_regression() {
     let font_context = FontContext::new(&font);
 
     let img_dir = std::env::temp_dir();
-    let tests = collect_tests(LAYOUT_YAML);
+    let tests = collect_tests(REGRESSION_RENDER_YAML);
     let rendered = render_tests(&font_context, tests, img_dir.as_path());
     let history = load_history(HISTORY_META_FILE);
     let diff = equation_diffs(&history, &rendered);
@@ -203,12 +211,12 @@ fn render_regression() {
     if !diff.no_diff() {
         let diff_count = diff.diffs.len();
         let new_count  = diff.new_eqs.len();
-        common::report::write_diff(LAYOUT_HTML, diff);
+        common::report::write_diff(REGRESSION_RENDER_OUT_HTML, diff);
         panic!("Detected {} formula changes and {} new formulas. \
                 Please review the changes in `{}`",
                diff_count,
                new_count,
-               LAYOUT_HTML);
+               REGRESSION_RENDER_OUT_HTML);
     }
 }
 
@@ -235,7 +243,7 @@ fn save_renders_to_history() {
     }
 
     // Load the tests in yaml, and render it to bincode
-    let tests = collect_tests(LAYOUT_YAML);
+    let tests = collect_tests(REGRESSION_RENDER_YAML);
     let rendered = render_tests(&font_context, tests, img_dir);
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");

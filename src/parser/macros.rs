@@ -4,7 +4,6 @@ use crate::parser::error::ParseError;
 use crate::parser::textoken::TokenIterator;
 use crate::parser::tokens_as_string;
 
-use super::Parser;
 use super::{control_sequence::PrimitiveControlSequence, error::ParseResult, textoken::TexToken};
 
 
@@ -31,7 +30,7 @@ impl CommandCollection {
             .find(|command| command.name() == name)
     }
 
-
+    /// Parses the content of a TeX file composed of a series of `\newcommand{..}{..}` statements into a command collection
     pub fn parse(input : &str) -> ParseResult<Self> {
         let command_collection = CommandCollection::default();
         let token_iter = TokenIterator::new(input);
@@ -421,8 +420,6 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> ExpandedTokenIter<'a, I> {
 
 #[cfg(test)]
 mod tests {
-    use ttf_parser::UnicodeRanges;
-
     use crate::parser::textoken::TokenIterator;
 
     use super::*;
