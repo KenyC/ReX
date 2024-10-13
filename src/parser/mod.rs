@@ -373,6 +373,18 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 text,
                             }));
                         },
+                        Mbox => {
+                            let text_group = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
+                            let text = tokens_as_string(text_group.into_iter())?;
+                            // Maybe setting the style in this way is too crude
+                            results.push(ParseNode::Style(crate::layout::Style::Text));
+                            results.push(ParseNode::PlainText(PlainText {
+                                text,
+                            }));                            
+                        }
                         BeginEnv => {
                             let env_name_group = self.token_iter.capture_group().map_err(|e| match e {
                                 ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
@@ -758,6 +770,13 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\text{\{\}1}1}"));
         insta::assert_debug_snapshot!(parse(r"\text{}}"));
         insta::assert_debug_snapshot!(parse(r"\text{a{\}}}"));
+    }
+
+    #[test]
+    fn snapshot_mbox() {
+        insta::assert_debug_snapshot!(parse(r"\mbox{abc}"));
+        insta::assert_debug_snapshot!(parse(r"\mbox{}}"));
+        insta::assert_debug_snapshot!(parse(r"1^{\mbox{a}}"));
     }
 
     #[test]

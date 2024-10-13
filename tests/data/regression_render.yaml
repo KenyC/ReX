@@ -47,8 +47,14 @@ Text:
     Snippets:
       - \text{10 + 12}
       - \text{log-in}
+      - \mbox{log-in to}
       - \text{{}\{{}\}}
       - \text{a{\}}}
+
+  - Description: \text should adapt size in exponents but not \mbox
+    Snippets:
+      - \text{ab}^{\text{ab}}
+      - \text{ab}^{\mbox{ab}}
 
 Fractions:
   - Description: should properly scale

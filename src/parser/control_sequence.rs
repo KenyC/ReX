@@ -34,6 +34,9 @@ pub enum PrimitiveControlSequence {
     Middle,
     Right,
     Text,
+    /// The `\mbox` control sequence
+    /// This command is like `\text`, except it ignores font size changes in sub-/super-scripts, etc.
+    Mbox,
     /// An unsupported TeX control sequence.  
     ///
     /// Certain commands like `\label{..}` or `\nonumber` make sense in the context of a larger document but not in ReX, which renders simple formula. 
@@ -155,7 +158,9 @@ impl PrimitiveControlSequence {
             "displaystyle"      => Self::StyleCommand(LayoutStyle::Display),
             "scriptstyle"       => Self::StyleCommand(LayoutStyle::Script),
             "scriptscriptstyle" => Self::StyleCommand(LayoutStyle::ScriptScript),
+
             "text"              => Self::Text,
+            "mbox"              => Self::Mbox,
 
             // Atom-type changes
             "mathop"  => Self::AtomChange(TexSymbolType::Operator(false)),
@@ -321,6 +326,10 @@ impl PrimitiveControlSequence {
 
             // Custom operators
             "operatorname" => 1,
+
+            // Text
+            "text" => 1,
+            "mbox" => 1,
 
             // unsupported
             "label"    => 1,

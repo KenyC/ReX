@@ -121,7 +121,6 @@ fn must_apply_italic_correction_before(node: &ParseNode) -> bool {
     true
 }
 
-// TODO: this should return layout result
 fn layout_node<'a, 'f: 'a, F : MathFont>(node: &ParseNode, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<Layout<'f, F>> {
     let mut layout = Layout::new();
     layout.dispatch(config, node, TexSymbolType::Transparent)?;
