@@ -34,6 +34,11 @@ pub enum PrimitiveControlSequence {
     Middle,
     Right,
     Text,
+    /// An unsupported TeX control sequence.  
+    ///
+    /// Certain commands like `\label{..}` or `\nonumber` make sense in the context of a larger document but not in ReX, which renders simple formula. 
+    /// Our policy is to accept these commands but compile them to nothing
+    Unsupported,
 }
 
 
@@ -217,6 +222,10 @@ impl PrimitiveControlSequence {
             "limits"   => Self::Limits(true),
             "nolimits" => Self::Limits(false),
 
+            // unsupported
+              "label"  
+            | "nonumber" => Self::Unsupported,
+
             _ => return None
         })
     }
@@ -309,6 +318,13 @@ impl PrimitiveControlSequence {
             "Ker"     => 0,
             "ln"      => 0,
             "log"     => 0,
+
+            // Custom operators
+            "operatorname" => 1,
+
+            // unsupported
+            "label"    => 1,
+            "nonumber" => 0,
 
             _ => return None
         })

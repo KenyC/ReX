@@ -440,6 +440,13 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         Right => {
                             return Ok(List { nodes: results, group: GroupKind::RightDelimiter });
                         },
+                        Unsupported => {
+                            let n_args = PrimitiveControlSequence::n_args(control_sequence_name).unwrap_or(0);
+                            // Parse number of args and do nothing with it
+                            for _ in 0 .. n_args {
+                                self.parse_required_argument_as_nodes()?;
+                            }
+                        }
                         SymbolCommand(mut symbol) => {
                             match symbol.atom_type {
                                   TexSymbolType::Accent 
@@ -856,7 +863,7 @@ mod tests {
 
     #[test]
     fn snapshot_operator_name() {
-        // pass
+        // success
         insta::assert_debug_snapshot!(parse(r"\operatorname{cof}"));
         insta::assert_debug_snapshot!(parse(r"\operatorname{a-m}"));
         
@@ -912,5 +919,12 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\~o"));
         insta::assert_debug_snapshot!(parse(r"\.o"));
         insta::assert_debug_snapshot!(parse(r"\overbrace{1}"));
+    }
+
+
+    #[test]
+    fn snapshot_unsupported() {
+        insta::assert_debug_snapshot!(parse(r"\nonumber{1}"));
+        insta::assert_debug_snapshot!(parse(r"\label{bla}p"));
     }
 }
