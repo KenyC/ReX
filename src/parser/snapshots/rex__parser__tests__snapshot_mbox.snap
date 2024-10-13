@@ -4,13 +4,17 @@ expression: "parse(r\"\\mbox{abc}\")"
 ---
 Ok(
     [
-        Style(
-            Text,
-        ),
-        PlainText(
-            PlainText {
-                text: "abc",
-            },
+        Group(
+            [
+                Style(
+                    Text,
+                ),
+                PlainText(
+                    PlainText {
+                        text: "abc",
+                    },
+                ),
+            ],
         ),
     ],
 )

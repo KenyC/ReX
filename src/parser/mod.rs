@@ -379,11 +379,14 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 _ => e,
                             })?;
                             let text = tokens_as_string(text_group.into_iter())?;
+                            // We create a group so as to scope the style change only to the \mbox not to later nodes
                             // Maybe setting the style in this way is too crude
-                            results.push(ParseNode::Style(crate::layout::Style::Text));
-                            results.push(ParseNode::PlainText(PlainText {
+                            let mut nodes = Vec::with_capacity(2);
+                            nodes.push(ParseNode::Style(crate::layout::Style::Text));
+                            nodes.push(ParseNode::PlainText(PlainText {
                                 text,
-                            }));                            
+                            })); 
+                            results.push(ParseNode::Group(nodes));
                         }
                         BeginEnv => {
                             let env_name_group = self.token_iter.capture_group().map_err(|e| match e {

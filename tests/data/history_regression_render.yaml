@@ -385,6 +385,46 @@
               glyph_id: 1436
               scale: 21.333333333333333
       img_render_path: tests/data/imgs/ bigl( Bigl( biggl( -NgteRmph4sA.png
+"In superscripts, \\mbox should not affect font size beyond its exponent. - 1^{2\\mbox{ab}2}":
+  tex: "1^{2\\mbox{ab}2}"
+  description: "Text: In superscripts, \\mbox should not affect font size beyond its exponent."
+  render:
+    Ok:
+      width: 46.80533555646737
+      height: 23.104001097381116
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 10.666667173306147
+                - -8.533333738644919
+              glyph_id: 51
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 18.666667553285757
+                - -8.533333738644919
+              glyph_id: 98
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 28.138668003181615
+                - -8.533333738644919
+              glyph_id: 99
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 38.80533517648776
+                - -8.533333738644919
+              glyph_id: 51
+              scale: 16.0
+      img_render_path: "tests/data/imgs/1^{2 mbox{ab}2}-__LPknftrew.png"
 "Operator name should behave like other operators - \\operatorname{pre-norm} (x+y)":
   tex: "\\operatorname{pre-norm} (x+y)"
   description: "Operators: Operator name should behave like other operators"
@@ -861,6 +901,64 @@
               glyph_id: 47
               scale: 21.333333333333333
       img_render_path: tests/data/imgs/1- -PIIAvduZMbs.png
+"Spaces should render, dash should be dashes - \\mbox{log-in to}":
+  tex: "\\mbox{log-in to}"
+  description: "Text: Spaces should render, dash should be dashes"
+  render:
+    Ok:
+      width: 72.30341061646188
+      height: 19.221334246297677
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 109
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 5.930666948358217
+                - 0.0
+              glyph_id: 112
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 16.597334121664365
+                - 0.0
+              glyph_id: 104
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 27.264001294970514
+                - 0.0
+              glyph_id: 46
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 34.36800163239241
+                - 0.0
+              glyph_id: 106
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 40.29866858075062
+                - 0.0
+              glyph_id: 111
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 55.70607649479751
+                - 0.0
+              glyph_id: 117
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 61.63674344315572
+                - 0.0
+              glyph_id: 112
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ mbox{log-in to}-Vwsc3BdRqbA.png"
 "Spaces should render, dash should be dashes - \\text{10 + 12}":
   tex: "\\text{10 + 12}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -1731,6 +1829,74 @@
               glyph_id: 47
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ begin{aligned} cos(-PJvF73j5Hws.png"
+"\\text should adapt size in exponents but not \\mbox - \\text{ab}^{\\mbox{ab}}":
+  tex: "\\text{ab}^{\\mbox{ab}}"
+  description: "Text: \\text should adapt size in exponents but not \\mbox"
+  render:
+    Ok:
+      width: 40.27733524640401
+      height: 23.317334440847238
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 98
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 9.472000449895859
+                - 0.0
+              glyph_id: 99
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 20.138667623202005
+                - -8.533333738644919
+              glyph_id: 98
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 29.610668073097864
+                - -8.533333738644919
+              glyph_id: 99
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/ text{ab}^{ mbox{ab}-aPlIzvd66wo.png"
+"\\text should adapt size in exponents but not \\mbox - \\text{ab}^{\\text{ab}}":
+  tex: "\\text{ab}^{\\text{ab}}"
+  description: "Text: \\text should adapt size in exponents but not \\mbox"
+  render:
+    Ok:
+      width: 35.24266834060351
+      height: 19.674667601163188
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 98
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 9.472000449895859
+                - 0.0
+              glyph_id: 99
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 20.138667623202005
+                - -8.533333738644917
+              glyph_id: 98
+              scale: 16.0
+          - Symbol:
+              pos:
+                - 27.242667960623899
+                - -8.533333738644917
+              glyph_id: 99
+              scale: 16.0
+      img_render_path: "tests/data/imgs/ text{ab}^{ text{ab}-cfVIzvd68g0.png"
 "array cells should be in textstyle (i.e. limits as subscripts/superscripts) - \\begin{array}{c} \\int_0^1 \\end{array}":
   tex: "\\begin{array}{c} \\int_0^1 \\end{array}"
   description: "Arrays: array cells should be in textstyle (i.e. limits as subscripts/superscripts)"

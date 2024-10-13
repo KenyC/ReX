@@ -16,13 +16,17 @@ Ok(
                 ),
                 superscript: Some(
                     [
-                        Style(
-                            Text,
-                        ),
-                        PlainText(
-                            PlainText {
-                                text: "a",
-                            },
+                        Group(
+                            [
+                                Style(
+                                    Text,
+                                ),
+                                PlainText(
+                                    PlainText {
+                                        text: "a",
+                                    },
+                                ),
+                            ],
                         ),
                     ],
                 ),

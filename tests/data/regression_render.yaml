@@ -56,6 +56,10 @@ Text:
       - \text{ab}^{\text{ab}}
       - \text{ab}^{\mbox{ab}}
 
+  - Description: In superscripts, \mbox should not affect font size beyond its exponent.
+    Snippets:
+      - 1^{2\mbox{ab}2}
+
 Fractions:
   - Description: should properly scale
     Snippets:
