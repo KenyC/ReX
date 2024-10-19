@@ -2551,6 +2551,120 @@
               glyph_id: 2498
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/a mathrel{a}a  aaa-DKsFkJGvmNA.png"
+"basic underline and overline over various unicodecdots - 1\\underline{a} + 1":
+  tex: "1\\underline{a} + 1"
+  description: "FontEffects: basic underline and overline over various unicodecdots"
+  render:
+    Ok:
+      width: 51.39674295678182
+      height: 21.461334352691968
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 10.666667173306147
+                - 0.0
+              glyph_id: 2498
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 10.666667173306147
+                - 4.224000200629234
+              width: 10.70933384199937
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 21.37600101530552
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 40.73007578347568
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/1 underline{a} + 1-tynLejxJTTk.png"
+"basic underline and overline over various unicodecdots - \\frac{\\underline{f}}{\\underline{g}}":
+  tex: "\\frac{\\underline{f}}{\\underline{g}}"
+  description: "FontEffects: basic underline and overline over various unicodecdots"
+  render:
+    Ok:
+      width: 16.10666722903649
+      height: 53.52533587565024
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 2.1333333333333335
+                - -17.301334155102567
+              glyph_id: 2503
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 2.1333333333333335
+                - -13.077333954473332
+              width: 11.840000562369824
+              height: 1.4080000668764115
+          - Rule:
+              pos:
+                - 2.1333333333333335
+                - -6.037333620091278
+              width: 11.840000562369824
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 2.8053333652516208
+                - 14.933334042628605
+              glyph_id: 2504
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 2.8053333652516208
+                - 19.15733424325784
+              width: 10.496000498533249
+              height: 1.4080000668764115
+      img_render_path: "tests/data/imgs/ frac{ underline{f}}-IPy5Rk51o1A.png"
+"basic underline and overline over various unicodecdots - \\underline{abc}":
+  tex: "\\underline{abc}"
+  description: "FontEffects: basic underline and overline over various unicodecdots"
+  render:
+    Ok:
+      width: 29.58933473875125
+      height: 21.290667677919069
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 1.7763568394002506e-15
+              glyph_id: 2498
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 10.70933384199937
+                - 1.7763568394002506e-15
+              glyph_id: 2499
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 20.73600098490715
+                - 1.7763568394002506e-15
+              glyph_id: 2500
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 0.0
+                - 4.224000200629236
+              width: 29.58933473875125
+              height: 1.4080000668764115
+      img_render_path: "tests/data/imgs/ underline{abc}-xgXNbZMbXRg.png"
 "color should be transparent to atom spacing - 1\\red{<}+2":
   tex: "1\\red{<}+2"
   description: "Spacing: color should be transparent to atom spacing"
