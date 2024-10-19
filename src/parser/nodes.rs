@@ -32,6 +32,8 @@ pub enum ParseNode {
     Accent(Accent),
     /// A style (text cramped) to apply over a certain group of nodes
     Style(Style),
+    /// Underline and overlines
+    FontEffect(FontEffect),
     /// A span of normal text without special math symbol replacement, spacing, etc.
     PlainText(PlainText),
     /// A change in the type of atoms
@@ -262,6 +264,12 @@ pub struct Rule {
     //pub depth:  Unit,
 }
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct FontEffect {
+    /// Nodes to be underlined
+    pub inner : Vec<ParseNode>,
+}
+
 /// Cf [`ParseNode::Radical`]
 #[derive(Debug, PartialEq, Clone)]
 pub struct Radical {
@@ -373,6 +381,7 @@ impl ParseNode {
                 .unwrap_or(TexSymbolType::Alpha),
 
             ParseNode::Style(_)         => TexSymbolType::Transparent,
+            ParseNode::FontEffect(_)    => TexSymbolType::Under,
             ParseNode::AtomChange(ref ac) => ac.at,
             ParseNode::Color(ref clr)     => clr.inner.first()
                 .map(|first| first.atom_type())

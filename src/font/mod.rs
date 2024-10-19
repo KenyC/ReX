@@ -144,6 +144,10 @@ pub struct Constants {
     pub delimiter_short_fall: Unit<Em>,
     pub null_delimiter_space: Unit<Em>,
 
+    pub underbar_vertical_gap: Unit<Em>,
+    pub underbar_rule_thickness: Unit<Em>,
+    pub underbar_extra_descender: Unit<Em>,
+
     pub script_percent_scale_down: f64,
     pub script_script_percent_scale_down: f64,
 }

@@ -19,7 +19,7 @@ use crate::font::{
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::Scaled;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
+use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, FontEffect, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
 use crate::parser::symbols::Symbol;
 use crate::dimensions::Unit;
 use crate::dimensions::units::Px;
@@ -152,6 +152,7 @@ impl<'f, F : MathFont> Layout<'f, F> {
             }
 
             ParseNode::DummyNode(_) => (),
+            ParseNode::FontEffect(FontEffect { inner: ref children }) => self.underline(layout(children, config)?.as_node(), config),
 
             ParseNode::PlainText(PlainText {ref text}) => {
                 for character in text.chars() {
@@ -178,6 +179,22 @@ impl<'f, F : MathFont> Layout<'f, F> {
             _ => config.ctx.glyph(sym.codepoint)?.as_layout(config)
         }
     }
+
+    /// Adds an underline below a node
+    fn underline<'a>(&mut self, node: LayoutNode<'f, F>, config : LayoutSettings<'a, 'f, F>) {
+        let width = node.width;
+        let clearance       = config.ctx.constants.underbar_vertical_gap    * config.font_size;
+        let thick           = config.ctx.constants.underbar_rule_thickness  * config.font_size;
+        let extra_descender = config.ctx.constants.underbar_extra_descender * config.font_size;
+        let mut vbox = builders::VBox::new();
+        vbox.add_node(node);
+        vbox.add_node(kern!(vert: clearance));
+        vbox.add_node(rule!(width: width, height: thick));
+        vbox.add_node(kern!(vert: extra_descender));
+        vbox.set_offset(clearance + thick + extra_descender);
+        self.add_node(vbox.build());
+    }
+
 
     fn largeop<'a>(&self, sym: Symbol, config: LayoutSettings<'a, 'f, F>) -> LayoutResult<LayoutNode<'f, F>> {
         let glyph = config.ctx.glyph(sym.codepoint)?;

@@ -250,6 +250,12 @@ Aligned:
       - \begin{aligned} 1&=1\\ 1=&1 \\ 1={}&1\end{aligned}
 
 
+FontEffects:
+  - Description: basic underline and overline over various unicodecdots
+    Snippets:
+      - \underline{abc}
+      - \frac{\underline{f}}{\underline{g}}
+      - 1\underline{a} + 1
 
 Arrays:
   - Description: substack

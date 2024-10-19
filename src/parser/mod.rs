@@ -306,6 +306,12 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                                 at, inner,
                             }));
                         },
+                        Underline => {
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
+                            results.push(ParseNode::FontEffect(nodes::FontEffect {
+                                inner,
+                            }));
+                        },
                         TextOperator(op_name, limits_placement) => {
                             results.push(make_operator(op_name, limits_placement));
                         },
@@ -948,5 +954,10 @@ mod tests {
     fn snapshot_unsupported() {
         insta::assert_debug_snapshot!(parse(r"\nonumber{1}"));
         insta::assert_debug_snapshot!(parse(r"\label{bla}p"));
+    }
+
+    #[test]
+    fn snapshot_underline() {
+        insta::assert_debug_snapshot!(parse(r"\underline{abc}"));
     }
 }

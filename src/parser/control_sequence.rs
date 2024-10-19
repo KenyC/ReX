@@ -28,6 +28,8 @@ pub enum PrimitiveControlSequence {
     StyleChange { family: Option<Family>, weight: Option<Weight>, takes_arg : bool },
     /// Represents `\operatorname{..}` ; this puts the text in braces as mathrm and appropriately handles space around it.
     OperatorName,
+    /// Underline `\underline{..}` ; creates a horizontal bar below box
+    Underline,
     BeginEnv,
     EndEnv,
     Left,
@@ -150,7 +152,8 @@ impl PrimitiveControlSequence {
             "quad"  => Self::Kerning(SpaceKind::QuadSpace.size()),
             "qquad" => Self::Kerning(SpaceKind::DoubleQuadSpace.size()),
 
-            "rule"  => Self::Rule,
+            "rule"       => Self::Rule,
+            "underline"  => Self::Underline,
 
 
             // Display style changes
@@ -328,6 +331,7 @@ impl PrimitiveControlSequence {
             "operatorname" => 1,
 
             // Text
+            "underline" => 1,
             "text" => 1,
             "mbox" => 1,
 

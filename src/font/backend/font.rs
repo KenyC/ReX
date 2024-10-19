@@ -152,6 +152,10 @@ impl MathFont for OpenTypeFont {
 
             script_percent_scale_down: 0.01 * f64::from(math_constants.script_percent_scale_down),
             script_script_percent_scale_down: 0.01 * f64::from(math_constants.script_script_percent_scale_down),
+            
+            underbar_vertical_gap:    em(math_constants.underbar_vertical_gap.value.into()),
+            underbar_rule_thickness:  em(math_constants.underbar_rule_thickness.value.into()),
+            underbar_extra_descender: em(math_constants.underbar_extra_descender.value.into()),
         }
     }
 
