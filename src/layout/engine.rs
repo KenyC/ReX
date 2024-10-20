@@ -183,15 +183,16 @@ impl<'f, F : MathFont> Layout<'f, F> {
     /// Adds an underline below a node
     fn underline<'a>(&mut self, node: LayoutNode<'f, F>, config : LayoutSettings<'a, 'f, F>) {
         let width = node.width;
+        let depth = node.depth;
         let clearance       = config.ctx.constants.underbar_vertical_gap    * config.font_size;
         let thick           = config.ctx.constants.underbar_rule_thickness  * config.font_size;
         let extra_descender = config.ctx.constants.underbar_extra_descender * config.font_size;
         let mut vbox = builders::VBox::new();
         vbox.add_node(node);
-        vbox.add_node(kern!(vert: clearance));
+        vbox.add_node(kern!(vert: clearance - depth));
         vbox.add_node(rule!(width: width, height: thick));
         vbox.add_node(kern!(vert: extra_descender));
-        vbox.set_offset(clearance + thick + extra_descender);
+        vbox.set_offset(clearance - depth + thick + extra_descender);
         self.add_node(vbox.build());
     }
 
