@@ -21,7 +21,7 @@ use pathfinder_geometry::{
 };
 use pathfinder_color::ColorU;
 use super::{Backend, Cursor, Role};
-use crate::{error::FontError, font::common::GlyphId, GraphicsBackend, FontBackend};
+use crate::{font::common::GlyphId, GraphicsBackend, FontBackend};
 use crate::parser::color::RGBA;
 
 fn v_cursor(c: Cursor) -> Vector2F {
@@ -107,32 +107,5 @@ impl<'a> GraphicsBackend for SceneWrapper<'a> {
     }
 }
 
-use super::Renderer;
-use crate::font::FontContext;
-use crate::layout::LayoutSettings;
-use pathfinder_export::{Export, FileFormat};
 
 
-/// Returns the SVG for the given formula, given a font file and a TeX formula.
-#[cfg(feature="fontrs-fontparser")]
-pub fn svg(font: &[u8], tex: &str) -> Result<Vec<u8>, FontError> {
-    use crate::layout::LayoutDimensions;
-
-    // TODO : remove '.unwrap()' 
-    let font = OpenTypeFont::parse(font).unwrap();
-    let ctx = FontContext::new(&font);
-    let mut renderer = Renderer::new();
-    renderer.debug = true;
-    let layout_settings = LayoutSettings::new(&ctx).font_size(10.0);
-    let layout = renderer.layout(tex, layout_settings).unwrap();
-    let LayoutDimensions { width, height, depth } = layout.size();
-
-    let mut scene = Scene::new();
-    scene.set_view_box(RectF::from_points(v_xy(0., depth), v_xy(width, height)));
-    let mut backend = SceneWrapper::new(&mut scene);
-    renderer.render(&layout, &mut backend);
-
-    let mut buf = Vec::new();
-    scene.export(&mut buf, FileFormat::SVG).unwrap();
-    Ok(buf)
-}

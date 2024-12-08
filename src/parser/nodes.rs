@@ -264,6 +264,7 @@ pub struct Rule {
     //pub depth:  Unit,
 }
 
+/// A font effect. Currently, simply means that that the nodes will be underlined
 #[derive(Clone, PartialEq, Debug)]
 pub struct FontEffect {
     /// Nodes to be underlined

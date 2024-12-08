@@ -28,7 +28,8 @@ use crate::error::Error;
 use crate::dimensions::units::Px;
 use crate::font::MathFont;
 use crate::font::common::GlyphId;
-use crate::layout::{LayoutNode, LayoutVariant, Alignment, LayoutSettings, Layout, Grid};
+use crate::layout::engine::LayoutBuilder;
+use crate::layout::{LayoutNode, LayoutVariant, Alignment, Layout, Grid};
 pub use crate::parser::color::RGBA;
 
 /// Context used for rendering.
@@ -140,12 +141,11 @@ impl Renderer {
     }
 
     /// Parses and lays out the given string
-    pub fn layout<'a, 'f, F : MathFont>(&self, tex: &str, layout_settings: LayoutSettings<'a, 'f, F>) -> Result<Layout<'f, F>, Error> {
+    pub fn layout<'f, F : MathFont>(&self, tex: &str, font: & 'f F) -> Result<Layout<'f, F>, Error> {
         use crate::parser::parse;
-        use crate::layout::engine::layout;
 
         let mut parse = parse(tex)?;
-        Ok(layout(&mut parse, layout_settings)?)
+        Ok(LayoutBuilder::new(font).layout(&mut parse)?)
     }
 
     /// Renders the given layout onto `out`, the provided backend.

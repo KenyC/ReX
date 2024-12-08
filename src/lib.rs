@@ -207,20 +207,20 @@ pub mod render;
 
 pub mod font;
 
-use font::{FontContext, MathFont};
+use font::MathFont;
+use layout::engine::LayoutBuilder;
 pub use render::*;
 
-use crate::{layout::LayoutSettings, parser::parse};
+use crate::parser::parse;
 
 
 /// Render a LateX formula to a given a surface `backend`, given a math font provided by `font_context`.
-pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, font_context: &FontContext<'_, F>) -> Result<(), crate::error::Error> {
+pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, font: &F) -> Result<(), crate::error::Error> {
     let parse_nodes = parse(formula)?;
 
-    let layout_settings = LayoutSettings::new(font_context);
 
 
-    let layout = crate::layout::engine::layout(&parse_nodes, layout_settings)?;
+    let layout = LayoutBuilder::new(font).layout(&parse_nodes)?;
 
 
     let renderer = Renderer::new();
@@ -230,7 +230,7 @@ pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, fo
 
 #[cfg(test)]
 mod tests {
-    use crate::{parser::parse, font::{FontContext, backend::ttf_parser::TtfMathFont}, layout::{LayoutSettings, engine}};
+    use crate::{font::backend::ttf_parser::TtfMathFont, layout::engine::{self, LayoutBuilder}, parser::parse};
 
     const GARAMOND_MATH_FONT : &[u8] = include_bytes!("../resources/Garamond_Math.otf");
 
@@ -242,9 +242,8 @@ mod tests {
     fn all_alphanumeric_style_combinations_must_work() {
         let font = ttf_parser::Face::parse(GARAMOND_MATH_FONT, 0).unwrap();
         let font = TtfMathFont::new(font).unwrap();
-        let ctx = FontContext::new(&font);
 
-        let layout_settings = LayoutSettings::new(&ctx).font_size(10.0);
+        let layout_engine = LayoutBuilder::new(&font).font_size(10.0).build();
 
         let alphanumeric : Vec<_> =
             (0 .. 0x7F)
@@ -272,7 +271,7 @@ mod tests {
 
                 println!("{}", formula);
                 let parse_nodes = parse(&formula).unwrap();
-                engine::layout(&parse_nodes, layout_settings).unwrap();
+                layout_engine.layout(&parse_nodes).unwrap();
             }
         }
     }

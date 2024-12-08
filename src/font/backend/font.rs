@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use font::opentype::OpenTypeFont;
 
-use crate::font::{Constants, Glyph};
+use crate::font::{FontConstants, Glyph};
 use crate::font::common::VariantGlyph;
 
 use crate::{font::common::GlyphId};
@@ -31,7 +31,7 @@ impl MathFont for OpenTypeFont {
         let hmetrics = font.glyph_metrics(gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let italics = self.italics(gid);
         let attachment = self.attachment(gid);
-        let glyph = font.glyph(gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
+        let glyph = FontTrait::glyph(self, gid.into()).ok_or(FontError::MissingGlyphGID(gid))?;
         let bbox = glyph.path.bounds();
         let ll = bbox.lower_left();
         let ur = bbox.upper_right();
@@ -92,7 +92,7 @@ impl MathFont for OpenTypeFont {
             .unwrap_or_default()
     }
 
-    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> Constants {
+    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> FontConstants {
         let em = |v: f64| -> Unit<Em> { Unit::<FUnit>::new(v) * font_units_to_em };
 
         let math_constants = &self
@@ -101,7 +101,7 @@ impl MathFont for OpenTypeFont {
             .unwrap()
             .constants
         ;
-        Constants {
+        FontConstants {
             subscript_shift_down: em(math_constants.subscript_top_max.value.into()),
             subscript_top_max: em(math_constants.subscript_top_max.value.into()),
             subscript_baseline_drop_min: em(math_constants.subscript_baseline_drop_min.value.into()),

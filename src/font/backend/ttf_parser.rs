@@ -3,7 +3,7 @@ use std::convert::TryInto;
 
 use ttf_parser::{math::GlyphPart, LazyArray16};
 
-use crate::{font::{Constants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, error::FontError, dimensions::units::Ratio};
+use crate::{font::{FontConstants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, error::FontError, dimensions::units::Ratio};
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FUnit};
 
@@ -73,13 +73,13 @@ impl<'a> TtfMathFont<'a> {
         Some(value)
     }
 
-    fn safe_constants(&self, font_units_to_em : Unit<Ratio<Em, FUnit>>) -> Option<Constants> {
+    fn safe_constants(&self, font_units_to_em : Unit<Ratio<Em, FUnit>>) -> Option<FontConstants> {
         // perhaps cache : GlyphInfo table
         let math_constants = self.math.constants?;
         let em = |v: f64| -> Unit<Em> { Unit::<FUnit>::new(v) * font_units_to_em };
 
 
-        Some(Constants {
+        Some(FontConstants {
             subscript_shift_down:        em(math_constants.subscript_top_max().value.into()),
             subscript_top_max:           em(math_constants.subscript_top_max().value.into()),
             subscript_baseline_drop_min: em(math_constants.subscript_baseline_drop_min().value.into()),
@@ -150,7 +150,7 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         self.safe_attachment(glyph_id).unwrap_or_default()
     }
 
-    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> Constants {
+    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> FontConstants {
         self.safe_constants(font_units_to_em).unwrap()
     }
 

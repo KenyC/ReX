@@ -24,13 +24,15 @@ pub mod spacing;
 pub mod constants;
 
 use crate::font::common::GlyphId;
+use crate::font::FontMetricsCache;
 use crate::parser::color::RGBA;
-use crate::font::FontContext;
 use std::ops::Deref;
 use std::fmt;
 use std::collections::BTreeMap;
 use crate::dimensions::Unit;
-use crate::dimensions::units::{Px, Em, FontSize, Ratio};
+use crate::dimensions::units::{Px, Em};
+
+
 
 /// Contains a set of [`LayoutNode`s](crate::layout::LayoutNode) that defines the position of glyphs and rules (i.e. filled rectangles) and certain measurements useful for rendering.
 /// It serves as input to [`Renderer::render`](crate::render::Renderer::render).
@@ -593,12 +595,12 @@ impl Style {
         }
     }
 
-    fn sup_shift_up<F>(self, config: LayoutSettings<F>) -> Unit<Em> {
+    fn sup_shift_up<F>(self, font_metrics_cache: &FontMetricsCache) -> Unit<Em> {
         match self {
             Style::Display | Style::Text | Style::Script | Style::ScriptScript => {
-                config.ctx.constants.superscript_shift_up
+                font_metrics_cache.constants().superscript_shift_up
             }
-            _ => config.ctx.constants.superscript_shift_up_cramped
+            _ => font_metrics_cache.constants().superscript_shift_up_cramped
         }
     }
 
@@ -626,113 +628,11 @@ impl Style {
 }
 
 
-// NOTE: A limitation on derive(Clone) forces us to implement clone ourselves.
-// cf discussion here: https://stegosaurusdormant.com/understanding-derive-clone/
-/// Defines the math font to use, the desired font size and whether to use Roman or Italic or various other scripts
-pub struct LayoutSettings<'a, 'f, F> {
-    /// Maths font
-    pub ctx: &'a FontContext<'f, F>,
-    /// Sizes of glyphs : normal, subscript size, superscript size
-    pub style: Style,
-    /// Font size in pixels per em (this is private: all user-facing interfaces should use a more conventional pt . em-1 unit)
-    font_size: Unit<Ratio<Px, Em>>,
-}
 
-
-impl<'a, 'f, F> Clone for LayoutSettings<'a, 'f, F> {
-    fn clone(&self) -> Self {
-        Self {
-            ctx :       self.ctx,
-            font_size : self.font_size,
-            style :     self.style.clone(),
-        }
-    }
-}
-impl<'a, 'f, F> Copy for LayoutSettings<'a, 'f, F> {}
-
-
-
-
-impl<'a, 'f, F> LayoutSettings<'a, 'f, F> {
-    /// Default font size used when none is provided: 12 pt.em-1
-    pub const DEFAULT_FONT_SIZE : Unit<FontSize> = Unit::new(12.);
-
-    /// Creates a new LayoutSettings
-    pub fn new(ctx: &'a FontContext<'f, F>) -> Self {
-        LayoutSettings {
-            ctx,
-            font_size: Self::DEFAULT_FONT_SIZE * Unit::standard_pt_to_px().lift(),
-            style : Style::default(),
-        }
-    }
-
-    /// Sets starting font size for layout, unit is pt / em.  
-    /// See module [`rex::dimensions::units`](crate::dimensions::units) for an explanation of the different dimensions used in font rendering.
-    pub fn font_size(mut self, font_size: f64) -> Self {
-        self.font_size = Unit::<FontSize>::new(font_size) * Unit::standard_pt_to_px().lift();
-        self
-    }
-
-    /// Sets the starting style of the layout (e.g. text style, display style). Cf [`Style`] for explanation of what a style is.
-    pub fn layout_style(mut self, style : Style) -> Self {
-        self.style = style;
-        self
-    }
-
-
-    fn cramped(self) -> Self {
-        LayoutSettings {
-            style: self.style.cramped(),
-            ..self
-        }
-    }
-
-    fn superscript_variant(self) -> Self {
-        LayoutSettings {
-            style: self.style.superscript_variant(),
-            ..self
-        }
-    }
-
-    fn subscript_variant(self) -> Self {
-        LayoutSettings {
-            style: self.style.subscript_variant(),
-            ..self
-        }
-    }
-
-    fn numerator(self) -> Self {
-        LayoutSettings {
-            style: self.style.numerator(),
-            ..self
-        }
-    }
-
-    fn denominator(self) -> Self {
-        LayoutSettings {
-            style: self.style.denominator(),
-            ..self
-        }
-    }
-
-    fn with_display(self) -> Self {
-        LayoutSettings {
-            style: Style::Display,
-            ..self
-        }
-    }
-
-    fn with_text(self) -> Self {
-        LayoutSettings {
-            style: Style::Text,
-            ..self
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use crate::{dimensions::{Unit, units::{FUnit, Ratio, FontSize, Px, Em}}, parser::parse, font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{LayoutSettings, engine::layout}};
+    use crate::{dimensions::{units::{Em, FUnit, FontSize, Px, Ratio}, Unit}, font::backend::ttf_parser::TtfMathFont, layout::{engine::LayoutBuilder, Style}, parser::parse};
 
 
     #[test]
@@ -750,12 +650,15 @@ mod tests {
         let nodes = parse("1").unwrap();
         let font = ttf_parser::Face::parse(XITS_FONT_BYTES, 0).unwrap();
         let font = TtfMathFont::new(font).unwrap();
-        let ctx = FontContext::new(&font);
 
         // 10pt layout
         let font_size = Unit::<FontSize>::new(10.);
-        let config = LayoutSettings::new(&ctx).font_size(font_size.unitless(FontSize::new()));
-        let result_layout = layout(&nodes, config).unwrap();
+        let result_layout = 
+            LayoutBuilder::new(&font)
+            .font_size(font_size.unitless(FontSize::new()))
+            .style(Style::Display)
+            .layout(&nodes)
+            .unwrap();
         let height = Unit::<Px>::new(result_layout.size().height);
         assert_close!(
             height, 
@@ -765,8 +668,12 @@ mod tests {
 
         // 12pt layout
         let font_size = Unit::<FontSize>::new(12.);
-        let config = LayoutSettings::new(&ctx).font_size(font_size.unitless(FontSize::new()));
-        let result_layout = layout(&nodes, config).unwrap();
+        let result_layout = 
+            LayoutBuilder::new(&font)
+            .font_size(font_size.unitless(FontSize::new()))
+            .style(Style::Display)
+            .layout(&nodes)
+            .unwrap();
         let height = Unit::<Px>::new(result_layout.size().height);
         assert_close!(
             height, 

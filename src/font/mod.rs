@@ -19,7 +19,7 @@ pub use style::style_symbol;
 
 pub use crate::font::common::{Direction, VariantGlyph};
 
-use crate::{font::common::GlyphId};
+use crate::font::common::GlyphId;
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FUnit, Ratio};
 use crate::error::FontError;
@@ -34,70 +34,60 @@ pub trait MathFont : Sized {
 
     fn italics(&self, glyph_id : GlyphId) -> i16;
     fn attachment(&self, glyph_id : GlyphId) -> i16; 
-    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> Constants;
+    fn constants(&self, font_units_to_em: Unit<Ratio<Em, FUnit>>) -> FontConstants;
     fn font_units_to_em(&self) -> Unit<Ratio<Em, FUnit>>;
 
 
     fn horz_variant(&self, gid: GlyphId, width: Unit<FUnit>)  -> VariantGlyph;
-    // TODO : there seems to be a problem in "qc.rs" 
-    // the } before "wat?" is too short for the last 2 fonts but not the first
-    // maybe this is a problem, maybe this is meant to be
     fn vert_variant(&self, gid: GlyphId, height: Unit<FUnit>) -> VariantGlyph;
+
+    fn glyph<'f>(& 'f self, codepoint: char) -> Result<Glyph<'f, Self>, FontError> {
+        let gid = self.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
+        self.glyph_from_gid(gid)
+    }
+
+
 }
 
-pub struct FontContext<'f, F> {
-    pub font: &'f F,
-    pub constants: Constants,
-    pub units_per_em: Unit<Ratio<FUnit, Em>>,
+
+pub struct FontMetricsCache {
+    constants: FontConstants,
+    units_per_em: Unit<Ratio<FUnit, Em>>,
 }
 
-impl<'f, F> Clone for FontContext<'f, F> {
+impl Clone for FontMetricsCache {
     fn clone(&self) -> Self {
         Self {
-            font:         self.font,
             constants:    self.constants.clone(),
             units_per_em: self.units_per_em,
         }
     }
 }
 
-impl<'f, F : MathFont> FontContext<'f, F> {
-    pub fn new(font: &'f F) -> Self {
+impl FontMetricsCache {
+    pub fn new<'f, F : MathFont>(font: &'f F) -> Self {
         let font_units_to_em = font.font_units_to_em();
         let units_per_em = font_units_to_em.recip();
         let constants = font.constants(font_units_to_em);
 
-        FontContext {
-            font,
+        Self {
             units_per_em,
             constants
         }
     }
 
-    pub fn glyph(&self, codepoint: char) -> Result<Glyph<'f, F>, FontError> {
-        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        self.glyph_from_gid(gid)
+    pub fn constants(&self) -> &FontConstants {
+        &self.constants
     }
 
-
-
-    pub fn vert_variant(&self, codepoint: char, height: Unit<FUnit>) -> Result<VariantGlyph, FontError> {
-        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.font.vert_variant(gid, height))
-    }
-    pub fn horz_variant(&self, codepoint: char, width: Unit<FUnit>) -> Result<VariantGlyph, FontError> {
-        let gid = self.font.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
-        Ok(self.font.horz_variant(gid, width))
-    }
-
-    pub fn glyph_from_gid(&self, gid: GlyphId) -> Result<Glyph<'f, F>, FontError> {
-        self.font.glyph_from_gid(gid)
+    pub fn units_per_em(&self) -> Unit<Ratio<FUnit, Em>> {
+        self.units_per_em
     }
 }
 
 
 #[derive(Clone)]
-pub struct Constants {
+pub struct FontConstants {
     pub subscript_shift_down: Unit<Em>,
     pub subscript_top_max: Unit<Em>,
     pub subscript_baseline_drop_min: Unit<Em>,
