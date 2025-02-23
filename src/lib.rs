@@ -15,7 +15,6 @@ First, load and parse the font with e.g. the `ttf-parser` crate.
 let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-let font_context = rex::font::FontContext::new(&math_font);
 ```
 
 Second, create the graphical backend, e.g. with `cairo` here
@@ -25,7 +24,6 @@ Second, create the graphical backend, e.g. with `cairo` here
 # let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 # let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 # let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-# let font_context = rex::font::FontContext::new(&math_font);
 # 
 // create graphics backend
 let svg_surface = cairo::SvgSurface::new(800., 600., Some("out.svg")).expect("Couldn't create SVG surface");
@@ -35,7 +33,7 @@ context.translate(0., 300.);
 let mut backend = rex::cairo::CairoBackend::new(context);
 ```
 
-With font and backend, a call to `render` will render the formula
+With font and backend, a call to `render` will render the formula:
 
 
 ```no_run
@@ -43,7 +41,6 @@ With font and backend, a call to `render` will render the formula
 # let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 # let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 # let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-# let font_context = rex::font::FontContext::new(&math_font);
 # 
 # 
 # // create graphics backend
@@ -57,7 +54,7 @@ With font and backend, a call to `render` will render the formula
 rex::render(
   r"e = \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n", 
   &mut backend,
-  &font_context,
+  &math_font,
 ).expect("Error in rendering");
 ```
 
@@ -98,12 +95,12 @@ Then, with the font backend loaded, we lay out the nodes in space:
 let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-let font_context = rex::font::FontContext::new(&math_font);
+
 
 // Step 2: lay out nodes in space
 let font_size : f64 = 10.; // in surface units per em
-let layout_settings = rex::layout::LayoutSettings::new(&font_context);
-let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
+// "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
+let layout = rex::layout::engine::LayoutBuilder::new(&math_font).layout(&parse_nodes).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 ```
 
 The layout contains useful information like the dimension of the formulas. We use this to center:
@@ -117,12 +114,11 @@ The layout contains useful information like the dimension of the formulas. We us
 # let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 # let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 # let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-# let font_context = rex::font::FontContext::new(&math_font);
 # 
 # // Step 2: lay out nodes in space
 # let font_size : f64 = 10.; // in surface units per em
-# let layout_settings = rex::layout::LayoutSettings::new(&font_context);
-# let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
+# // "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
+# let layout = rex::layout::engine::LayoutBuilder::new(&math_font).layout(&parse_nodes).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 # 
 let size   = layout.size();
 let total_height = size.height + size.depth; // 'height' is dist from baseline to highest point and 'depth' is dist from baseline to lowest point
@@ -144,12 +140,11 @@ Finally, we may render:
 # let font_file = std::fs::read("font.otf").expect("Couldn't load font");
 # let font = ttf_parser::Face::parse(&font_file, 0).expect("Couldn't parse font.");
 # let math_font = rex::font::backend::ttf_parser::TtfMathFont::new(font).expect("The font likely lacks a MATH table"); // extracts math info from font
-# let font_context = rex::font::FontContext::new(&math_font);
 # 
 # // Step 2: lay out nodes in space
 # let font_size : f64 = 10.; // in surface units per em
-# let layout_settings = rex::layout::LayoutSettings::new(&font_context); // "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
-# let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
+# // "display style" is the style used for typesetting $$...$$ formulas in LaTeX (as opposed to $...$ formulas)
+# let layout = rex::layout::engine::LayoutBuilder::new(&math_font).layout(&parse_nodes).expect("Font error"); // may fail if your font lacks some glyphs or does not contain some needed MATH info
 # 
 # let size   = layout.size();
 # let total_height = size.height + size.depth; // 'height' is dist from baseline to highest point and 'depth' is dist from baseline to lowest point
