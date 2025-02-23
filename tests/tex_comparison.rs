@@ -2,7 +2,7 @@ use std::{io::Write, path::PathBuf, process::Command};
 
 use base64::Engine;
 use raqote::{DrawTarget, Transform};
-use rex::{font::{backend::ttf_parser::TtfMathFont, FontContext}, layout::{engine::layout, LayoutSettings}, raqote::RaqoteBackend, Renderer};
+use rex::{font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, raqote::RaqoteBackend, Renderer};
 
 mod common;
 use common::report::HTML_REPORT_FOOTER;
@@ -44,7 +44,6 @@ fn tex_comparison() {
 
    let font = ttf_parser::Face::parse(MATH_FONT, 0).unwrap();
    let math_font = TtfMathFont::new(font).unwrap();
-   let font_context = FontContext::new(&math_font);
 
    let mut buffer_diff_img = Vec::new();
    let mut no_diff_rex_and_tex = true;
@@ -60,7 +59,7 @@ fn tex_comparison() {
                 Ok(tex_sample)
             })
         ;
-        let rex_render = compile_rex_sample(&sample, &font_context);
+        let rex_render = compile_rex_sample(&sample, &math_font);
 
 
         // Write TeX render
@@ -112,15 +111,16 @@ fn tex_comparison() {
    assert!(no_diff_rex_and_tex);
 }
 
-fn compile_rex_sample<'a>(sample: &str, font_context : & FontContext<'a, TtfMathFont>) -> Result<Vec<u8>, rex::error::Error> {
+fn compile_rex_sample<'a>(sample: &str, font : &TtfMathFont) -> Result<Vec<u8>, rex::error::Error> {
     // parse
     let nodes = rex::parser::parse(sample)?;
 
-    let layout_settings = LayoutSettings::new(font_context)
+    let layout_engine = LayoutBuilder
+        ::new(font)
         .font_size(FONT_SIZE)
-        .layout_style(rex::layout::Style::Display)
+        .style(rex::layout::Style::Display)
     ;
-    let layout = layout(&nodes, layout_settings)?;
+    let layout = layout_engine.layout(&nodes)?;
 
 
     let renderer = Renderer::new();

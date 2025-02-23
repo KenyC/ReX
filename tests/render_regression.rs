@@ -13,15 +13,15 @@ use std::io::BufReader;
 
 
 use raqote::{DrawTarget, Transform};
+use rex::layout::engine::{LayoutBuilder, LayoutEngine};
 use rex::Renderer;
 
 mod common;
 use common::debug_render::DebugRender;
 use common::equation_sample::{Equation, EquationDiffs, EquationRender};
 use common::utils::equation_to_filepath;
-use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
-use rex::layout::{LayoutSettings, Style};
+use rex::layout::{Style};
 use rex::raqote::RaqoteBackend;
 
 const REGRESSION_RENDER_YAML: &str = "tests/data/regression_render.yaml";
@@ -61,7 +61,7 @@ fn load_history<P: AsRef<Path>>(path: P) -> TestResults {
 }
 
 
-fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tests: Tests, img_dir : &Path) -> TestResults {
+fn render_tests(font : &TtfMathFont, tests: Tests, img_dir : &Path) -> TestResults {
 
     let mut equations: TestResults = BTreeMap::new();
     for (category, collection) in tests.0.iter() {
@@ -74,7 +74,7 @@ fn render_tests<'font, 'file>(ctx : &FontContext<'font, TtfMathFont<'file>>, tes
                     category, 
                     &snippets.description, 
                     equation, 
-                    ctx,
+                    font,
                     &img_path,
                 );
                 equations.insert(key, equation);
@@ -91,12 +91,12 @@ fn make_equation(
     category: &str, 
     description: &str, 
     equation: &str, 
-    ctx: &FontContext<TtfMathFont>,
+    font : &TtfMathFont,
     img_render_path : &Path,
 ) -> Equation {
     let description = format!("{}: {}", category, description);
 
-    let render = render_equation(equation, ctx, img_render_path);
+    let render = render_equation(equation, font, img_render_path);
 
     Equation { 
         tex:         equation.to_owned(), 
@@ -105,14 +105,18 @@ fn make_equation(
     }
 }
 
-fn render_equation(equation: &str, ctx: &FontContext<'_, TtfMathFont<'_>>, img_render_path: &Path) -> Result<EquationRender, String> {
+fn render_equation(equation: &str, font : &TtfMathFont, img_render_path: &Path) -> Result<EquationRender, String> {
     const FONT_SIZE : f64 = 16.0;
+    let layout_engine = LayoutBuilder::new(font)
+        .font_size(FONT_SIZE)
+        .style(Style::Display)
+        .build()
+    ;
     // let description = format!("{}: {}", category, description);
 
     let parse_nodes = rex::parser::parse(equation).map_err(|e| e.to_string())?;
-    let layout_settings = LayoutSettings::new(&ctx).font_size(FONT_SIZE).layout_style(Style::Display);
 
-    let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();
+    let layout = layout_engine.layout(&parse_nodes).unwrap();
 
 
     let renderer = Renderer::new();
@@ -200,11 +204,10 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
 fn render_regression() {
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
     let font = common::utils::load_font(font_file);
-    let font_context = FontContext::new(&font);
 
     let img_dir = std::env::temp_dir();
     let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&font_context, tests, img_dir.as_path());
+    let rendered = render_tests(&font, tests, img_dir.as_path());
     let history = load_history(HISTORY_META_FILE);
     let diff = equation_diffs(&history, &rendered);
 
@@ -227,7 +230,6 @@ fn save_renders_to_history() {
 
     let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
     let font = common::utils::load_font(font_file);
-    let font_context = FontContext::new(&font);
 
     // Remove PNG images from HISTORY_IMG_DIR
     let img_dir = Path::new(HISTORY_IMG_DIR);
@@ -244,7 +246,7 @@ fn save_renders_to_history() {
 
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&font_context, tests, img_dir);
+    let rendered = render_tests(&font, tests, img_dir);
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
     let writer = BufWriter::new(out);

@@ -3,13 +3,12 @@ extern crate femtovg;
  
 
 
-use rex::layout::engine::layout;
+use rex::layout::engine::{LayoutBuilder, LayoutEngine};
 use sdl2::event::Event; 
 use sdl2::keyboard::Keycode; 
 use femtovg::renderer::OpenGl;
 
 use rex::femtovg::FemtoVGCanvas;
-use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::Renderer;
 use rex::layout::{LayoutDimensions};
@@ -52,9 +51,10 @@ fn main() {
         formula = String::from_utf8(std::fs::read(&formula_path).unwrap()).unwrap();
     }
 
-    // -- Load font
+    // -- Load font & create layout engine
     let font_file = std::fs::read(font_file_path).unwrap();
     let font = load_font(&font_file);
+    let layout_engine = LayoutBuilder::new(&font).font_size(font_size).build();
 
 
 
@@ -102,7 +102,7 @@ fn main() {
 
     // -- Draw
     // Calls to ReX function are limited to this function
-    draw(&mut canvas_backend, &font, &formula, debug, font_size);
+    draw(&mut canvas_backend, &formula, &layout_engine, debug);
 
 
 
@@ -120,19 +120,14 @@ fn main() {
 }
 
 
-fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formula : &str, debug : bool, font_size : f64) 
+fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, formula : &str, layout_engine : &LayoutEngine<'_, TtfMathFont>, debug : bool) 
 {
-    // -- Create context
-    let font_context = FontContext::new(font);
-    let layout_settings = rex::layout::LayoutSettings::new(&font_context).font_size(font_size);
-
-
     // -- Parse formula
     let parse_nodes = rex::parser::parse(formula).unwrap();
 
 
     // -- Lay out nodes
-    let layout = layout(&parse_nodes, layout_settings).unwrap();
+    let layout = layout_engine.layout(&parse_nodes).unwrap();
 
 
     // -- Transform canvas to lay out formulas

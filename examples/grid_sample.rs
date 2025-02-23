@@ -3,13 +3,13 @@ extern crate femtovg;
  
 
 
-use rex::layout::engine::layout;
+use rex::font::MathFont;
+use rex::layout::engine::{LayoutBuilder, LayoutEngine};
 use sdl2::event::Event; 
 use sdl2::keyboard::Keycode; 
 use femtovg::renderer::OpenGl;
 
 use rex::femtovg::FemtoVGCanvas;
-use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::Renderer;
 use rex::layout::{LayoutDimensions, Grid, Layout};
@@ -27,8 +27,9 @@ const SAMPLES: &[&str] = &[
     r"\mathop{\mathrm{lim\,sup}}\limits_{x\rightarrow\infty}\ \mathop{\mathrm{sin}}(x)\mathrel{\mathop{=}\limits^?}1"
 ];
  
-const WIDTH : u32 = 800; 
-const HEIGHT: u32 = 600; 
+const WIDTH :    u32 = 800; 
+const HEIGHT:    u32 = 600; 
+const FONT_SIZE: f64 = 10.;
 
 fn main() { 
     env_logger::init();
@@ -37,6 +38,8 @@ fn main() {
     // -- Load font
     let font_file = std::fs::read("resources/FiraMath_Regular.otf").unwrap();
     let font = load_font(&font_file);
+
+    let layout_engine = LayoutBuilder::new(&font).font_size(FONT_SIZE).build();
 
 
 
@@ -84,7 +87,7 @@ fn main() {
 
     // -- Draw
     // Calls to ReX function are limited to this function
-    draw(&mut canvas_backend, &font, &SAMPLES);
+    draw(&mut canvas_backend, &layout_engine, &SAMPLES);
 
     canvas.flush();
     window.gl_swap_window();
@@ -99,13 +102,8 @@ fn main() {
 }
 
 
-fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMathFont<'a>, formulas : &[&str]) 
+fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, layout_engine : &LayoutEngine<'_, TtfMathFont>, formulas : &[&str]) 
 {
-    // -- Create context
-    let font_context = FontContext::new(font);
-    let layout_settings = rex::layout::LayoutSettings::new(&font_context).font_size(10.0);
-
-
     // -- Parse formula
     let sample_parse_nodes = 
     	formulas
@@ -118,7 +116,7 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, font : &TtfMat
     // TODO: expose VBox and HBox
     let mut grid = Grid::new();
     for (i, parse_nodes) in sample_parse_nodes.into_iter().enumerate() {
-    	let layout = layout(&parse_nodes, layout_settings).unwrap();
+    	let layout = layout_engine.layout(&parse_nodes).unwrap();
     	grid.insert(i, 0, layout.as_node());
     }
     let mut layout = Layout::new();

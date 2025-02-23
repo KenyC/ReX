@@ -1,7 +1,5 @@
 use rex::{
-    render::Renderer,
-    layout::LayoutSettings,
-    font::{FontContext, backend::ttf_parser::TtfMathFont}, cairo::CairoBackend
+    cairo::CairoBackend, font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, render::Renderer
 };
 use clap::Parser;
 
@@ -46,10 +44,10 @@ fn main() {
 
 
     // -- Create ReX context
-    let ctx = FontContext::new(&font);
     // 12pt = 16px
-    let layout_settings = LayoutSettings::new(&ctx).font_size(font_size);
-
+    let layout_engine = LayoutBuilder::new(&font)
+        .font_size(font_size)
+        .build();
 
 
     // -- parse
@@ -61,7 +59,7 @@ fn main() {
 
 
     // -- layout
-    let layout = rex::layout::engine::layout(&parse_nodes, layout_settings).unwrap();
+    let layout = layout_engine.layout(&parse_nodes).unwrap();
 
     if debug {
         eprintln!("{:#?}", layout.clone().as_node());

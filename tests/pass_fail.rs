@@ -6,12 +6,12 @@ extern crate serde_yaml;
 use std::fs::File;
 use std::io::BufReader;
 
+use rex::layout::engine::LayoutBuilder;
 use rex::Renderer;
 use rex::cairo::CairoBackend;
 use rex::error::Error;
-use rex::font::FontContext;
 use rex::font::backend::ttf_parser::TtfMathFont;
-use rex::layout::{LayoutSettings, Style, Grid};
+use rex::layout::{Style, Grid};
 use rex::parser::parse;
 //use std::io::Sink;
 
@@ -35,12 +35,11 @@ fn pass_fail() {
 
     let font_file = std::fs::read(FONT_FILE_PATH).unwrap();
     let font = load_font(&font_file);
-    let ctx = FontContext::new(&font);
     
 
 
     for test in tests.pass {
-        match render(&ctx, &test) {
+        match render(&font, &test) {
             Ok(_) => continue,
             Err(err) => {
                 println!("Tex: {}", test);
@@ -70,13 +69,13 @@ fn pass_fail() {
     }
 }
 
-fn render<'a, 'f, 'b>(ctx : &FontContext<'f, TtfMathFont<'a>>, string : &'b str) -> Result<String, Error> {
+fn render<'a, 'b>(font : &TtfMathFont<'a>, string : &'b str) -> Result<String, Error> {
     // parsing
     let parse_nodes = parse(string)?;
 
     // laying out
-    let layout_settings = LayoutSettings::new(&ctx).font_size(10.0).layout_style(Style::Display);
-    let node = rex::layout::engine::layout(&parse_nodes, layout_settings).map(|l| l.as_node())?;
+    let layout_engine = LayoutBuilder::new(font).font_size(10.0).style(Style::Display).build();
+    let node = layout_engine.layout(&parse_nodes).map(|l| l.as_node())?;
     let mut grid = Grid::new();
     grid.insert(0, 0, node);
     let mut layout = rex::layout::Layout::new();
