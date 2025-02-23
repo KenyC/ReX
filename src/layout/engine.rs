@@ -602,8 +602,8 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         // This is where he handle Operators with limits.
         if let Some(ref b) = scripts.base {
             if TexSymbolType::Operator(true) == b.atom_type() {
-                self.operator_limits(base, sup, sub, context)?;
-                return Ok(Vec::new());
+                let to_return = self.operator_limits(base, sup, sub, context)?;
+                return Ok(vec![to_return]);
             }
         }
 
@@ -769,20 +769,22 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
     }
 
     fn frac(&self, frac: &GenFraction, context: LayoutContext) -> LayoutResult<Vec<LayoutNode<'f, F>>> {
-        let config = match frac.style {
+        // The style used in fractions (\displaystyle, etc) does not necessarily inherit from context
+        // So we create a new context
+        let frac_context = match frac.style {
             MathStyle::NoChange => context.clone(),
             MathStyle::Display => context.with_display(),
             MathStyle::Text => context.with_text(),
         };
 
         let bar = match frac.bar_thickness {
-            BarThickness::Default => self.metrics_cache.constants().fraction_rule_thickness.to_px(self, context),
+            BarThickness::Default => self.metrics_cache.constants().fraction_rule_thickness.to_px(self, frac_context),
             BarThickness::None => Unit::ZERO,
-            BarThickness::Unit(u) => u.to_px(self, context),
+            BarThickness::Unit(u) => u.to_px(self, frac_context),
         };
 
-        let mut n = self.layout_with(&frac.numerator,   config.numerator())?;
-        let mut d = self.layout_with(&frac.denominator, config.denominator())?;
+        let mut n = self.layout_with(&frac.numerator,   frac_context.numerator())?;
+        let mut d = self.layout_with(&frac.denominator, frac_context.denominator())?;
 
         if n.width > d.width {
             d.alignment = Alignment::Centered(d.width);
@@ -795,22 +797,22 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let numer = n.as_node();
         let denom = d.as_node();
 
-        let axis = self.metrics_cache.constants().axis_height.to_px(self, context);
+        let axis = self.metrics_cache.constants().axis_height.to_px(self, frac_context);
         let shift_up;
         let shift_down;
         let gap_num;
         let gap_denom;
 
-        if config.style > Style::Text {
-            shift_up   = self.metrics_cache.constants().fraction_numerator_display_style_shift_up.to_px(self, context);
-            shift_down = self.metrics_cache.constants().fraction_denominator_display_style_shift_down.to_px(self, context);
-            gap_num    = self.metrics_cache.constants().fraction_num_display_style_gap_min.to_px(self, context);
-            gap_denom  = self.metrics_cache.constants().fraction_denom_display_style_gap_min.to_px(self, context);
+        if frac_context.style > Style::Text {
+            shift_up   = self.metrics_cache.constants().fraction_numerator_display_style_shift_up.to_px(self, frac_context);
+            shift_down = self.metrics_cache.constants().fraction_denominator_display_style_shift_down.to_px(self, frac_context);
+            gap_num    = self.metrics_cache.constants().fraction_num_display_style_gap_min.to_px(self, frac_context);
+            gap_denom  = self.metrics_cache.constants().fraction_denom_display_style_gap_min.to_px(self, frac_context);
         } else {
-            shift_up   = self.metrics_cache.constants().fraction_numerator_shift_up.to_px(self, context);
-            shift_down = self.metrics_cache.constants().fraction_denominator_shift_down.to_px(self, context);
-            gap_num    = self.metrics_cache.constants().fraction_numerator_gap_min.to_px(self, context);
-            gap_denom  = self.metrics_cache.constants().fraction_denominator_gap_min.to_px(self, context);
+            shift_up   = self.metrics_cache.constants().fraction_numerator_shift_up.to_px(self, frac_context);
+            shift_down = self.metrics_cache.constants().fraction_denominator_shift_down.to_px(self, frac_context);
+            gap_num    = self.metrics_cache.constants().fraction_numerator_gap_min.to_px(self, frac_context);
+            gap_denom  = self.metrics_cache.constants().fraction_denominator_gap_min.to_px(self, frac_context);
         }
 
         let kern_num = Unit::max(shift_up - axis - bar.scale(0.5), gap_num - numer.depth);
@@ -826,20 +828,20 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             denom
         );
 
-        let null_delimiter_space = self.metrics_cache.constants().null_delimiter_space * config.font_size;
-        let axis_height = self.metrics_cache.constants().axis_height * config.font_size;
+        let null_delimiter_space = self.metrics_cache.constants().null_delimiter_space * frac_context.font_size;
+        let axis_height = self.metrics_cache.constants().axis_height * frac_context.font_size;
         // Enclose fraction with delimiters if provided, otherwise with a NULL_DELIMITER_SPACE.
         let left = match frac.left_delimiter {
             None => kern!(horz: null_delimiter_space),
             Some(sym) => {
                 let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
-                let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * config.font_size);
+                let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * frac_context.font_size);
 
                 let glyph_id = self.font.glyph_index(sym.codepoint).ok_or(crate::error::FontError::MissingGlyphCodepoint(sym.codepoint))?;
                 self.font
-                    .vert_variant(glyph_id, self.to_font(clearance, context.font_size))
-                    .as_layout(self, context)?
-                    .centered(axis_height.to_px(self, context))
+                    .vert_variant(glyph_id, self.to_font(clearance, frac_context.font_size))
+                    .as_layout(self, frac_context)?
+                    .centered(axis_height.to_px(self, frac_context))
             }
         };
 
@@ -847,13 +849,13 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             None => kern!(horz: null_delimiter_space),
             Some(sym) => {
                 let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
-                let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * config.font_size);
+                let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * frac_context.font_size);
 
                 let glyph_id = self.font.glyph_index(sym.codepoint).ok_or(crate::error::FontError::MissingGlyphCodepoint(sym.codepoint))?;
                 self.font
-                    .vert_variant(glyph_id, self.to_font(clearance, context.font_size))
-                    .as_layout(self, context)?
-                    .centered(axis_height.to_px(self, context))
+                    .vert_variant(glyph_id, self.to_font(clearance, frac_context.font_size))
+                    .as_layout(self, frac_context)?
+                    .centered(axis_height.to_px(self, frac_context))
             }
         };
 
