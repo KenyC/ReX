@@ -7,13 +7,13 @@ extern crate serde_yaml;
 
 use std::convert::AsRef;
 use std::path::Path;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io::BufReader;
 
 
 use raqote::{DrawTarget, Transform};
-use rex::layout::engine::{LayoutBuilder, LayoutEngine};
+use rex::layout::engine::LayoutBuilder;
 use rex::Renderer;
 
 mod common;
@@ -37,11 +37,48 @@ struct Tests(BTreeMap<String, Vec<Category>>);
 struct Category {
     #[serde(rename = "Description")]
     description: String,
+    #[serde(rename = "Font", default)]
+    font: FontName,
     #[serde(rename = "Snippets")]
     snippets: Vec<String>,
 }
 
+const FONTS : &[(FontName, & 'static [u8])] = &[
+    (FontName::Xits,      include_bytes!("../resources/XITS_Math.otf")),
+    (FontName::Garamond,  include_bytes!("../resources/Garamond_Math.otf")),
+    (FontName::Fira,      include_bytes!("../resources/FiraMath_Regular.otf")),
+    (FontName::Asana,     include_bytes!("../resources/Asana-Math.otf")),
+];
+
+/// This refers to the fonts in the "resources/" folder of the crate
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
+enum FontName {
+    Xits,
+    Garamond,
+    Fira,
+    Asana,
+}
+
+impl Default for FontName {
+    fn default() -> Self {
+        Self::Xits
+    }
+}
+
+fn load_fonts() -> HashMap<FontName, TtfMathFont<'static>> {
+    FONTS
+        .iter()
+        .copied()
+        .map(|(font_name, font_file)| {
+            (font_name, common::utils::load_font(font_file))
+        })
+        .collect()
+}
+
+
 type TestResults = BTreeMap<String, Equation>;
+
+
 
 fn collect_tests<P: AsRef<Path>>(path: P) -> Tests {
     let file = File::open(path.as_ref()).expect("failed to open test collection");
@@ -61,8 +98,7 @@ fn load_history<P: AsRef<Path>>(path: P) -> TestResults {
 }
 
 
-fn render_tests(font : &TtfMathFont, tests: Tests, img_dir : &Path) -> TestResults {
-
+fn render_tests(fonts : &HashMap<FontName, TtfMathFont>, tests: Tests, img_dir : &Path) -> TestResults {
     let mut equations: TestResults = BTreeMap::new();
     for (category, collection) in tests.0.iter() {
         for snippets in collection {
@@ -70,6 +106,8 @@ fn render_tests(font : &TtfMathFont, tests: Tests, img_dir : &Path) -> TestResul
                 let key = format!("{} - {}", &snippets.description, equation);
                 let file_name = equation_to_filepath(equation, &snippets.description);
                 let img_path = img_dir.join(&file_name);
+                // .unwrap() will only fail if constant FONTS does not contain one of the variant of FontName
+                let font = fonts.get(&snippets.font).unwrap();
                 let equation = make_equation(
                     category, 
                     &snippets.description, 
@@ -202,12 +240,11 @@ fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDif
 
 #[test]
 fn render_regression() {
-    let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::utils::load_font(font_file);
+    let fonts = load_fonts();
 
     let img_dir = std::env::temp_dir();
     let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&font, tests, img_dir.as_path());
+    let rendered = render_tests(&fonts, tests, img_dir.as_path());
     let history = load_history(HISTORY_META_FILE);
     let diff = equation_diffs(&history, &rendered);
 
@@ -226,10 +263,9 @@ fn render_regression() {
 #[test]
 #[ignore]
 fn save_renders_to_history() {
-    use std::io::BufWriter;
+    let fonts = load_fonts();
 
-    let font_file : &[u8] = include_bytes!("../resources/XITS_Math.otf");
-    let font = common::utils::load_font(font_file);
+    use std::io::BufWriter;
 
     // Remove PNG images from HISTORY_IMG_DIR
     let img_dir = Path::new(HISTORY_IMG_DIR);
@@ -246,7 +282,7 @@ fn save_renders_to_history() {
 
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&font, tests, img_dir);
+    let rendered = render_tests(&fonts, tests, img_dir);
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
     let writer = BufWriter::new(out);
