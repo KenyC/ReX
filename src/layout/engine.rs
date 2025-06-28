@@ -7,11 +7,11 @@
 use std::unimplemented;
 
 use super::convert::AsLayoutNode;
+use super::kern::{subscript_kern, superscript_kern};
 use super::{builders, Alignment, Layout, LayoutNode, LayoutVariant, Style};
 
 use crate::font::{FontMetricsCache, MathFont};
 use crate::font::{
-    kerning::{superscript_kern, subscript_kern},
     VariantGlyph,
     TexSymbolType
 };
@@ -581,6 +581,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         Ok(to_return)
     }
     fn scripts(&self, scripts: &Scripts, context: LayoutContext) -> LayoutResult<Vec<LayoutNode<'f, F>>> {
+        // For OpenType Math: https://learn.microsoft.com/en-us/typography/opentype/spec/math#mathkerninfo-table
         // See: https://tug.org/TUGboat/tb27-1/tb86jackowski.pdf
         //      https://www.tug.org/tugboat/tb30-1/tb94vieth.pdf
         let base = match scripts.base {
@@ -636,15 +637,13 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
                     }
                     // Apply italics correction is base is a symbol
                     else if let Some(base_sym) = base.is_symbol() {
-                        // Lookup font kerning of superscript is also a symbol
-                        if let Some(sup_sym) = sup.is_symbol() {
-                            let bg = self.font.glyph_from_gid(base_sym.gid)?;
-                            let sg = self.font.glyph_from_gid(sup_sym.gid)?;
-                            let kern = superscript_kern(&bg, &sg, self.to_font(adjust_up, context.font_size)).to_px(self, context);
-                            sup_kern = base_sym.italics + kern;
-                        } else {
-                            sup_kern = base_sym.italics;
-                        }
+                        let base_height = self.to_font(base.height, context.font_size);
+                        // TODO: shouldn't this be font_size of sperscript?
+                        let script_depth = self.to_font(sup.depth + adjust_up, context.font_size);
+
+                        // Lookup font kerning of superscript
+                        let kern = superscript_kern(&base, &sup, base_height, script_depth)?.to_px(self, context);
+                        sup_kern = base_sym.italics + kern;
                     }
                 }
             }
@@ -674,11 +673,10 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
                     }
                 }
 
-                if let (Some(ssym), Some(bsym)) = (sub.is_symbol(), base.is_symbol()) {
-                    let bg = self.font().glyph_from_gid(bsym.gid)?;
-                    let sg = self.font().glyph_from_gid(ssym.gid)?;
-                    sub_kern += subscript_kern(&bg, &sg, self.to_font(adjust_down, context.font_size)).to_px(self, context);
-                }
+                let base_depth = self.to_font(base.depth, context.font_size);
+                // TODO: shouldn't this be font_size of subscript?
+                let script_height = self.to_font(sub.height + adjust_down, context.font_size);
+                sub_kern += subscript_kern(&base, &sub, base_depth, script_height)?.to_px(self, context);
             }
         }
 

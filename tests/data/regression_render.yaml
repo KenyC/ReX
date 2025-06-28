@@ -21,6 +21,13 @@ Scripts:
     Snippets:
     - R_{\mathfrak{E}}X\ R^{\mathfrak{E}}X
 
+  - Description: position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others
+    # We use Garamond-Math here ; the default XITS does not have a useful kern table
+    Font: Garamond
+    Snippets:
+    - f_{i,w,g} 
+    - f_i
+
 Delimiters:
   - Description: should properly scale
     Snippets:

@@ -3819,6 +3819,74 @@
               glyph_id: 126
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ left { x  in  mathb-Bb4AdLt7y4k.png"
+"position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others - f_i":
+  tex: f_i
+  description: "Scripts: position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others"
+  render:
+    Ok:
+      width: 12.480000592768193
+      height: 24.657067837814489
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 1623
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 7.402667018274466
+                - 9.386667112509409
+              glyph_id: 1625
+              scale: 14.933333333333334
+      img_render_path: tests/data/imgs/f_i-gWrNV4LfWPg.png
+"position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others - f_{i,w,g}":
+  tex: "f_{i,w,g}"
+  description: "Scripts: position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others"
+  render:
+    Ok:
+      width: 36.64853507404526
+      height: 28.778668033579984
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 1623
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 7.872000373899936
+                - 9.386667112509409
+              glyph_id: 1625
+              scale: 14.933333333333334
+          - Symbol:
+              pos:
+                - 12.949333948393662
+                - 9.386667112509409
+              glyph_id: 14
+              scale: 14.933333333333334
+          - Symbol:
+              pos:
+                - 16.384000778198243
+                - 9.386667112509409
+              glyph_id: 1639
+              scale: 14.933333333333334
+          - Symbol:
+              pos:
+                - 25.971201233565809
+                - 9.386667112509409
+              glyph_id: 14
+              scale: 14.933333333333334
+          - Symbol:
+              pos:
+                - 29.405868063370389
+                - 9.386667112509409
+              glyph_id: 1624
+              scale: 14.933333333333334
+      img_render_path: "tests/data/imgs/f_{i w g}-_mrfwK5WhF8.png"
 "position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - 1-\\overbrace{\\frac 12}":
   tex: "1-\\overbrace{\\frac 12}"
   description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
