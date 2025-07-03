@@ -19,19 +19,22 @@ use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
 use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
 /// Backend for TinySkia renderer
-pub struct TinySkiaBackend {
+pub struct TinySkiaBackend<'a> {
     /// A canvas to draw onto
     pixmap: Pixmap,
     /// Transform to convert from position according to ReX Renderer backend
     /// to coordinates on the TinySkia pixmap
     layout_to_pixmap: Transform,
+    color_stack: Vec<Color>,
+    current_color: Color,
+    paint: Paint<'a>,
 }
 
-impl TinySkiaBackend {
+impl TinySkiaBackend<'_> {
     /// New TinySkiaBackend instance initializing a canvas (pixmap)
     /// along with a transform to get coordinates on the TinySkia pixmap.
     /// Size in pixels can be adjusted with the scale parameter.
-    pub fn new(dims: LayoutDimensions, scale: f64) -> Self {
+    pub fn new(dims: LayoutDimensions, default_color: Color, scale: f64) -> Self {
         // `Cursor` positions in layout from ReX Renderer backend are relative to the baseline,
         // including negative y-coordinates above the baseline.
         // Coordinates on `pixmap` are relative to the top-left corner of the pixmap
@@ -44,7 +47,10 @@ impl TinySkiaBackend {
         let layout_to_pixmap = Transform::from_translate(0.0, dims.height as f32)
             .post_scale(scale, scale);
 
-        Self { pixmap, layout_to_pixmap }
+        let mut paint = Paint::default();
+        paint.set_color(default_color);
+
+        Self { pixmap, layout_to_pixmap, color_stack: vec![], current_color: default_color, paint }
     }
     /// Returns pixmap being drawn onto after all drawing operations are completed
     pub fn pixmap(self) -> Pixmap {
@@ -53,7 +59,7 @@ impl TinySkiaBackend {
 }
 
 #[cfg(feature="ttfparser-fontparser")]
-impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend {
+impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend<'_> {
     fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &TtfMathFont<'_>) {
         // Make the tiny_skia path builder implement the necessary trait to draw
         // the glyph with the TtfMathFont font backend
@@ -96,7 +102,7 @@ impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend {
         if let Some(path) =  builder.open_path.finish() {
             self.pixmap.fill_path(
                 &path,
-                &Paint::default(),
+                &self.paint,
                 FillRule::Winding,
                 transform,
                 None,
@@ -106,7 +112,7 @@ impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend {
 }
 
 #[cfg(feature="fontrs-fontparser")]
-impl FontBackend<OpenTypeFont> for TinySkiaBackend {
+impl FontBackend<OpenTypeFont> for TinySkiaBackend<'_> {
     fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &OpenTypeFont) {
         // Create tiny_skia path for glyph taking into account font matrix
         let mut contour_path = PathBuilder::new();
@@ -158,7 +164,7 @@ impl FontBackend<OpenTypeFont> for TinySkiaBackend {
         if let Some(path) =  contour_path.finish() {
             self.pixmap.fill_path(
                 &path,
-                &Paint::default(),
+                &self.paint,
                 FillRule::Winding,
                 transform,
                 None,
@@ -168,12 +174,12 @@ impl FontBackend<OpenTypeFont> for TinySkiaBackend {
 }
 
 #[cfg(feature="ttfparser-fontparser")]
-impl Backend<TtfMathFont<'_>> for TinySkiaBackend {}
+impl Backend<TtfMathFont<'_>> for TinySkiaBackend<'_> {}
 
 #[cfg(feature="fontrs-fontparser")]
-impl Backend<OpenTypeFont> for TinySkiaBackend {}
+impl Backend<OpenTypeFont> for TinySkiaBackend<'_> {}
 
-impl GraphicsBackend for TinySkiaBackend {
+impl GraphicsBackend for TinySkiaBackend<'_> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
         // let color = match role {
         //     Role::Glyph => ColorU::new(0, 200, 0, 255),
@@ -199,14 +205,23 @@ impl GraphicsBackend for TinySkiaBackend {
         if let Some(rect) = Rect::from_xywh(pos.x as f32, pos.y as f32, width as f32, height as f32) {
             self.pixmap.fill_rect(
                 rect,
-                &Paint::default(),
+                &self.paint,
                 self.layout_to_pixmap,
                 None,
             );
         }
     }
-    fn begin_color(&mut self, RGBA(r, g, b, a): RGBA) {}
-    fn end_color(&mut self) {}
+    fn begin_color(&mut self, RGBA(r, g, b, a): RGBA) {
+        self.color_stack.push(self.current_color);
+        self.current_color = Color::from_rgba8(r, g, b, a);
+        self.paint.set_color(self.current_color);
+    }
+    fn end_color(&mut self) {
+        if let Some(next_color) = self.color_stack.pop() {
+            self.current_color = next_color;
+            self.paint.set_color(self.current_color);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -242,7 +257,7 @@ mod tests {
         let renderer = Renderer::new();
 
         const SCALE: f64 = 5.;
-        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), SCALE);
+        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::WHITE, SCALE);
         renderer.render(&layout, &mut tinyskia_backend);
         tinyskia_backend
             .pixmap()
@@ -255,7 +270,7 @@ mod tests {
     fn test_tiny_skia_backend_fontrs() {
         let font_file: &[u8] = include_bytes!("../../resources/FiraMath_Regular.otf");
         let font = OpenTypeFont::parse(font_file).unwrap();
-        let equation = "x_f = \\sqrt{\\frac{a + b}{c - d}}";
+        let equation = "x_f = {\\color{red}\\sqrt{\\frac{a + b}{c - d}}}";
         const FONT_SIZE: f64 = 16.0;
         let layout_engine = LayoutBuilder::new(&font)
             .font_size(FONT_SIZE)
@@ -269,7 +284,7 @@ mod tests {
         let renderer = Renderer::new();
 
         const SCALE: f64 = 5.;
-        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), SCALE);
+        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::BLACK, SCALE);
         renderer.render(&layout, &mut tinyskia_backend);
         tinyskia_backend
             .pixmap()
