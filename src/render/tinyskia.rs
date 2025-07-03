@@ -181,25 +181,23 @@ impl Backend<OpenTypeFont> for TinySkiaBackend<'_> {}
 
 impl GraphicsBackend for TinySkiaBackend<'_> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
-        // let color = match role {
-        //     Role::Glyph => ColorU::new(0, 200, 0, 255),
-        //     Role::HBox => ColorU::new(200, 0, 0, 255),
-        //     Role::VBox => ColorU::new(0, 0, 200, 255),
-        // };
-        // let paint = self.scene.push_paint(&Paint::from_color(color));
-        // let style = StrokeStyle {
-        //     line_cap: LineCap::Square,
-        //     line_join: LineJoin::Bevel,
-        //     line_width: 0.1,
-        // };
-        // pixmap.fill_rect(
-        //     IntRect::from_xywh(pos.x as i32, pos.y as i32, width as i32, height as i32)
-        //         .unwrap()
-        //         .to_rect(),
-        //     &Paint::default(),
-        //     transform,
-        //     None,
-        // );
+        // No convenient function to draw a bounding box in TinySkia, so it is instead
+        // filled with translucent colour
+        let color = match role {
+            Role::Glyph => Color::from_rgba8(0, 200, 0, 80),
+            Role::HBox => Color::from_rgba8(200, 0, 0, 80),
+            Role::VBox => Color::from_rgba8(0, 0, 200, 80),
+        };
+        if let Some(rect) = Rect::from_xywh(pos.x as f32, pos.y as f32, width as f32, height as f32) {
+            self.paint.set_color(color);
+            self.pixmap.fill_rect(
+                rect,
+                &self.paint,
+                self.layout_to_pixmap,
+                None,
+            );
+            self.paint.set_color(self.current_color);
+        }
     }
     fn rule(&mut self, pos: Cursor, width: f64, height: f64) {
         if let Some(rect) = Rect::from_xywh(pos.x as f32, pos.y as f32, width as f32, height as f32) {
@@ -281,7 +279,8 @@ mod tests {
 
         let layout = layout_engine.layout(&parse_nodes).unwrap();
 
-        let renderer = Renderer::new();
+        let mut renderer = Renderer::new();
+        renderer.debug = true;
 
         const SCALE: f64 = 5.;
         let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::BLACK, SCALE);
