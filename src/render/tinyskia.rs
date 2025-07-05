@@ -262,11 +262,12 @@ mod tests {
 
         const SCALE: f64 = 5.;
         let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::WHITE, SCALE);
-        renderer.render(&layout, &mut tinyskia_backend);
+        let save_location = std::env::temp_dir().join("ttfparser-tinyskia.png");
         tinyskia_backend
             .pixmap()
-            .save_png("ttfparser-tinyskia.png")
+            .save_png(&save_location)
             .unwrap();
+        println!("Saved PNG file to {:?}", save_location);
     }
 
     #[test]
@@ -291,9 +292,11 @@ mod tests {
         const SCALE: f64 = 5.;
         let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::BLACK, SCALE);
         renderer.render(&layout, &mut tinyskia_backend);
+        let save_location = std::env::temp_dir().join("fontrs-tinyskia.png");
         tinyskia_backend
             .pixmap()
-            .save_png("fontrs-tinyskia.png")
+            .save_png(&save_location)
             .unwrap();
+        println!("Saved PNG file to {:?}", save_location);
     }
 }
