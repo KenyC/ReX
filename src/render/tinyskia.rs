@@ -22,34 +22,57 @@ pub struct TinySkiaBackend {
     pixmap: Pixmap,
     /// Transform to convert from position according to ReX Renderer backend
     /// to coordinates on the TinySkia pixmap
-    layout_to_pixmap: Transform,
+    pub layout_to_pixmap: Transform,
     color_stack: Vec<Color>,
     current_color: Color,
     paint: Paint<'static>,
 }
 
 impl TinySkiaBackend {
+    /// New TinySkiaBackend instance taking ownership of a pixmap to draw onto.
+    /// The `layout_to_pixmap` transform is initialized to the identity
+    /// (resulting in everything above the baseline of the equation being
+    /// clipped off the top pixmap and the left side aligned with the pixmap).
+    /// Make sure to adjust that transform to position the equation appropriately.
+    pub fn new(pixmap: Pixmap) -> Self {
+        let layout_to_pixmap = Transform::identity();
+
+        let current_color = Color::BLACK;
+        let mut paint = Paint::default();
+        paint.set_color(current_color);
+
+        Self { pixmap, layout_to_pixmap, color_stack: vec![], current_color, paint }
+    }
+
     /// New TinySkiaBackend instance initializing a canvas (pixmap)
-    /// along with a transform to get coordinates on the TinySkia pixmap.
+    /// along with a transform to position the equation to fit the pixmap.
     /// Size in pixels can be adjusted with the scale parameter.
-    pub fn new(dims: LayoutDimensions, default_color: Color, scale: f64) -> Self {
+    pub fn from_dims(dims: LayoutDimensions, scale: f64) -> Option<Self> {
         // `Cursor` positions in layout from ReX Renderer backend are relative to the baseline,
         // including negative y-coordinates above the baseline.
         // Coordinates on `pixmap` are relative to the top-left corner of the pixmap
         // (and always positive).
         let width = (dims.width * scale) as u32;
         let height = ((dims.height - dims.depth) * scale) as u32;
-        let pixmap = Pixmap::new(width, height).unwrap();
+        let pixmap = Pixmap::new(width, height)?;
 
         let scale = scale as f32;
         let layout_to_pixmap = Transform::from_translate(0.0, dims.height as f32)
             .post_scale(scale, scale);
 
+        let current_color = Color::BLACK;
         let mut paint = Paint::default();
-        paint.set_color(default_color);
+        paint.set_color(current_color);
 
-        Self { pixmap, layout_to_pixmap, color_stack: vec![], current_color: default_color, paint }
+        Some(Self { pixmap, layout_to_pixmap, color_stack: vec![], current_color, paint })
     }
+
+    /// Specify initial colour to use for drawing
+    pub fn set_color(&mut self, color: Color) {
+        self.current_color = color;
+        self.paint.set_color(color);
+    }
+
     /// Returns pixmap being drawn onto after all drawing operations are completed
     pub fn pixmap(self) -> Pixmap {
         self.pixmap
@@ -261,7 +284,8 @@ mod tests {
         let renderer = Renderer::new();
 
         const SCALE: f64 = 5.;
-        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::WHITE, SCALE);
+        let mut tinyskia_backend = TinySkiaBackend::from_dims(layout.size(), SCALE).unwrap();
+        renderer.render(&layout, &mut tinyskia_backend);
         let save_location = std::env::temp_dir().join("ttfparser-tinyskia.png");
         tinyskia_backend
             .pixmap()
@@ -290,7 +314,8 @@ mod tests {
         renderer.debug = true;
 
         const SCALE: f64 = 5.;
-        let mut tinyskia_backend = TinySkiaBackend::new(layout.size(), Color::BLACK, SCALE);
+        let mut tinyskia_backend = TinySkiaBackend::from_dims(layout.size(), SCALE).unwrap();
+        tinyskia_backend.set_color(Color::WHITE);
         renderer.render(&layout, &mut tinyskia_backend);
         let save_location = std::env::temp_dir().join("fontrs-tinyskia.png");
         tinyskia_backend
