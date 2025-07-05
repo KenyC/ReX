@@ -62,7 +62,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                             if instr.overlap != 0 {
                                 let overlap = Unit::<FUnit>::new(instr.overlap.into());
                                 let kern = -(overlap + glyph.depth()).to_px(engine, context);
-                                contents.add_node(kern!(vert: kern));
+                                contents.add_node(LayoutNode::vert_kern(kern))
                             }
                         }
 
@@ -75,7 +75,7 @@ impl<'f, F : MathFont> AsLayoutNode<'f, F> for VariantGlyph {
                             let glyph = engine.font().glyph_from_gid(instr.gid)?;
                             if instr.overlap != 0 {
                                 let kern = -Unit::<FUnit>::new(instr.overlap.into()).to_px(engine, context);
-                                contents.add_node(kern!(horz: kern));
+                                contents.add_node(LayoutNode::horiz_kern(kern));
                             }
                             contents.add_node(glyph.as_layout(engine, context)?);
                         }

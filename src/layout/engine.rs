@@ -202,14 +202,14 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             let italic_correction_to_apply = italic_correction.take();
             if sp != Spacing::None {
                 let kern = sp.to_length().to_px(self, context);
-                layout.add_node(kern!(horz: kern));
+                layout.add_node(LayoutNode::horiz_kern(kern));
             }
             // if there is already no space between consecutive nodes
             // we check whether one should apply italic correction
             else if let Some(italic_correction) = italic_correction_to_apply {
                 // Discharge italic correction
                 if must_apply_italic_correction_before(node) {
-                    layout.add_node(kern!(horz : italic_correction));
+                    layout.add_node(LayoutNode::horiz_kern(italic_correction));
                 }
             }
 
@@ -348,7 +348,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             ParseNode::AtomChange(ref ac) => vec![self.layout_with(&ac.inner, context.no_next())?.as_node()],
             ParseNode::Group(ref gp) => vec![self.layout_with(gp, context.no_next())?.as_node()],
             ParseNode::Rule(rule) => vec![rule.as_layout(self, context)?],
-            ParseNode::Kerning(kern) => vec![kern!(horz: kern.to_px(self, context))],
+            ParseNode::Kerning(kern) => vec![LayoutNode::horiz_kern(kern.to_px(self, context))],
 
             ParseNode::Color(ref clr) => {
                 let inner = self.layout_with(&clr.inner, context.no_next())?;
@@ -365,7 +365,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
                 let mut to_return = Vec::new();
                 for character in text.chars() {
                     if character.is_ascii_whitespace() {
-                        to_return.push(kern![horz : Spacing::Medium.to_length().to_px(self, context)]);
+                        to_return.push(LayoutNode::horiz_kern(Spacing::Medium.to_length().to_px(self, context)));
                     }
                     else {
                         to_return.push(self.font.glyph(character)?.as_layout(self, context)?);
@@ -398,9 +398,9 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let extra_descender = self.metrics_cache.constants().underbar_extra_descender * context.font_size;
         let mut vbox = layout::builders::VBox::new();
         vbox.add_node(node);
-        vbox.add_node(kern!(vert: clearance - depth));
+        vbox.add_node(LayoutNode::vert_kern(clearance - depth));
         vbox.add_node(rule!(width: width, height: thick));
-        vbox.add_node(kern!(vert: extra_descender));
+        vbox.add_node(LayoutNode::vert_kern(extra_descender));
         vbox.set_offset(clearance - depth + thick + extra_descender);
         vbox.build()
     }
@@ -491,12 +491,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let base_height = base.height;
         if diff_offsets > Unit::ZERO {
             let mut hbox_accent = layout::builders::HBox::new();
-            hbox_accent.add_node(LayoutNode {
-                width:  base_offset - acc_offset,
-                height: Unit::ZERO,
-                depth:  Unit::ZERO,
-                node:   LayoutVariant::Kern,
-            });
+            hbox_accent.add_node(LayoutNode::horiz_kern(diff_offsets));
             hbox_accent.add_node(accent);
 
             base_node = base.as_node();
@@ -504,12 +499,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         }
         else {
             let mut hbox_base = layout::builders::HBox::new();
-            hbox_base.add_node(LayoutNode {
-                width:  - diff_offsets,
-                height: Unit::ZERO,
-                depth:  Unit::ZERO,
-                node:   LayoutVariant::Kern,
-            });
+            hbox_base.add_node(LayoutNode::horiz_kern(- diff_offsets));
             hbox_base.add_node(base.as_node());
 
             base_node = hbox_base.build();
@@ -526,12 +516,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
 
 
             vbox.add_node(base_node);
-            vbox.add_node(LayoutNode {
-                width: Unit::ZERO,
-                height: - base_depth,
-                depth:  Unit::ZERO,
-                node: LayoutVariant::Kern,
-            });
+            vbox.add_node(LayoutNode::vert_kern(- base_depth));
             vbox.add_node(accent_node);
 
             // node must stand at the same height as basis
@@ -545,12 +530,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             // By not placing an offset on this vbox, we are assured that the
             // baseline will match the baseline of `base.as_node()`
             vbox.add_node(accent_node);
-            vbox.add_node(LayoutNode {
-                width: Unit::ZERO,
-                height: delta,
-                depth: Unit::ZERO,
-                node: LayoutVariant::Kern,
-            });
+            vbox.add_node(LayoutNode::vert_kern(delta));
             vbox.add_node(base_node);
         }
         Ok(vbox.build())
@@ -695,19 +675,19 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let mut contents = layout::builders::VBox::new();
         if scripts.superscript.is_some() {
             if !sup_kern.is_zero() {
-                sup.contents.insert(0, kern!(horz: sup_kern));
+                sup.contents.insert(0, LayoutNode::horiz_kern(sup_kern));
                 sup.width += sup_kern;
             }
 
             let corrected_adjust = adjust_up - sub.height + adjust_down;
             contents.add_node(sup.as_node());
-            contents.add_node(kern!(vert: corrected_adjust));
+            contents.add_node(LayoutNode::vert_kern(corrected_adjust));
         }
 
         contents.set_offset(adjust_down);
         if scripts.subscript.is_some() { 
             if !sub_kern.is_zero() {
-                sub.contents.insert(0, kern!(horz: sub_kern));
+                sub.contents.insert(0, LayoutNode::horiz_kern(sub_kern));
                 sub.width += sub_kern;
             }
             contents.add_node(sub.as_node());
@@ -750,17 +730,17 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             offset: offset;
             hbox![align: Alignment::Centered(sup.width);
                 width: width;
-                kern![horz: delta.scale(0.5)],
+                LayoutNode::horiz_kern(delta.scale(0.5)),
                 sup.as_node()
             ],
 
-            kern!(vert: sup_kern),
+            LayoutNode::vert_kern(sup_kern),
             base.centered(width).as_node(),
-            kern!(vert: sub_kern),
+            LayoutNode::vert_kern(sub_kern),
 
             hbox![align: Alignment::Centered(sub.width);
                 width: width;
-                kern![horz: -delta.scale(0.5)],
+                LayoutNode::horiz_kern(-delta.scale(0.5)),
                 sub.as_node()
             ]
         ])
@@ -820,9 +800,9 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let width = numer.width;
         let inner = vbox!(offset: offset;
             numer,
-            kern!(vert: kern_num),
+            LayoutNode::vert_kern(kern_num),
             rule!(width: width, height: bar),
-            kern!(vert: kern_den),
+            LayoutNode::vert_kern(kern_den),
             denom
         );
 
@@ -830,7 +810,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let axis_height = self.metrics_cache.constants().axis_height * frac_context.font_size;
         // Enclose fraction with delimiters if provided, otherwise with a NULL_DELIMITER_SPACE.
         let left = match frac.left_delimiter {
-            None => kern!(horz: null_delimiter_space),
+            None => LayoutNode::horiz_kern(null_delimiter_space),
             Some(sym) => {
                 let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
                 let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * frac_context.font_size);
@@ -844,7 +824,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         };
 
         let right = match frac.right_delimiter {
-            None => kern!(horz: null_delimiter_space),
+            None => LayoutNode::horiz_kern(null_delimiter_space),
             Some(sym) => {
                 let clearance = Unit::max(inner.height - axis_height, axis_height - inner.depth).scale(2.0);
                 let clearance = Unit::max(clearance, self.metrics_cache.constants().delimited_sub_formula_min_height * frac_context.font_size);
@@ -898,9 +878,9 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         Ok(vec![
             vbox![offset: offset; sqrt],
             vbox![
-                kern!(vert: top_padding),
+                LayoutNode::vert_kern(top_padding),
                 rule!(width:  contents.width, height: rule_thickness),
-                kern!(vert: gap),
+                LayoutNode::vert_kern(gap),
                 contents
             ]
 
@@ -966,7 +946,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             // Try for an ideal gap, otherwise use the minimum
             if idx < length {
                 let gap = Unit::max(gap_min, gap_try - prev);
-                vbox.add_node(kern![vert: gap]);
+                vbox.add_node(LayoutNode::vert_kern(gap));
             }
         }
 
@@ -1299,7 +1279,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let null_delimiter_space = self.metrics_cache.constants().null_delimiter_space * context.font_size;
 
         if symbol.codepoint == '.' {
-            return Ok(kern!(horz: null_delimiter_space));
+            return Ok(LayoutNode::horiz_kern(null_delimiter_space));
         }
 
 
@@ -1348,7 +1328,7 @@ fn draw_vertical_bars<F>(hbox: &mut builders::HBox<F>, n_bars: u8, rule_measurem
         let double_rule_sep = double_rule_sep;
         hbox.add_node(rule![width: rule_width, height: total_height]);
         for _ in 0 .. n_bars - 1 {
-            hbox.add_node(kern![horz: double_rule_sep]);
+            hbox.add_node(LayoutNode::horiz_kern(double_rule_sep));
             hbox.add_node(rule![width: rule_width, height: total_height]);
         }
     }

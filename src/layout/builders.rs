@@ -241,26 +241,6 @@ macro_rules! rule {
     );
 }
 
-macro_rules! kern {
-    (vert: $height:expr) => (
-        LayoutNode {
-            width:  Unit::ZERO,
-            height: $height,
-            depth:  Unit::ZERO,
-            node:   LayoutVariant::Kern,
-        }
-    );
-
-    (horz: $width:expr) => (
-        LayoutNode {
-            width:   $width,
-            height: Unit::ZERO,
-            depth:  Unit::ZERO,
-            node:   LayoutVariant::Kern,
-        }
-    );
-}
-
 pub fn color<'a, F>(layout: Layout<'a, F>, color: &nodes::Color) -> LayoutNode<'a, F> {
     LayoutNode {
         width: layout.width,
