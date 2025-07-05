@@ -17,7 +17,7 @@ use font::{Font, OpenTypeFont};
 use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
 
 /// Backend for TinySkia renderer
-pub struct TinySkiaBackend<'a> {
+pub struct TinySkiaBackend {
     /// A canvas to draw onto
     pixmap: Pixmap,
     /// Transform to convert from position according to ReX Renderer backend
@@ -25,10 +25,10 @@ pub struct TinySkiaBackend<'a> {
     layout_to_pixmap: Transform,
     color_stack: Vec<Color>,
     current_color: Color,
-    paint: Paint<'a>,
+    paint: Paint<'static>,
 }
 
-impl TinySkiaBackend<'_> {
+impl TinySkiaBackend {
     /// New TinySkiaBackend instance initializing a canvas (pixmap)
     /// along with a transform to get coordinates on the TinySkia pixmap.
     /// Size in pixels can be adjusted with the scale parameter.
@@ -57,7 +57,7 @@ impl TinySkiaBackend<'_> {
 }
 
 #[cfg(feature="ttfparser-fontparser")]
-impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend<'_> {
+impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend {
     fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &TtfMathFont<'_>) {
         // Make the tiny_skia path builder implement the necessary trait to draw
         // the glyph with the TtfMathFont font backend
@@ -110,7 +110,7 @@ impl FontBackend<TtfMathFont<'_>> for TinySkiaBackend<'_> {
 }
 
 #[cfg(feature="fontrs-fontparser")]
-impl FontBackend<OpenTypeFont> for TinySkiaBackend<'_> {
+impl FontBackend<OpenTypeFont> for TinySkiaBackend {
     fn symbol(&mut self, pos: Cursor, gid: GlyphId, scale: f64, ctx: &OpenTypeFont) {
         // Create tiny_skia path for glyph taking into account font matrix
         let mut contour_path = PathBuilder::new();
@@ -172,12 +172,12 @@ impl FontBackend<OpenTypeFont> for TinySkiaBackend<'_> {
 }
 
 #[cfg(feature="ttfparser-fontparser")]
-impl Backend<TtfMathFont<'_>> for TinySkiaBackend<'_> {}
+impl Backend<TtfMathFont<'_>> for TinySkiaBackend {}
 
 #[cfg(feature="fontrs-fontparser")]
-impl Backend<OpenTypeFont> for TinySkiaBackend<'_> {}
+impl Backend<OpenTypeFont> for TinySkiaBackend {}
 
-impl GraphicsBackend for TinySkiaBackend<'_> {
+impl GraphicsBackend for TinySkiaBackend {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
         if let Some(rect) = Rect::from_xywh(pos.x as f32, pos.y as f32, width as f32, height as f32) {
             let color = match role {
