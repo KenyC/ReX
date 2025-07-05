@@ -8,15 +8,13 @@ use super::{Backend, Cursor, Role};
 use crate::layout::LayoutDimensions;
 use crate::parser::color::RGBA;
 use crate::{font::common::GlyphId, FontBackend, GraphicsBackend};
-use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, PixmapMut, Rect, Transform};
+use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Rect, Stroke, Transform};
 #[cfg(feature="ttfparser-fontparser")]
 use crate::font::backend::ttf_parser::TtfMathFont;
 #[cfg(feature="fontrs-fontparser")]
 use font::{Font, OpenTypeFont};
 #[cfg(feature="fontrs-fontparser")]
 use pathfinder_content::{outline::ContourIterFlags, segment::SegmentKind};
-#[cfg(feature="fontrs-fontparser")]
-use pathfinder_geometry::{transform2d::Transform2F, vector::Vector2F};
 
 /// Backend for TinySkia renderer
 pub struct TinySkiaBackend<'a> {
@@ -181,20 +179,28 @@ impl Backend<OpenTypeFont> for TinySkiaBackend<'_> {}
 
 impl GraphicsBackend for TinySkiaBackend<'_> {
     fn bbox(&mut self, pos: Cursor, width: f64, height: f64, role: Role) {
-        // No convenient function to draw a bounding box in TinySkia, so it is instead
-        // filled with translucent colour
-        let color = match role {
-            Role::Glyph => Color::from_rgba8(0, 200, 0, 80),
-            Role::HBox => Color::from_rgba8(200, 0, 0, 80),
-            Role::VBox => Color::from_rgba8(0, 0, 200, 80),
-        };
         if let Some(rect) = Rect::from_xywh(pos.x as f32, pos.y as f32, width as f32, height as f32) {
+            let color = match role {
+                Role::Glyph => Color::from_rgba8(0, 200, 0, 255),
+                Role::HBox => Color::from_rgba8(200, 0, 0,  255),
+                Role::VBox => Color::from_rgba8(0, 0, 200,  255),
+            };
             self.paint.set_color(color);
-            self.pixmap.fill_rect(
-                rect,
-                &self.paint,
-                self.layout_to_pixmap,
-                None,
+
+            let path = {
+                let mut path_builder = PathBuilder::new();
+                path_builder.push_rect(rect);
+                path_builder.finish().unwrap()
+            };
+
+            let mut stroke = Stroke::default();
+            stroke.width = 0.; // hairline stroking to avoid scaling issues
+            self.pixmap.stroke_path(
+                &path, 
+                &self.paint, 
+                &stroke, 
+                self.layout_to_pixmap, 
+                None
             );
             self.paint.set_color(self.current_color);
         }

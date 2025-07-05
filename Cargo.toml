@@ -54,7 +54,7 @@ serde = "1.0"
 
 [dependencies.font]
 git = "https://github.com/pdf-rs/font"
-features=["math"]
+features=["math", "cff"]
 optional = true
 
 [dependencies.pathfinder_renderer]
