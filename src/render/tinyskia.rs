@@ -138,8 +138,8 @@ impl FontBackend<OpenTypeFont> for TinySkiaBackend {
         // Create tiny_skia path for glyph taking into account font matrix
         let mut contour_path = PathBuilder::new();
         {
-            let tr = ctx.font_matrix();
-            let path = ctx.glyph(gid.into()).unwrap().path.transformed(&tr);
+            let font_transform = ctx.font_matrix();
+            let path = ctx.glyph(gid.into()).unwrap().path.transformed(&font_transform);
             let contours = path.into_contours();
             for contour in contours {
                 if let Some(segment) = contour.iter(ContourIterFlags::empty()).next() {
@@ -208,14 +208,22 @@ impl GraphicsBackend for TinySkiaBackend {
                 Role::HBox => Color::from_rgba8(200, 0, 0,  255),
                 Role::VBox => Color::from_rgba8(0, 0, 200,  255),
             };
-            self.paint.set_color(color);
 
             let path = {
                 let mut path_builder = PathBuilder::new();
                 path_builder.push_rect(rect);
-                path_builder.finish().unwrap()
+                // path is None if path is empty or has invalid bounds
+                // in that case we draw nothing
+                if let Some(path) = path_builder.finish() {
+                    path
+                }
+                else {
+                    return ()
+                }
             };
 
+
+            self.paint.set_color(color);
             let mut stroke = Stroke::default();
             stroke.width = 0.; // hairline stroking to avoid scaling issues
             self.pixmap.stroke_path(
