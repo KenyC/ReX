@@ -269,3 +269,5 @@ pub mod femtovg;
 pub mod cairo;
 #[cfg(feature="raqote-renderer")]
 pub mod raqote;
+#[cfg(feature="tinyskia-renderer")]
+pub mod tinyskia;

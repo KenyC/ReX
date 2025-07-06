@@ -13,6 +13,7 @@ pathfinder-renderer   = ["dep:pathfinder_renderer", "dep:pathfinder_geometry", "
 femtovg-renderer      = ["dep:femtovg"]
 cairo-renderer        = ["dep:cairo-rs"]
 raqote-renderer       = ["dep:raqote"]
+tinyskia-renderer     = ["dep:tiny-skia"]
 ttfparser-fontparser  = ["dep:ttf-parser"]
 fontrs-fontparser     = ["dep:font", "dep:pathfinder_geometry", "dep:pathfinder_content", "dep:pathfinder_color", "dep:pathfinder_export"]
 
@@ -46,13 +47,14 @@ pathfinder_export   = { git = "https://github.com/servo/pathfinder/", optional =
 # Users of their library should be maximally unconstrained
 cairo-rs = {version = ">= 0.14.0", optional = true}
 raqote   = {version = ">= 0.8.2",  optional = true}
+tiny-skia    = { version = ">= 0.11.4", optional = true }
 unicode-math = { path = "deps/unicode-math" }
 serde_derive = "1.0"
 serde = "1.0"
 
 [dependencies.font]
 git = "https://github.com/pdf-rs/font"
-features=["math"]
+features=["math", "cff"]
 optional = true
 
 [dependencies.pathfinder_renderer]
@@ -82,4 +84,3 @@ rand = "0.8.5"
 insta = "1.31.0"
 similar = "2.5.0"
 serde_json = "1.0.116"
-
