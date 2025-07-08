@@ -269,3 +269,4 @@ pub mod femtovg;
 pub mod cairo;
 #[cfg(feature="raqote-renderer")]
 pub mod raqote;
+pub mod bbox;

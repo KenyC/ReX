@@ -190,6 +190,8 @@ extern crate log;
 mod macros;
 
 #[deny(missing_docs)]
+mod geometry;
+#[deny(missing_docs)]
 pub mod error;
 #[deny(missing_docs)]
 pub mod dimensions;
