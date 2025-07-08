@@ -11,7 +11,7 @@ use femtovg::renderer::OpenGl;
 use rex::femtovg::FemtoVGCanvas;
 use rex::font::backend::ttf_parser::TtfMathFont;
 use rex::Renderer;
-use rex::layout::{LayoutDimensions};
+use rex::layout::LayoutBBox;
 
 use clap::Parser;
 
@@ -131,8 +131,8 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, formula : &str
 
 
     // -- Transform canvas to lay out formulas
-    let dims = layout.size();
-    center_formula(dims, backend);
+    let bbox = layout.bounding_box();
+    center_formula(bbox, backend);
 
 
     // -- Render
@@ -149,10 +149,10 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, formula : &str
 
 
 
-fn center_formula(dims: LayoutDimensions, backend: &mut FemtoVGCanvas<OpenGl>) {
-    let width   = dims.width  as f32;
-    let height  = dims.height as f32;
-    let depth   = dims.depth  as f32;
+fn center_formula(bbox: LayoutBBox, backend: &mut FemtoVGCanvas<OpenGl>) {
+    let width   = bbox.width()  as f32;
+    let height  = bbox.height() as f32;
+
     let width_canvas  = WIDTH as f32;
     let height_canvas = HEIGHT as f32;
 
@@ -161,12 +161,16 @@ fn center_formula(dims: LayoutDimensions, backend: &mut FemtoVGCanvas<OpenGl>) {
     canvas.translate(width_canvas / 2., height_canvas / 2.);
 
     let min_width_scale  = width_canvas / width;
-    let min_height_scale = (height_canvas / 2.) / height.abs();
-    let min_depth_scale = (height_canvas / 2.) / depth.abs();
-    let min_scale = f32::min(min_width_scale, f32::min(min_height_scale, min_depth_scale));
+    let min_height_scale = height_canvas / height;
+    let min_scale = f32::min(min_width_scale, min_height_scale);
     // canvas.scale(10., 10.);
     canvas.scale(min_scale, min_scale);
-    canvas.translate(- width / 2., 0.);
+
+    // Translating to origin
+    canvas.translate(
+        (- (bbox.x_min + bbox.x_max) * 0.5) as f32, 
+        (- (bbox.y_min + bbox.y_max) * 0.5) as f32,
+    );
 
 }
 

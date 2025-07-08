@@ -1,5 +1,5 @@
 use rex::{
-    cairo::CairoBackend, font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, render::Renderer
+    bbox, cairo::CairoBackend, font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, render::Renderer
 };
 use clap::Parser;
 
@@ -66,11 +66,11 @@ fn main() {
     }
 
     // -- create Cairo surface & context
-    let dims = layout.size();
-    let svg_surface = cairo::SvgSurface::new(dims.width, dims.height - dims.depth, Some(output_file_path)).unwrap();
+    let bbox = layout.bounding_box();
+    let svg_surface = cairo::SvgSurface::new(bbox.width(), bbox.height(), Some(output_file_path)).unwrap();
     let context = cairo::Context::new(&svg_surface).unwrap();
-    // So that top-left corner of SVG is aligned with top of formula
-    context.translate(0., dims.height);
+    // Translate to origin
+    context.translate(- bbox.x_min, - bbox.y_min);
 
 
 

@@ -3,7 +3,7 @@
 //! To determine the real bounding box, you can perform a renderer with the backend defined in this module.
 
 
-use crate::{dimensions::{units::{Em, FUnit, Px, Ratio}, Unit}, font::{backend::ttf_parser::TtfMathFont, common::GlyphId, MathFont}, geometry::BBox};
+use crate::{dimensions::{units::{Em, FUnit, Px, Ratio}, Unit}, font::{common::GlyphId, MathFont}, geometry::BBox};
 
 use super::{Backend, FontBackend, GraphicsBackend};
 
@@ -32,6 +32,11 @@ impl BBoxBackend {
                 y_max: Unit::<Px>::new(y_origin), 
             }
         }
+    }
+
+    /// Returns the bounding box computed by the backend.
+    pub fn finish(self) -> BBox<Px> {
+        self.bbox
     }
 }
 

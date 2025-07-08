@@ -24,9 +24,11 @@ pub mod spacing;
 pub mod kern;
 pub mod constants;
 
+use crate::bbox::BBoxBackend;
 use crate::font::common::GlyphId;
-use crate::font::FontMetricsCache;
+use crate::font::{FontMetricsCache, MathFont};
 use crate::parser::color::RGBA;
+use crate::Renderer;
 use std::ops::Deref;
 use std::fmt;
 use std::collections::BTreeMap;
@@ -141,10 +143,10 @@ impl<'f, F> Layout<'f, F> {
         }
     }
 
+
 }
 
 impl<'f, F> Layout<'f, F> {
-
     fn is_symbol(&self) -> Option<LayoutGlyph<'f, F>> {
         if self.contents.len() != 1 {
             return None;
@@ -153,9 +155,26 @@ impl<'f, F> Layout<'f, F> {
     }
 }
 
-/// A struct containing various measures for a Layout in pixel units.
+impl<'f, F : MathFont> Layout<'f, F> {
+    /// Returns the true bounding box of the formula, the one that encloses all glyphs and all rules.
+    /// The coordinates are given taking the origin to be in (0, 0).
+    pub fn bounding_box(&self) -> LayoutBBox {
+        let mut bbox_renderer = BBoxBackend::new(0., 0.);
+        Renderer::new().render(self, &mut bbox_renderer);
+        let bbox = bbox_renderer.finish();
+
+        LayoutBBox { 
+            x_min: bbox.x_min.unitless(Px), 
+            x_max: bbox.x_max.unitless(Px), 
+            y_min: bbox.y_min.unitless(Px), 
+            y_max: bbox.y_max.unitless(Px), 
+        }        
+    }
+}
+
+/// A struct containing various measures for a [`Layout`] in pixel units.
 // Should not be used internally, the unitless types are "unsafe"
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LayoutDimensions {
     /// distance from baseline to top of the formula (positive if top of formula above baseline, typically positive)
     pub width  : f64,
@@ -163,6 +182,33 @@ pub struct LayoutDimensions {
     pub height : f64,
     /// width of formula
     pub depth  : f64,
+}
+
+/// A struct representing the true bounding box of the formula, enclosing all glyphs and all rules.
+/// The coordinates are given taking the origin to be in (0, 0).
+// Should not be used internally, the unitless types are "unsafe"
+#[derive(Debug, Clone)]
+pub struct LayoutBBox {
+    /// minimum x-coordinate
+    pub x_min : f64,
+    /// maximum x-coordinate
+    pub x_max : f64,
+    /// minimum y-coordinate
+    pub y_min : f64,
+    /// maximum y-coordinate
+    pub y_max : f64,
+}
+
+impl LayoutBBox {
+    /// Returns the width of the bounding box
+    pub fn width(&self) -> f64 {
+        self.x_max - self.x_min
+    }
+
+    /// Returns the height of the bounding box
+    pub fn height(&self) -> f64 {
+        self.y_max - self.y_min
+    }
 }
 
 /// A sub-part of the layout hierarchy: can contain other nodes and may be contained in other nodes.

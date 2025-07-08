@@ -3,7 +3,7 @@
 
 use std::ops::Mul;
 
-use crate::dimensions::{units::FUnit, Unit};
+use crate::dimensions::Unit;
 
 /// A generic bounding box for a 2D coordinate system, parameterized by unit type.
 /// When used to store typographical measurements, i.e. a glyph's bounding box, it is assumed the origin is at (0, 0). In particular, the baseline on which glyphs sit is at y=0
