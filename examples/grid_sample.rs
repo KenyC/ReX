@@ -124,7 +124,7 @@ fn draw<'a, 'b : 'a>(backend : &'b mut FemtoVGCanvas<'a, OpenGl>, layout_engine 
 
 
     // -- Transform canvas to lay out formulas
-    let bbox = layout.bounding_box();
+    let bbox = layout.full_bounding_box();
     center_formula(bbox, backend);
 
 

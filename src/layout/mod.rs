@@ -158,17 +158,32 @@ impl<'f, F> Layout<'f, F> {
 impl<'f, F : MathFont> Layout<'f, F> {
     /// Returns the true bounding box of the formula, the one that encloses all glyphs and all rules.
     /// The coordinates are given taking the origin to be in (0, 0).
-    pub fn bounding_box(&self) -> LayoutBBox {
-        let mut bbox_renderer = BBoxBackend::new(0., 0.);
+    /// Returns `None` if the layout contains no glyphs or rules
+    /// Note: it may still contain whitespaces! 
+    pub fn bounding_box(&self) -> Option<LayoutBBox> {
+        let mut bbox_renderer = BBoxBackend::new();
         Renderer::new().render(self, &mut bbox_renderer);
-        let bbox = bbox_renderer.finish();
+        let bbox = bbox_renderer.finish()?;
 
-        LayoutBBox { 
+        Some(LayoutBBox { 
             x_min: bbox.x_min.unitless(Px), 
             x_max: bbox.x_max.unitless(Px), 
             y_min: bbox.y_min.unitless(Px), 
             y_max: bbox.y_max.unitless(Px), 
-        }        
+        })        
+    }
+
+    /// Returns the union of the bounding box that encloses all glyphs and rules (as returned by [`Layout::bounding_box`])
+    /// and the 'typographical' bounding box (containing white spaces)
+    pub fn full_bounding_box(&self) -> LayoutBBox {
+        let content_bbox = self.bounding_box().unwrap_or_else(|| LayoutBBox { x_min: 0., x_max: 0., y_min: 0., y_max: 0. });
+        let LayoutDimensions { width, height, depth } = self.size();
+        content_bbox.union(LayoutBBox {
+            x_min: 0.,
+            x_max: width,
+            y_min: height,
+            y_max: depth,
+        })
     }
 }
 
@@ -208,6 +223,16 @@ impl LayoutBBox {
     /// Returns the height of the bounding box
     pub fn height(&self) -> f64 {
         self.y_max - self.y_min
+    }
+
+    /// Returns the smallest bbox enclosing both `şelf` and `other`
+    pub fn union(&self, other: Self) -> Self {
+        Self { 
+            x_min: f64::min(self.x_min, other.x_min), 
+            y_min: f64::min(self.y_min, other.y_min), 
+            x_max: f64::max(self.x_max, other.x_max), 
+            y_max: f64::max(self.y_max, other.y_max), 
+        }
     }
 }
 

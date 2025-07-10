@@ -66,7 +66,7 @@ fn main() {
     }
 
     // -- create Cairo surface & context
-    let bbox = layout.bounding_box();
+    let bbox = layout.full_bounding_box();
     let svg_surface = cairo::SvgSurface::new(bbox.width(), bbox.height(), Some(output_file_path)).unwrap();
     let context = cairo::Context::new(&svg_surface).unwrap();
     // Translate to origin

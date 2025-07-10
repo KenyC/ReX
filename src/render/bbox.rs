@@ -9,40 +9,45 @@ use super::{Backend, FontBackend, GraphicsBackend};
 
 
 
-/// A rendering backend that does not draw but simply records strokes
+/// A rendering backend that does not draw but simply records the bouding box being drawn to
 #[derive(Debug, Clone)]
 pub struct BBoxBackend {
-    bbox: BBox<Px>,
+    /// The current bounding box
+    /// Is None when nothing has been drawn yet
+    bbox: Option<BBox<Px>>,
 }
 
 impl Default for BBoxBackend {
     fn default() -> Self {
-        Self::new(0., 0.)
+        Self::new()
     }
 }
 
 impl BBoxBackend {
     /// Creates a new bbox rendering backend.
-    pub fn new(x_origin : f64, y_origin : f64) -> Self {
+    pub fn new() -> Self {
         Self { 
-            bbox: BBox { 
-                x_min: Unit::<Px>::new(x_origin), 
-                x_max: Unit::<Px>::new(x_origin), 
-                y_min: Unit::<Px>::new(y_origin), 
-                y_max: Unit::<Px>::new(y_origin), 
-            }
+            bbox: None,
         }
     }
 
     /// Returns the bounding box computed by the backend.
-    pub fn finish(self) -> BBox<Px> {
+    /// Return None when nothing has be drawn
+    pub fn finish(self) -> Option<BBox<Px>> {
         self.bbox
+    }
+
+    fn enclose(&mut self, mut bbox: BBox<Px>) {
+        if let Some(other) = self.bbox.as_ref() {
+            bbox = bbox.union(other.clone());
+        }
+        self.bbox = Some(bbox)
     }
 }
 
 impl GraphicsBackend for BBoxBackend {
     fn rule(&mut self, pos: super::Cursor, width: f64, height: f64) {
-        self.bbox = self.bbox.union(BBox::from_dims(
+        self.enclose(BBox::from_dims(
             Unit::new(pos.x), Unit::new(pos.y),
             Unit::new(width), Unit::new(height),
         ));
@@ -71,7 +76,7 @@ impl<F : MathFont> FontBackend<F> for BBoxBackend {
             .translate(x, y)
         ;
 
-        self.bbox = self.bbox.union(bbox);
+        self.enclose(bbox);
     }
 }
 
@@ -116,18 +121,19 @@ mod tests {
         let expected = BBox::<FUnit> { 
             x_min: Unit::new(-97.), 
             x_max: Unit::new(600.), 
-            y_min: Unit::new(-290.), 
-            y_max: Unit::new(706.), 
+            y_min: Unit::new(-706.), 
+            y_max: Unit::new(290.), 
         }.scale(Unit::<Ratio<FUnit, Em>>::new(1000.).recip() * font_size.lift());
+        let bbox = bbox_backend.bbox.unwrap();
         assert!(
             BBox::close_to(
-                &bbox_backend.bbox,
+                &bbox,
                 &expected,
                 ERROR_TOLERANCE,
             ),
-            "expected: {:?}, found: {:?}",
+            "expected: {:#?}, found: {:#?}",
             expected,
-            bbox_backend.bbox,
+            bbox,
         )   
 
 
@@ -180,8 +186,9 @@ mod tests {
             Unit::new(37.0938),
             Unit::new(15.9375),
         // In addition, Inkscape doesn't include the origin so we must include in the bbox
-        ).union(BBox::single_point(Unit::ZERO, Unit::ZERO));
-        let found = bbox_backend.bbox.translate(Unit::ZERO, -bbox_backend.bbox.y_min);
+        );
+        let bbox = bbox_backend.bbox.unwrap();
+        let found = bbox.translate(Unit::ZERO, - bbox.y_min);
         assert!(
             BBox::close_to(
                 &found,
@@ -204,8 +211,9 @@ mod tests {
             Unit::new(0.),
             Unit::new(201.997),
             Unit::new(37.1953),
-        ).union(BBox::single_point(Unit::ZERO, Unit::ZERO));
-        let found = bbox_backend.bbox.translate(Unit::ZERO, -bbox_backend.bbox.y_min);
+        );
+        let bbox = bbox_backend.bbox.unwrap();
+        let found = bbox.translate(Unit::ZERO, - bbox.y_min);
         assert!(
             BBox::close_to(
                 &found,
