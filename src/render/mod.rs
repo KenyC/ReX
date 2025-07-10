@@ -271,3 +271,4 @@ pub mod cairo;
 pub mod raqote;
 #[cfg(feature="tinyskia-renderer")]
 pub mod tinyskia;
+pub mod bbox;
