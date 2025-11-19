@@ -390,8 +390,12 @@ pub fn parse_color<'a, I : Iterator<Item = TexToken<'a>>>(token_iter : I) -> Par
     for token in token_iter {
         match token {
             TexToken::Char(c) => color_name.push(c),
-            TexToken::ControlSequence(_) => todo!(),
-            _ => todo!()
+            _ => return Err(ParseError::ExpectedChars),
+            // NOTE: there used to be the code below here, which implies that there might be a way for color argument to contain primitive commands; 
+            // not sure whether this is ever possible so I remove it
+            //
+            // TexToken::ControlSequence(_) => todo!(),
+            // _ => todo!()
         }
     }
     let color : RGBA = color_name.parse().map_err(|_| ParseError::UnrecognizedColor(color_name.into_boxed_str()))?;
