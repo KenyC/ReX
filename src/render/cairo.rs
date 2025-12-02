@@ -31,6 +31,10 @@ impl CairoBackend {
     pub fn context(self) -> Context
     {self.context}
 
+    /// Getter for [`Context`] 
+    pub fn context_ref(&self) -> &Context
+    {&self.context}
+
     fn set_current_color(&mut self) {
         let (r, g, b, a,) = self.current_color;
         #[inline]
