@@ -1,6 +1,6 @@
 ---
 source: src/parser/mod.rs
-expression: "parse(r\"a\\hspace{1em}b\")"
+expression: "parse(r\"a\\vspace{2em}b\")"
 ---
 Ok(
     [
@@ -10,9 +10,9 @@ Ok(
                 atom_type: Alpha,
             },
         ),
-        Kerning(
+        VerticalKerning(
             Em(
-                1.0,
+                2.0,
             ),
         ),
         Symbol(

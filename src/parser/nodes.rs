@@ -26,8 +26,10 @@ pub enum ParseNode {
     Scripts(Scripts),
     /// A rule (i.e. a uniformly filled line)
     Rule(Rule),
-    /// Some (positive or negative) spacing between groups of nodes
+    /// Some (positive or negative) horizontal spacing between groups of nodes
     Kerning(AnyUnit),
+    /// Some (positive or negative) vertical spacing
+    VerticalKerning(AnyUnit),
     /// An accent over a certain groups of nodes
     Accent(Accent),
     /// A style (text cramped) to apply over a certain group of nodes
@@ -375,6 +377,7 @@ impl ParseNode {
 
             ParseNode::Rule(_)          => TexSymbolType::Alpha,
             ParseNode::Kerning(_)       => TexSymbolType::Transparent,
+            ParseNode::VerticalKerning(_) => TexSymbolType::Transparent,
             ParseNode::Accent(ref acc) if acc.extend => TexSymbolType::Operator(true),
             ParseNode::Accent(ref acc) => 
                 acc.nucleus.first()

@@ -1,6 +1,6 @@
 ---
 source: src/parser/mod.rs
-expression: "parse(r\"a\\hspace{1em}b\")"
+expression: "parse(r\"a\\hspace{10pt}b\")"
 ---
 Ok(
     [
@@ -11,8 +11,8 @@ Ok(
             },
         ),
         Kerning(
-            Em(
-                1.0,
+            Px(
+                13.333333333333334,
             ),
         ),
         Symbol(

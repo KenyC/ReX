@@ -349,6 +349,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             ParseNode::Group(ref gp) => vec![self.layout_with(gp, context.no_next())?.as_node()],
             ParseNode::Rule(rule) => vec![rule.as_layout(self, context)?],
             ParseNode::Kerning(kern) => vec![LayoutNode::horiz_kern(kern.to_px(self, context))],
+            ParseNode::VerticalKerning(kern) => vec![LayoutNode::vert_kern(kern.to_px(self, context))],
 
             ParseNode::Color(ref clr) => {
                 let inner = self.layout_with(&clr.inner, context.no_next())?;
