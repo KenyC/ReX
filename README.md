@@ -34,7 +34,7 @@ You may add support for other font parser by implementing the `MathFont` trait a
   - [x] Sub- and super-scripts
   - [x] Text fragment `\text{...}`
   - [x] Custom macros
-  - [ ] Misc. font effects: `\boldsymbol` and `\underline`
+  - [x] Misc. font effects: `\boldsymbol`, `\bm`, and `\underline`
 
 
 # Samples
