@@ -217,7 +217,16 @@ impl Renderer {
                     out.symbol(pos.down(node.height.unitless(Px)), gly.gid, gly.size.unitless(Px), gly.font);
                 }
 
-                LayoutVariant::Color(_) => panic!("Shouldn't have a color in a vertical box???"),
+                LayoutVariant::Color(ref clr) => {
+                    out.begin_color(clr.color);
+                    self.render_hbox(out,
+                                     pos.down(node.height.unitless(Px)),
+                                     &clr.inner,
+                                     node.height.unitless(Px),
+                                     node.width.unitless(Px),
+                                     Alignment::Default);
+                    out.end_color();
+                }
 
                 LayoutVariant::Kern => { /* NOOP */ }
             }
