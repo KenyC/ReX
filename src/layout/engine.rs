@@ -374,8 +374,9 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
                 to_return
             },
 
-            // TODO: understand whether this is needed anywhere
-            ParseNode::Style(_)     => unimplemented!(),
+            // Style changes are handled in layout_with() before dispatch() is called.
+            // Return empty vec for defensive handling if somehow reached.
+            ParseNode::Style(_)     => Vec::new(),
         })
     }
 
