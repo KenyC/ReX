@@ -25,7 +25,7 @@ pub mod kern;
 pub mod constants;
 
 use crate::bbox::BBoxBackend;
-use crate::font::common::GlyphId;
+use crate::font::common::{GlyphId, ScriptLevel};
 use crate::font::{FontMetricsCache, MathFont};
 use crate::parser::color::RGBA;
 use crate::Renderer;
@@ -695,6 +695,21 @@ impl Style {
         match self {
             Style::Display | Style::DisplayCramped => Style::TextCramped,
             _ => self.subscript_variant(),
+        }
+    }
+
+    fn script_level(self) -> Option<ScriptLevel> {
+        match self {
+            Style::ScriptScriptCramped 
+            | Style::ScriptScript => Some(ScriptLevel::LevelTwo),
+            
+            Style::ScriptCramped 
+            | Style::Script => Some(ScriptLevel::LevelOne),
+            
+            Style::TextCramped 
+            | Style::Text 
+            | Style::DisplayCramped 
+            | Style::Display => None,
         }
     }
 }

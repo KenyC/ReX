@@ -1,9 +1,9 @@
 
 use std::convert::TryInto;
 
-use ttf_parser::{math::GlyphPart, LazyArray16};
+use ttf_parser::{LazyArray16, Tag, gsub::{AlternateSubstitution, SubstitutionSubtable}, math::GlyphPart};
 
-use crate::{font::{FontConstants, VariantGlyph, common::{GlyphInstruction, GlyphId}, Direction, Glyph}, error::FontError, dimensions::units::Ratio};
+use crate::{dimensions::units::Ratio, error::FontError, font::{common::{GlyphId, GlyphInstruction, ScriptLevel}, Direction, FontConstants, Glyph, VariantGlyph}};
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FUnit};
 
@@ -307,6 +307,58 @@ impl<'a> crate::font::MathFont for TtfMathFont<'a> {
         Unit::<Ratio<Em, FUnit>>::new(self.font_matrix.sx as f64)
     }
 
+    fn glyph_script_alternate(&self, gid: GlyphId, script_level : ScriptLevel) -> Option<GlyphId> {
+        // Find GSUB (glyph substitution table)
+        let gsub = self.font.tables().gsub?;
+        let script_level = if let ScriptLevel::LevelTwo = script_level { 1 } else { 0 };
+
+        // Find 'ssty' feature
+        const SSTY_U8_ARRAY : & 'static [u8]= "ssty".as_bytes();
+        const SSTY_U8_4 : [u8; 4]= [SSTY_U8_ARRAY[0], SSTY_U8_ARRAY[1], SSTY_U8_ARRAY[2], SSTY_U8_ARRAY[3]];
+
+        // gsub.lookups
+
+        let ssty_feature = gsub.features.find(Tag::from_bytes(&SSTY_U8_4))?;
+
+        for lookup_index in ssty_feature.lookup_indices {
+            if let Some(lookup) = gsub.lookups.get(lookup_index) {
+                for subtable in lookup.subtables.into_iter::<SubstitutionSubtable>() {
+                    match subtable {
+                        SubstitutionSubtable::Single(ttf_parser::gsub::SingleSubstitution::Format1 { coverage, delta }) => {
+                            if coverage.contains(gid.into()) {
+                                let gid_u16 : u16 = gid.into();
+                                return Some(GlyphId::from(gid_u16.wrapping_add_signed(delta)));
+                            }
+                        },
+                        SubstitutionSubtable::Single(ttf_parser::gsub::SingleSubstitution::Format2 { substitutes , ..}) => {
+                            if let Some((_, glyph_substitute_id)) = substitutes.binary_search(&gid.into()) {
+                                return Some(GlyphId::from(glyph_substitute_id));
+                            }
+                        },
+                        SubstitutionSubtable::Alternate(AlternateSubstitution { coverage, alternate_sets }) => {
+                            if let Some(alternate_set) = coverage
+                                .get(gid.into())
+                                .and_then(|i| alternate_sets.get(i))
+                            {
+                                let alternates = alternate_set.alternates;
+                                if !alternates.is_empty() {
+                                    let script_level = script_level.min(alternates.len() - 1);
+                                    return alternates.get(script_level).map(GlyphId::from);
+                                }
+                            }
+                        },
+                          SubstitutionSubtable::Multiple(_)
+                        | SubstitutionSubtable::Ligature(_)
+                        | SubstitutionSubtable::Context(_)
+                        | SubstitutionSubtable::ChainContext(_)
+                        | SubstitutionSubtable::ReverseChainSingle(_) => (),
+                    }
+                }
+            }
+        }
+
+        None
+    }
 
 }
 
@@ -367,7 +419,7 @@ fn construct_glyphs(min_connector_overlap : u32, parts: LazyArray16<GlyphPart>, 
         if part.part_flags.extender() {
             // if no extender, we skip this case.
             if min_repeats == 0 {
-                continue;                
+                continue;
             }
             // if more than one repetition of an extender, we must take into account
             // overlap between the extender and itself.
@@ -441,8 +493,33 @@ fn construct_glyphs(min_connector_overlap : u32, parts: LazyArray16<GlyphPart>, 
 #[cfg(test)]
 mod tests {
 
+    use crate::font::MathFont;
+
     use super::*;
     const FIRA_MATH_FONT_FILE : & 'static [u8] = include_bytes!("../../../resources/FiraMath_Regular.otf");
+
+    #[test]
+    fn test_script_substitute() {
+        let face = ttf_parser::Face::parse(FIRA_MATH_FONT_FILE, 0).unwrap();
+        let font = TtfMathFont::new(face).unwrap();
+
+
+        // Id for prime (U+2032)
+        let prime_glyph = GlyphId::from(0x22c_u16);
+        // Id for prime substitution glyp
+        let first_substitution = GlyphId::from(0x61f_u16);
+        let second_substitution = GlyphId::from(0x626_u16);
+
+        assert_eq!(
+            font.glyph_script_alternate(prime_glyph, ScriptLevel::LevelOne),
+            Some(first_substitution),
+        );
+
+        assert_eq!(
+            font.glyph_script_alternate(prime_glyph, ScriptLevel::LevelTwo),
+            Some(second_substitution),
+        )
+    }
 
     #[test]
     fn test_construct_glyphs() {

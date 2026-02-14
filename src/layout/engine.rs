@@ -382,10 +382,18 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
     fn symbol(&self, sym: Symbol, context: LayoutContext) -> LayoutResult<LayoutNode<'f, F>> {
         // Operators are handled specially.  We may need to find a larger
         // symbol and vertical center it.
-        match sym.atom_type {
-            TexSymbolType::Operator(_) => self.largeop(sym, context),
-            _ => self.font.glyph(sym.codepoint)?.as_layout(self, context)
+        if matches!(sym.atom_type, TexSymbolType::Operator(_),) {
+            return self.largeop(sym, context);
         }
+
+        let mut glyph = self.font.glyph(sym.codepoint)?;
+
+        // If in script mode, we perform substitutions
+        if let Some(script_level) = context.style.script_level() {
+            glyph.gid = self.font.glyph_script_alternate(glyph.gid, script_level).unwrap_or(glyph.gid);
+        }
+
+        glyph.as_layout(self, context)
     }
 
 

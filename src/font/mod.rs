@@ -19,7 +19,7 @@ pub use style::style_symbol;
 
 pub use crate::font::common::{Direction, VariantGlyph};
 
-use crate::font::common::GlyphId;
+use crate::font::common::{GlyphId, ScriptLevel};
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FUnit, Ratio};
 use crate::error::FontError;
@@ -44,6 +44,14 @@ pub trait MathFont : Sized {
     fn glyph<'f>(& 'f self, codepoint: char) -> Result<Glyph<'f, Self>, FontError> {
         let gid = self.glyph_index(codepoint).ok_or(FontError::MissingGlyphCodepoint(codepoint))?;
         self.glyph_from_gid(gid)
+    }
+
+    /// If the font supports `ssty`, this function offers to replace a certain glyph with one more appropriate for sub- and super-scripts
+    /// As per the spec, a font may offer substitutions for non-nested superscripts (level 1) and for superscripts of superscripts (level 2)
+    /// The `script_level_two` boolean parameter specifies whether a level 1 substitute is requested (false) or a level 2 substitute (true)
+    #[allow(unused_variables)]
+    fn glyph_script_alternate(&self, gid: GlyphId, script_level : ScriptLevel) -> Option<GlyphId> {
+        None
     }
 
 

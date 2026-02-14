@@ -227,7 +227,7 @@ pub fn render<F : MathFont, B : Backend<F>>(formula : &str, backend : &mut B, fo
 
 #[cfg(test)]
 mod tests {
-    use crate::{font::backend::ttf_parser::TtfMathFont, layout::engine::{self, LayoutBuilder}, parser::parse};
+    use crate::{font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, parser::parse};
 
     const GARAMOND_MATH_FONT : &[u8] = include_bytes!("../resources/Garamond_Math.otf");
 

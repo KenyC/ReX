@@ -1,15 +1,15 @@
 //! Parses strings representing LateX formulas into [`ParseNode`]'s
-//! 
+//!
 //! The main function function of interest is [`engine::parse`]
 
-pub mod nodes;
 pub mod color;
-pub mod symbols;
-pub mod macros;
-pub mod error;
-pub mod environments;
-mod textoken;
 mod control_sequence;
+pub mod environments;
+pub mod error;
+pub mod macros;
+pub mod nodes;
+pub mod symbols;
+mod textoken;
 
 use unicode_math::TexSymbolType;
 
@@ -18,20 +18,20 @@ use crate::error::ParseResult;
 use crate::font::style_symbol;
 use crate::font::Style;
 use crate::parser::control_sequence::parse_color;
+use crate::parser::control_sequence::PrimitiveControlSequence;
 use crate::parser::nodes::Accent;
 use crate::parser::nodes::Delimited;
 use crate::parser::nodes::GenFraction;
 use crate::parser::nodes::PlainText;
 use crate::parser::textoken::TexToken;
-use crate::parser::control_sequence::PrimitiveControlSequence;
 
 use self::control_sequence::SpaceKind;
 use self::environments::Environment;
 use self::error::ParseError;
 use self::macros::CommandCollection;
 use self::macros::ExpandedTokenIter;
-pub use self::nodes::ParseNode;
 pub use self::nodes::is_symbol;
+pub use self::nodes::ParseNode;
 use self::nodes::Scripts;
 use self::symbols::Symbol;
 use self::textoken::NumberOfPrimes;
@@ -127,53 +127,55 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
 
         while let Some(token) = self.token_iter.next_token()? {
             match token {
-                TexToken::Superscript | TexToken::Subscript  => {
-                    let is_superscript = token == TexToken::Superscript;
-                    let group = self.parse_required_argument_as_nodes().map_err(|e| match e {
-                        ParseError::ExpectedToken => ParseError::MissingSubSuperScript,
-                        e => e,
-                    })?;
+                TexToken::Superscript 
+                | TexToken::Subscript  
+                | TexToken::Prime(..)  
+                => {
                     let last_node = results.pop();
-                    let new_node = match last_node {
-                        Some(ParseNode::Scripts(mut scripts)) =>{
-                            let sub_or_super_script = scripts.get_script(is_superscript);
-                            match sub_or_super_script {
-                                Some(_) => return Err(ParseError::TooManySubscriptsOrSuperscripts),
-                                None => {
-                                    *sub_or_super_script = Some(group);
-                                },
-                            }
-                            ParseNode::Scripts(scripts)
-                        }
-                        Some(node) => {
-                            let mut scripts = Scripts { 
+                    let mut script = match last_node {
+                        Some(ParseNode::Scripts(mut scripts)) => scripts,
+                        Some(node) => 
+                            Scripts { 
                                 base: Some(Box::new(node)), 
                                 superscript: None,
                                 subscript: None, 
-                            };
-                            *scripts.get_script(is_superscript) = Some(group);
-                            ParseNode::Scripts(scripts)
-                        }
-                        None => {
-                            let mut scripts = Scripts { 
+                            }
+                        ,
+                        None => 
+                            Scripts { 
                                 base: None, 
                                 superscript: None,
                                 subscript: None, 
-                            };
-                            *scripts.get_script(is_superscript) = Some(group);
-                            ParseNode::Scripts(scripts)
-                        }
+                            }
+                        ,
                     };
-                    results.push(new_node);
-                },
-                TexToken::Prime(number_of_primes) => { 
-                    let codepoint = match number_of_primes {
-                        NumberOfPrimes::Simple => '′',
-                        NumberOfPrimes::Double => '″',
-                        NumberOfPrimes::Triple => '‴',
-                    };
-                    let symbol = Symbol { codepoint, atom_type: TexSymbolType::Ordinary };
-                    results.push(ParseNode::Symbol(symbol));
+                    
+                    let is_superscript = !matches!(token, TexToken::Subscript);
+                    
+                    let exponent = script.get_script(is_superscript);
+                    let exponent = exponent.get_or_insert(Vec::new());
+                    
+                    
+                    if let TexToken::Prime(number_of_primes) = token {
+                        let codepoint = match number_of_primes {
+                            NumberOfPrimes::Simple => '′',
+                            NumberOfPrimes::Double => '″',
+                            NumberOfPrimes::Triple => '‴',
+                        };
+                        let symbol = Symbol { codepoint, atom_type: TexSymbolType::Ordinary };
+                        exponent.push(ParseNode::Symbol(symbol));
+                    }
+                    else {
+                        let group = self.parse_required_argument_as_nodes().map_err(|e| match e {
+                            ParseError::ExpectedToken => ParseError::MissingSubSuperScript,
+                            e => e,
+                        })?;
+                        exponent.extend(group);
+                    }
+                    
+                    
+                    
+                    results.push(ParseNode::Scripts(script));
                 },
                 TexToken::Tilde => { 
                     results.push(ParseNode::Kerning(SpaceKind::WordSpace.size()))
@@ -864,7 +866,9 @@ mod tests {
         // success
         insta::assert_debug_snapshot!(parse(r"\substack{   1 \\ 2}"));
         insta::assert_debug_snapshot!(parse(r"\substack{ 1 \\ \frac{7}8 \\ 4}"));
-        insta::assert_debug_snapshot!(parse(r"\begin{array}{c}\substack{1 \\ \frac{7}8 \\ 4} \\ 5 \end{array}"));
+        insta::assert_debug_snapshot!(parse(
+            r"\begin{array}{c}\substack{1 \\ \frac{7}8 \\ 4} \\ 5 \end{array}"
+        ));
         insta::assert_debug_snapshot!(parse(r"\substack{1 \\}"));
         insta::assert_debug_snapshot!(parse(r"1 \substack{}"));
 
@@ -894,7 +898,7 @@ mod tests {
         // success
         insta::assert_debug_snapshot!(parse(r"\operatorname{cof}"));
         insta::assert_debug_snapshot!(parse(r"\operatorname{a-m}"));
-        
+
         // failure
         insta::assert_debug_snapshot!(parse(r"\operatorname{\frac12}"));
     }

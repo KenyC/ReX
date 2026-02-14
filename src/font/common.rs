@@ -33,6 +33,17 @@ pub enum Direction {
     Vertical
 }
 
+
+/// Specifies the script level at which a glyph is rendered, such as superscript, subscript, or their nested forms (e.g. subscripts of subscripts).
+/// This is mainly to select a stylistic variant in `ssty` feature of font (cf [reference]()), i.e. another glyph to draw that will look neater in sub- and superscripts.
+#[derive(Debug, Clone, Copy)]
+pub enum ScriptLevel {
+    /// The glyph is rendered as a first-level script (superscript or subscript).
+    LevelOne,
+    /// The glyph is rendered as a nested script (e.g., a superscript of a superscript or a subscript of a subscript).
+    LevelTwo,
+}
+
 /// One part of the extended glyph construction.
 /// The different parts are assembled together with some overlap.
 #[derive(Debug, Clone, Copy)]

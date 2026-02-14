@@ -1,5 +1,5 @@
 use rex::{
-    bbox, cairo::CairoBackend, font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, render::Renderer
+    cairo::CairoBackend, font::backend::ttf_parser::TtfMathFont, layout::engine::LayoutBuilder, render::Renderer
 };
 use clap::Parser;
 

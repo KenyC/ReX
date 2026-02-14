@@ -28,6 +28,14 @@ Scripts:
     - f_{i,w,g} 
     - f_i
 
+  - Description: position of scripts and interaction with primes
+    # We use Garamond-Math here ; the default XITS does not have a useful kern table
+    Font: Garamond
+    Snippets:
+    - g'_2
+    - g_2'
+    - g'^2
+
 Delimiters:
   - Description: should properly scale
     Snippets:
