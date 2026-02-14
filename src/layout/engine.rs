@@ -23,7 +23,7 @@ use crate::parser::symbols::Symbol;
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FontSize, Px, Ratio, FUnit};
 use crate::layout;
-use crate::error::{FontError, LayoutResult};
+use crate::error::{FontError, LayoutError, LayoutResult};
 
 
 
@@ -386,14 +386,23 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             return self.largeop(sym, context);
         }
 
-        let mut glyph = self.font.glyph(sym.codepoint)?;
-
-        // If in script mode, we perform substitutions
-        if let Some(script_level) = context.style.script_level() {
-            glyph.gid = self.font.glyph_script_alternate(glyph.gid, script_level).unwrap_or(glyph.gid);
-        }
-
-        glyph.as_layout(self, context)
+        let glyph_gid = self.font().glyph_index(sym.codepoint).ok_or_else(|| FontError::MissingGlyphCodepoint(sym.codepoint))?;
+        
+        let substitute_gid = 
+            context.style
+                // if in script mode, we perform substitutions
+                .script_level() 
+                // only if said substitutions exist for glyph
+                .and_then(|script_level| self.font.glyph_script_alternate(glyph_gid, script_level))
+                // otherwise, use glyph_id from previous step
+                .unwrap_or(glyph_gid)
+        ;
+        
+        self.font()
+            // create the glyph
+            .glyph_from_gid(substitute_gid)?
+            // turn it into a `LayoutNode`
+            .as_layout(self, context)
     }
 
 
