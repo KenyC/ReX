@@ -315,6 +315,18 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             let space = parse_dimension(&dim_string)?;
                             results.push(ParseNode::VerticalKerning(space))
                         },
+                        Smash => {
+                            let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
+                            results.push(ParseNode::Smash(nodes::Smash { inner }))
+                        },
+                        MathStrut => {
+                            // Strut with standard height (0.7 baseline) and depth (0.3 baseline)
+                            // These are defined in layout::constants as STRUT_HEIGHT and STRUT_DEPTH
+                            results.push(ParseNode::Strut(nodes::Strut {
+                                height: AnyUnit::Em(0.7),
+                                depth: AnyUnit::Em(0.3),
+                            }))
+                        },
                         StyleCommand(style) => {
                             results.push(ParseNode::Style(style));
                         },
@@ -862,6 +874,10 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"a\hspace{1em}b"));
         insta::assert_debug_snapshot!(parse(r"a\hspace{10pt}b"));
         insta::assert_debug_snapshot!(parse(r"a\vspace{2em}b"));
+
+        // smash and mathstrut
+        insta::assert_debug_snapshot!(parse(r"\smash{x^2}"));
+        insta::assert_debug_snapshot!(parse(r"a\mathstrut b"));
 
         // failure
         insta::assert_debug_snapshot!(parse(r"1\33"));

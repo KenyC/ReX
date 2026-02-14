@@ -1,0 +1,30 @@
+---
+source: src/parser/mod.rs
+expression: "parse(r\"a\\mathstrut b\")"
+---
+Ok(
+    [
+        Symbol(
+            Symbol {
+                codepoint: '𝑎',
+                atom_type: Alpha,
+            },
+        ),
+        Strut(
+            Strut {
+                height: Em(
+                    0.7,
+                ),
+                depth: Em(
+                    0.3,
+                ),
+            },
+        ),
+        Symbol(
+            Symbol {
+                codepoint: '𝑏',
+                atom_type: Alpha,
+            },
+        ),
+    ],
+)

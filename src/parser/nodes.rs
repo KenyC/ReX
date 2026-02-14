@@ -30,6 +30,10 @@ pub enum ParseNode {
     Kerning(AnyUnit),
     /// Some (positive or negative) vertical spacing
     VerticalKerning(AnyUnit),
+    /// Content rendered with zero height and depth (for vertical alignment)
+    Smash(Smash),
+    /// A strut with explicit height and depth (zero width)
+    Strut(Strut),
     /// An accent over a certain groups of nodes
     Accent(Accent),
     /// A style (text cramped) to apply over a certain group of nodes
@@ -273,6 +277,22 @@ pub struct FontEffect {
     pub inner : Vec<ParseNode>,
 }
 
+/// Cf [`ParseNode::Smash`]. Renders content with zero height and depth.
+#[derive(Clone, PartialEq, Debug)]
+pub struct Smash {
+    /// The content to render with zero height/depth
+    pub inner: Vec<ParseNode>,
+}
+
+/// Cf [`ParseNode::Strut`]. A zero-width strut with explicit height and depth.
+#[derive(Clone, PartialEq, Debug)]
+pub struct Strut {
+    /// Height of the strut (above baseline)
+    pub height: AnyUnit,
+    /// Depth of the strut (below baseline)
+    pub depth: AnyUnit,
+}
+
 /// Cf [`ParseNode::Radical`]
 #[derive(Debug, PartialEq, Clone)]
 pub struct Radical {
@@ -378,6 +398,10 @@ impl ParseNode {
             ParseNode::Rule(_)          => TexSymbolType::Alpha,
             ParseNode::Kerning(_)       => TexSymbolType::Transparent,
             ParseNode::VerticalKerning(_) => TexSymbolType::Transparent,
+            ParseNode::Smash(ref s)     => s.inner.first()
+                .map(|first| first.atom_type())
+                .unwrap_or(TexSymbolType::Alpha),
+            ParseNode::Strut(_)         => TexSymbolType::Transparent,
             ParseNode::Accent(ref acc) if acc.extend => TexSymbolType::Operator(true),
             ParseNode::Accent(ref acc) => 
                 acc.nucleus.first()

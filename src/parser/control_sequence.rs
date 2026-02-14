@@ -48,6 +48,10 @@ pub enum PrimitiveControlSequence {
     HSpace,
     /// Vertical space with explicit dimension argument: `\vspace{1em}`
     VSpace,
+    /// Smash: render content with zero height and depth
+    Smash,
+    /// Math strut: zero-width strut with parenthesis height/depth
+    MathStrut,
 }
 
 
@@ -159,6 +163,8 @@ impl PrimitiveControlSequence {
             "qquad" => Self::Kerning(SpaceKind::DoubleQuadSpace.size()),
             "hspace" => Self::HSpace,
             "vspace" => Self::VSpace,
+            "smash" => Self::Smash,
+            "mathstrut" => Self::MathStrut,
 
             "rule"       => Self::Rule,
             "underline"  => Self::Underline,
@@ -286,6 +292,8 @@ impl PrimitiveControlSequence {
             "qquad" => 0,
             "hspace" => 1,
             "vspace" => 1,
+            "smash" => 1,
+            "mathstrut" => 0,
             "rule"  => 2,
 
 

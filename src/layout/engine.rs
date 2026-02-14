@@ -18,7 +18,7 @@ use crate::font::{
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::ToPx;
 use super::spacing::{atom_space, Spacing};
-use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, FontEffect, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Stack};
+use crate::parser::nodes::{Accent, Array, ArrayColumnAlign, BarThickness, ColSeparator, Delimited, ExtendedDelimiter, FontEffect, GenFraction, MathStyle, ParseNode, PlainText, Radical, Scripts, Smash, Stack, Strut};
 use crate::parser::symbols::Symbol;
 use crate::dimensions::Unit;
 use crate::dimensions::units::{Em, FontSize, Px, Ratio, FUnit};
@@ -350,6 +350,24 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             ParseNode::Rule(rule) => vec![rule.as_layout(self, context)?],
             ParseNode::Kerning(kern) => vec![LayoutNode::horiz_kern(kern.to_px(self, context))],
             ParseNode::VerticalKerning(kern) => vec![LayoutNode::vert_kern(kern.to_px(self, context))],
+
+            ParseNode::Smash(ref smash) => {
+                let mut inner = self.layout_with(&smash.inner, context.no_next())?.as_node();
+                // Set height and depth to zero, keeping the content visible
+                inner.height = Unit::ZERO;
+                inner.depth = Unit::ZERO;
+                vec![inner]
+            }
+
+            ParseNode::Strut(ref strut) => {
+                // Zero-width strut with specified height and depth
+                vec![LayoutNode {
+                    width: Unit::ZERO,
+                    height: strut.height.to_px(self, context),
+                    depth: strut.depth.to_px(self, context),
+                    node: LayoutVariant::Kern,
+                }]
+            }
 
             ParseNode::Color(ref clr) => {
                 let inner = self.layout_with(&clr.inner, context.no_next())?;
