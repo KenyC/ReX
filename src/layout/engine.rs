@@ -352,10 +352,21 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
             ParseNode::VerticalKerning(kern) => vec![LayoutNode::vert_kern(kern.to_px(self, context))],
 
             ParseNode::Smash(ref smash) => {
+                use crate::parser::nodes::SmashMode;
                 let mut inner = self.layout_with(&smash.inner, context.no_next())?.as_node();
-                // Set height and depth to zero, keeping the content visible
-                inner.height = Unit::ZERO;
-                inner.depth = Unit::ZERO;
+                // Set height and/or depth to zero based on mode
+                match smash.mode {
+                    SmashMode::Both => {
+                        inner.height = Unit::ZERO;
+                        inner.depth = Unit::ZERO;
+                    }
+                    SmashMode::Top => {
+                        inner.height = Unit::ZERO;
+                    }
+                    SmashMode::Bottom => {
+                        inner.depth = Unit::ZERO;
+                    }
+                }
                 vec![inner]
             }
 

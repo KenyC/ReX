@@ -83,6 +83,8 @@ pub enum ParseError {
     MoreArgsThanSpecified,
     /// In the first argument of `\newcommand`, expected the name of a command.
     ExpectedMacroName,
+    /// An optional argument to a command was not recognized (e.g. `\smash[x]` where x is neither t nor b)
+    UnrecognizedArgument(Box<str>),
 }
 
 
@@ -151,6 +153,8 @@ impl fmt::Display for ParseError {
                 write!(f, r"Macro parameter number is higher than the number of arguments listed in macro"),
             ExpectedMacroName =>
                 write!(f, r"First argument of \newcommand should be the name of a macro"),
+            UnrecognizedArgument(arg) =>
+                write!(f, "Unrecognized optional argument '[{}]'", arg),
         }
     }
 }

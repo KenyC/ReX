@@ -277,11 +277,24 @@ pub struct FontEffect {
     pub inner : Vec<ParseNode>,
 }
 
-/// Cf [`ParseNode::Smash`]. Renders content with zero height and depth.
+/// Which dimensions to smash (set to zero)
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum SmashMode {
+    /// Smash both height and depth (default)
+    Both,
+    /// Smash only height (top), keep depth
+    Top,
+    /// Smash only depth (bottom), keep height
+    Bottom,
+}
+
+/// Cf [`ParseNode::Smash`]. Renders content with zero height and/or depth.
 #[derive(Clone, PartialEq, Debug)]
 pub struct Smash {
-    /// The content to render with zero height/depth
+    /// The content to render
     pub inner: Vec<ParseNode>,
+    /// Which dimensions to smash
+    pub mode: SmashMode,
 }
 
 /// Cf [`ParseNode::Strut`]. A zero-width strut with explicit height and depth.

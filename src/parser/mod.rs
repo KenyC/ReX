@@ -316,8 +316,20 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                             results.push(ParseNode::VerticalKerning(space))
                         },
                         Smash => {
+                            // Parse optional argument [t] or [b]
+                            let mode = match self.token_iter.capture_optional_group()? {
+                                Some(tokens) => {
+                                    let opt_str = tokens_as_string(tokens.into_iter())?;
+                                    match opt_str.as_str() {
+                                        "t" => nodes::SmashMode::Top,
+                                        "b" => nodes::SmashMode::Bottom,
+                                        _ => return Err(ParseError::UnrecognizedArgument(opt_str.into_boxed_str())),
+                                    }
+                                }
+                                None => nodes::SmashMode::Both,
+                            };
                             let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
-                            results.push(ParseNode::Smash(nodes::Smash { inner }))
+                            results.push(ParseNode::Smash(nodes::Smash { inner, mode }))
                         },
                         MathStrut => {
                             // Strut with standard height (0.7 baseline) and depth (0.3 baseline)
@@ -877,10 +889,13 @@ mod tests {
 
         // smash and mathstrut
         insta::assert_debug_snapshot!(parse(r"\smash{x^2}"));
+        insta::assert_debug_snapshot!(parse(r"\smash[t]{x^2}"));
+        insta::assert_debug_snapshot!(parse(r"\smash[b]{x_2}"));
         insta::assert_debug_snapshot!(parse(r"a\mathstrut b"));
 
         // failure
         insta::assert_debug_snapshot!(parse(r"1\33"));
+        insta::assert_debug_snapshot!(parse(r"\smash[x]{y}"));
     }
 
     #[test]
