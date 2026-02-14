@@ -39,11 +39,13 @@ pub enum PrimitiveControlSequence {
     /// The `\mbox` control sequence
     /// This command is like `\text`, except it ignores font size changes in sub-/super-scripts, etc.
     Mbox,
-    /// An unsupported TeX control sequence.  
+    /// An unsupported TeX control sequence.
     ///
-    /// Certain commands like `\label{..}` or `\nonumber` make sense in the context of a larger document but not in ReX, which renders simple formula. 
+    /// Certain commands like `\label{..}` or `\nonumber` make sense in the context of a larger document but not in ReX, which renders simple formula.
     /// Our policy is to accept these commands but compile them to nothing
     Unsupported,
+    /// Horizontal space with explicit dimension argument: `\hspace{1em}`
+    HSpace,
 }
 
 
@@ -153,6 +155,7 @@ impl PrimitiveControlSequence {
             " "     => Self::Kerning(SpaceKind::WordSpace.size()),
             "quad"  => Self::Kerning(SpaceKind::QuadSpace.size()),
             "qquad" => Self::Kerning(SpaceKind::DoubleQuadSpace.size()),
+            "hspace" => Self::HSpace,
 
             "rule"       => Self::Rule,
             "underline"  => Self::Underline,
@@ -278,6 +281,7 @@ impl PrimitiveControlSequence {
             " "     => 0,
             "quad"  => 0,
             "qquad" => 0,
+            "hspace" => 1,
             "rule"  => 2,
 
 

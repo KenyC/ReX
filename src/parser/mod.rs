@@ -297,6 +297,15 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                         Kerning(space) => {
                             results.push(ParseNode::Kerning(space))
                         },
+                        HSpace => {
+                            let dim_tokens = self.token_iter.capture_group().map_err(|e| match e {
+                                ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_sequence_name)),
+                                _ => e,
+                            })?;
+                            let dim_string = tokens_as_string(dim_tokens.into_iter())?;
+                            let space = parse_dimension(&dim_string)?;
+                            results.push(ParseNode::Kerning(space))
+                        },
                         StyleCommand(style) => {
                             results.push(ParseNode::Style(style));
                         },
@@ -598,6 +607,7 @@ fn parse_dimension(input_string: &str) -> ParseResult<AnyUnit> {
     match dim {
         "em" => Ok(AnyUnit::Em(number)),
         "px" => Ok(AnyUnit::Px(number)),
+        "pt" => Ok(AnyUnit::Px(number * 96.0 / 72.0)), // 1pt = 96/72 px (CSS standard)
         _ => Err(ParseError::UnrecognizedDimension(Box::from(input_string))),
     }
 }
@@ -838,6 +848,9 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"5\:2"));
         insta::assert_debug_snapshot!(parse(r"1\qquad{}33"));
         insta::assert_debug_snapshot!(parse(r"1~3\ 3"));
+        insta::assert_debug_snapshot!(parse(r"a\hspace{1em}b"));
+        insta::assert_debug_snapshot!(parse(r"a\hspace{10pt}b"));
+        insta::assert_debug_snapshot!(parse(r"a\hspace{5px}b"));
 
         // failure
         insta::assert_debug_snapshot!(parse(r"1\33"));

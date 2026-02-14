@@ -1,7 +1,7 @@
 ---
 source: src/parser/mod.rs
-assertion_line: 851
-expression: "parse(r\"a\\hspace{1em}b\")"
+assertion_line: 852
+expression: "parse(r\"a\\hspace{10pt}b\")"
 ---
 Ok(
     [
@@ -12,8 +12,8 @@ Ok(
             },
         ),
         Kerning(
-            Em(
-                1.0,
+            Px(
+                13.333333333333334,
             ),
         ),
         Symbol(
