@@ -229,6 +229,24 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
 
                     vec![node]
                 },
+                ParseNode::Scripts(ref scripts) => {
+                    // Issue #19: After a Scripts node, we need to apply italic correction
+                    // from the base symbol to subsequent nodes.
+                    let result = self.dispatch(node, context)?;
+
+                    // If the base is an italic symbol, capture its italic correction
+                    if let Some(ref base) = scripts.base {
+                        if let Some(sym) = base.is_symbol() {
+                            if unicode_math::is_italic(sym.codepoint) {
+                                if let Ok(glyph) = self.font().glyph(sym.codepoint) {
+                                    italic_correction = Some(glyph.italics.to_px(self, context));
+                                }
+                            }
+                        }
+                    }
+
+                    result
+                },
                 _ => self.dispatch(node, context)?,
             };
             for node in nodes {
