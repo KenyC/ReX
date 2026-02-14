@@ -149,26 +149,55 @@ impl<'a, F> Grid<'a, F> {
         }
     }
 
-    /// Insert node in the grid at the given position. 
+    /// Insert node in the grid at the given position.
     /// Replaces any node there may have been in this position.
     pub fn insert(&mut self, row: usize, column: usize, node: LayoutNode<'a, F>) {
+        // If replacing an existing node, we may need to recalculate row/column dimensions
+        if let Some(old_node) = self.contents.get(&(row, column)) {
+            let old_height = old_node.height;
+            let old_depth = old_node.depth;
+            let old_width = old_node.width;
+
+            // Check if old node defined the row height or depth
+            if old_height == self.rows[row].0 || old_depth == self.rows[row].1 {
+                // Recalculate row dimensions from all nodes in this row (excluding old node)
+                let (max_height, min_depth) = self.contents.iter()
+                    .filter(|&(&(r, c), _)| r == row && c != column)
+                    .fold((Unit::ZERO, Unit::ZERO), |(h, d), (_, n)| {
+                        (Unit::max(h, n.height), Unit::min(d, n.depth))
+                    });
+                self.rows[row] = (max_height, min_depth);
+            }
+
+            // Check if old node defined the column width
+            if old_width == self.columns[column] {
+                // Recalculate column width from all nodes in this column (excluding old node)
+                let max_width = self.contents.iter()
+                    .filter(|&(&(r, c), _)| c == column && r != row)
+                    .fold(Unit::ZERO, |w, (_, n)| Unit::max(w, n.width));
+                self.columns[column] = max_width;
+            }
+        }
+
+        // Ensure row/column vectors are large enough
         if row >= self.rows.len() {
             self.rows.resize(row + 1, (Unit::ZERO, Unit::ZERO));
         }
+        if column >= self.columns.len() {
+            self.columns.resize(column + 1, Unit::ZERO);
+        }
+
+        // Update dimensions with new node
         if node.height > self.rows[row].0 {
             self.rows[row].0 = node.height;
         }
         if node.depth < self.rows[row].1 {
             self.rows[row].1 = node.depth;
         }
-        if column >= self.columns.len() {
-            self.columns.resize(column + 1, Unit::ZERO);
-        }
         if node.width > self.columns[column] {
             self.columns[column] = node.width;
         }
 
-        // TODO: bug ; if the inserted node replaces an existing node, the values in columns and row might no longer be correct
         self.contents.insert((row, column), node);
     }
 
