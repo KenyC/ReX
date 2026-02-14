@@ -107,8 +107,10 @@ impl PrimitiveControlSequence {
 
 
             // Style-change command
-            "mathbf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),   takes_arg: true, },
-            "mathit"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic), takes_arg: true, },
+            "mathbf"     => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),       takes_arg: true, },
+            "mathit"     => Self::StyleChange {family: None,                     weight: Some(Weight::Italic),     takes_arg: true, },
+            "boldsymbol" => Self::StyleChange {family: None,                     weight: Some(Weight::BoldItalic), takes_arg: true, },
+            "bm"         => Self::StyleChange {family: None,                     weight: Some(Weight::BoldItalic), takes_arg: true, },
             "mathrm"   => Self::StyleChange {family: Some(Family::Roman),      weight: None,                 takes_arg: true, },
             "mathscr"  => Self::StyleChange {family: Some(Family::Script),     weight: None,                 takes_arg: true, },
             "mathfrak" => Self::StyleChange {family: Some(Family::Fraktur),    weight: None,                 takes_arg: true, },
@@ -254,8 +256,10 @@ impl PrimitiveControlSequence {
             "sqrt" => 1,
 
             // Style-change command
-            "mathbf"   => 1,
-            "mathit"   => 1,
+            "mathbf"     => 1,
+            "mathit"     => 1,
+            "boldsymbol" => 1,
+            "bm"         => 1,
             "mathrm"   => 1,
             "mathscr"  => 1,
             "mathfrak" => 1,
