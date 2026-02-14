@@ -27,3 +27,4 @@ test.svg
 /*.html
 callgrind*
 *.rustfmt
+.DS_Store
