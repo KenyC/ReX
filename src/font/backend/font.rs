@@ -43,11 +43,12 @@ impl MathFont for OpenTypeFont {
             lsb:        Unit::<FUnit>::new(hmetrics.lsb.into()),
             italics:    Unit::<FUnit>::new(italics.into()),
             attachment: Unit::<FUnit>::new(attachment.into()),
+            // bbox order: (x_min, y_min, x_max, y_max)
             bbox: (
-                Unit::<FUnit>::new(ll.x().into()),
-                Unit::<FUnit>::new(ur.y().into()),
-                Unit::<FUnit>::new(ur.x().into()),
-                Unit::<FUnit>::new(ll.y().into()),
+                Unit::<FUnit>::new(ll.x().into()),  // x_min from lower_left
+                Unit::<FUnit>::new(ll.y().into()),  // y_min from lower_left
+                Unit::<FUnit>::new(ur.x().into()),  // x_max from upper_right
+                Unit::<FUnit>::new(ur.y().into()),  // y_max from upper_right
             )
         })
     }
