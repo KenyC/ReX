@@ -4,16 +4,27 @@ expression: "parse(\"a'''\")"
 ---
 Ok(
     [
-        Symbol(
-            Symbol {
-                codepoint: '𝑎',
-                atom_type: Alpha,
-            },
-        ),
-        Symbol(
-            Symbol {
-                codepoint: '‴',
-                atom_type: Ordinary,
+        Scripts(
+            Scripts {
+                base: Some(
+                    Symbol(
+                        Symbol {
+                            codepoint: '𝑎',
+                            atom_type: Alpha,
+                        },
+                    ),
+                ),
+                superscript: Some(
+                    [
+                        Symbol(
+                            Symbol {
+                                codepoint: '‴',
+                                atom_type: Ordinary,
+                            },
+                        ),
+                    ],
+                ),
+                subscript: None,
             },
         ),
     ],

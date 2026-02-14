@@ -7,10 +7,20 @@ Ok(
         Radical(
             Radical {
                 inner: [
-                    Symbol(
-                        Symbol {
-                            codepoint: '′',
-                            atom_type: Ordinary,
+                    Scripts(
+                        Scripts {
+                            base: None,
+                            superscript: Some(
+                                [
+                                    Symbol(
+                                        Symbol {
+                                            codepoint: '′',
+                                            atom_type: Ordinary,
+                                        },
+                                    ),
+                                ],
+                            ),
+                            subscript: None,
                         },
                     ),
                 ],

@@ -4,7 +4,6 @@
 //! this function returns a layout. The layout can then be sent to the renderer (cf [`render`](crate::render)) to create a graphical output.
 
 
-use std::unimplemented;
 
 use super::convert::AsLayoutNode;
 use super::kern::{subscript_kern, superscript_kern};
@@ -329,6 +328,24 @@ fn must_apply_italic_correction_before(node: &ParseNode) -> bool {
     true
 }
 
+/// Checks if a codepoint is a prime symbol (′, ″, ‴, or ⁗).
+/// These characters are already sized for superscript positioning in math fonts,
+/// so they should not be scaled down when placed as superscripts.
+fn is_prime_codepoint(c: char) -> bool {
+    matches!(c, '′' | '″' | '‴' | '⁗')
+}
+
+/// Checks if a slice of ParseNodes contains only prime symbols.
+/// Used to determine whether to apply script scaling in superscripts.
+fn is_prime_only(nodes: &[ParseNode]) -> bool {
+    !nodes.is_empty() && nodes.iter().all(|node| {
+        match node {
+            ParseNode::Symbol(sym) => is_prime_codepoint(sym.codepoint),
+            _ => false,
+        }
+    })
+}
+
 
 impl<'f, F : MathFont> LayoutEngine<'f, F> {
 
@@ -571,7 +588,16 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         };
 
         let mut sup = match scripts.superscript {
-            Some(ref sup) => self.layout_with(sup, context.superscript_variant())?,
+            Some(ref sup) => {
+                // Prime symbols (′, ″, ‴) are already sized for superscript positioning in math fonts.
+                // Don't apply script scaling to avoid double-scaling them.
+                // See: https://github.com/KenyC/ReX/issues/25
+                if is_prime_only(sup) {
+                    self.layout_with(sup, context)?
+                } else {
+                    self.layout_with(sup, context.superscript_variant())?
+                }
+            },
             None => Layout::new(),
         };
 

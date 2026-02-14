@@ -166,14 +166,43 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     };
                     results.push(new_node);
                 },
-                TexToken::Prime(number_of_primes) => { 
+                TexToken::Prime(number_of_primes) => {
+                    // Primes should be treated as superscripts so they combine properly
+                    // with subscripts (e.g., f'_2 should position ' above 2)
                     let codepoint = match number_of_primes {
                         NumberOfPrimes::Simple => '′',
                         NumberOfPrimes::Double => '″',
                         NumberOfPrimes::Triple => '‴',
                     };
                     let symbol = Symbol { codepoint, atom_type: TexSymbolType::Ordinary };
-                    results.push(ParseNode::Symbol(symbol));
+                    let prime_node = ParseNode::Symbol(symbol);
+
+                    let last_node = results.pop();
+                    let new_node = match last_node {
+                        Some(ParseNode::Scripts(mut scripts)) => {
+                            // Append prime to existing superscript or create new one
+                            match &mut scripts.superscript {
+                                Some(sup) => sup.push(prime_node),
+                                None => scripts.superscript = Some(vec![prime_node]),
+                            }
+                            ParseNode::Scripts(scripts)
+                        }
+                        Some(node) => {
+                            ParseNode::Scripts(Scripts {
+                                base: Some(Box::new(node)),
+                                superscript: Some(vec![prime_node]),
+                                subscript: None,
+                            })
+                        }
+                        None => {
+                            ParseNode::Scripts(Scripts {
+                                base: None,
+                                superscript: Some(vec![prime_node]),
+                                subscript: None,
+                            })
+                        }
+                    };
+                    results.push(new_node);
                 },
                 TexToken::Tilde => { 
                     results.push(ParseNode::Kerning(SpaceKind::WordSpace.size()))
@@ -907,6 +936,9 @@ mod tests {
         insta::assert_debug_snapshot!(parse("a''''"));
         insta::assert_debug_snapshot!(parse("'a"));
         insta::assert_debug_snapshot!(parse(r"\sqrt'"));
+        // Issue #25: Primes should combine with subscripts
+        insta::assert_debug_snapshot!(parse("f'_2"));
+        insta::assert_debug_snapshot!(parse("f_2'"));
     }
 
     #[test]

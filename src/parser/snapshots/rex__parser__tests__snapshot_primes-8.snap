@@ -1,6 +1,6 @@
 ---
 source: src/parser/mod.rs
-expression: "parse(\"a'\")"
+expression: "parse(\"f_2'\")"
 ---
 Ok(
     [
@@ -9,7 +9,7 @@ Ok(
                 base: Some(
                     Symbol(
                         Symbol {
-                            codepoint: '𝑎',
+                            codepoint: '𝑓',
                             atom_type: Alpha,
                         },
                     ),
@@ -24,7 +24,16 @@ Ok(
                         ),
                     ],
                 ),
-                subscript: None,
+                subscript: Some(
+                    [
+                        Symbol(
+                            Symbol {
+                                codepoint: '2',
+                                atom_type: Alpha,
+                            },
+                        ),
+                    ],
+                ),
             },
         ),
     ],
