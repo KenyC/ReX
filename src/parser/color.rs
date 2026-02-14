@@ -13,9 +13,12 @@ pub struct RGBA(pub u8, pub u8, pub u8, pub u8);
 
 
 /// Type of errors encountered while parsing the color's name
+#[derive(Debug, PartialEq, Eq)]
 pub enum ColorParseError {
     /// Color does not start with # but its name is not the ASCII name of a CSS color
     UnknownColorName,
+    /// Color starts with # but is not a valid hex color (must be #RRGGBB or #RRGGBBAA)
+    InvalidHexFormat,
 }
 
 
@@ -29,8 +32,13 @@ impl FromStr for RGBA {
     ///  - #RRGGBB (ie: `#ff0000` for red)
     ///  - #RRGGBBAA (ie: `#00000000` for transparent)
     ///  - `transparent`
-    // TODO: implement missing tokens
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Check for hex color format
+        if let Some(hex) = s.strip_prefix('#') {
+            return Self::from_hex(hex).ok_or(ColorParseError::InvalidHexFormat);
+        }
+
+        // Fall back to named colors
         Self::from_name(s).ok_or(ColorParseError::UnknownColorName)
     }
 }
@@ -41,6 +49,31 @@ impl RGBA {
         match COLOR_MAP.binary_search_by_key(&name, |color_name| color_name.0) {
             Ok(idx) => Some(COLOR_MAP[idx].1),
             _ => None
+        }
+    }
+
+    /// Parse a hex color string (without the # prefix).
+    /// Supports RRGGBB (6 chars) and RRGGBBAA (8 chars) formats.
+    pub fn from_hex(hex: &str) -> Option<RGBA> {
+        let hex = hex.trim();
+
+        match hex.len() {
+            // #RRGGBB format - assume full opacity
+            6 => {
+                let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+                let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+                let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+                Some(RGBA(r, g, b, 0xff))
+            }
+            // #RRGGBBAA format
+            8 => {
+                let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+                let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+                let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+                let a = u8::from_str_radix(&hex[6..8], 16).ok()?;
+                Some(RGBA(r, g, b, a))
+            }
+            _ => None,
         }
     }
 }
@@ -198,3 +231,39 @@ const COLOR_MAP: &[(&'static str, RGBA)] = map!{
     "yellow" => RGBA(0xff,0xff,0x00,0xff),
     "yellowgreen" => RGBA(0x9a,0xcd,0x32,0xff),
 };
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_named_colors() {
+        assert_eq!("red".parse::<RGBA>(), Ok(RGBA(0xff, 0x00, 0x00, 0xff)));
+        assert_eq!("blue".parse::<RGBA>(), Ok(RGBA(0x00, 0x00, 0xff, 0xff)));
+        assert_eq!("transparent".parse::<RGBA>(), Ok(RGBA(0x00, 0x00, 0x00, 0x00)));
+    }
+
+    #[test]
+    fn test_hex_rrggbb() {
+        assert_eq!("#ff0000".parse::<RGBA>(), Ok(RGBA(0xff, 0x00, 0x00, 0xff)));
+        assert_eq!("#00ff00".parse::<RGBA>(), Ok(RGBA(0x00, 0xff, 0x00, 0xff)));
+        assert_eq!("#0000ff".parse::<RGBA>(), Ok(RGBA(0x00, 0x00, 0xff, 0xff)));
+        assert_eq!("#AABBCC".parse::<RGBA>(), Ok(RGBA(0xaa, 0xbb, 0xcc, 0xff)));
+    }
+
+    #[test]
+    fn test_hex_rrggbbaa() {
+        assert_eq!("#ff000080".parse::<RGBA>(), Ok(RGBA(0xff, 0x00, 0x00, 0x80)));
+        assert_eq!("#00000000".parse::<RGBA>(), Ok(RGBA(0x00, 0x00, 0x00, 0x00)));
+        assert_eq!("#ffffffff".parse::<RGBA>(), Ok(RGBA(0xff, 0xff, 0xff, 0xff)));
+    }
+
+    #[test]
+    fn test_invalid_colors() {
+        assert_eq!("notacolor".parse::<RGBA>(), Err(ColorParseError::UnknownColorName));
+        assert_eq!("#fff".parse::<RGBA>(), Err(ColorParseError::InvalidHexFormat));
+        assert_eq!("#fffff".parse::<RGBA>(), Err(ColorParseError::InvalidHexFormat));
+        assert_eq!("#gggggg".parse::<RGBA>(), Err(ColorParseError::InvalidHexFormat));
+    }
+}
