@@ -49,8 +49,6 @@ pub enum ParseError {
     MissingColFormatForArrayEnvironment,
     /// After `^` and `_`, a group or a token must follow.
     MissingSubSuperScript,
-    /// There either is more than one subscript or more than one superscript attached to the same node.
-    TooManySubscriptsOrSuperscripts,
     /// The command `\rule` expects an argument of the form `1.3pt` (number followed by dimension). The dimension may not be anything but `em` or `pt` at the moment.
     UnrecognizedDimension(Box<str>),
     /// The string in `\begin{..}` or `\end{..}` is not a recognized environment. Cf [Environment] for the list of supported LaTeX environments.
@@ -119,8 +117,6 @@ impl fmt::Display for ParseError {
                 write!(f, "Column format is missing for \\begin{{array}}"),
             MissingSubSuperScript => 
                 write!(f, "Missing group after _ or ^"),
-            TooManySubscriptsOrSuperscripts => 
-                write!(f, "More than one subscript or more than one superscript"),
             UnrecognizedDimension(dimension) => 
                 write!(f, "'{}' cannot be recognized as a dimension", dimension),
             UnrecognizedEnvironment(env_name) => 
