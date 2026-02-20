@@ -278,6 +278,8 @@ pub struct Radical {
     pub inner: Vec<ParseNode>,
     /// The character used to represent the radical (typically U+221A '√', but also '∛' U+221B, etc.)
     pub character: char,
+    /// Optional index for nth root (e.g. `\sqrt[3]{x}` has index `3`)
+    pub index: Option<Vec<ParseNode>>,
     // pub superscript: Vec<ParseNode>,
 }
 

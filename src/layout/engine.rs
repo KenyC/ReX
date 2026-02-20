@@ -866,6 +866,11 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         // reference rule 11 from pg 443 of TeXBook
         let contents = self.layout_with(&rad.inner, context.cramped())?.as_node();
 
+        // Cache dimensions before contents is moved
+        let contents_height = contents.height;
+        let contents_depth = contents.depth;
+        let contents_width = contents.width;
+
         // obtain minimum clearange between radicand and radical bar
         // and cache other sizes that will be needed
         let gap = match context.style >= Style::Display {
@@ -877,7 +882,7 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let rule_ascender = self.metrics_cache.constants().radical_extra_ascender.to_px(self, context);
 
         // determine size of radical glyph
-        let inner_height = (contents.height - contents.depth) + gap + rule_thickness;
+        let inner_height = (contents_height - contents_depth) + gap + rule_thickness;
         let sqrt = self.vert_variant_for_codepoint(rad.character, self.to_font(inner_height, context.font_size))?.as_layout(self, context)?;
 
         // pad between radicand and radical bar
@@ -885,23 +890,51 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let gap = Unit::max(delta, gap);
 
         // offset radical symbol
-        let offset = rule_thickness + gap + contents.height;
+        let offset = rule_thickness + gap + contents_height;
         let offset = sqrt.height - offset;
 
         // padding above sqrt
         // TODO: This is unclear
         let top_padding = rule_ascender - rule_thickness;
 
-        Ok(vec![
+        // Build the radical body (sqrt glyph + bar + contents)
+        let radical_body = vec![
             vbox![offset: offset; sqrt],
             vbox![
                 LayoutNode::vert_kern(top_padding),
-                rule!(width:  contents.width, height: rule_thickness),
+                rule!(width: contents_width, height: rule_thickness),
                 LayoutNode::vert_kern(gap),
                 contents
             ]
+        ];
 
-        ])
+        // If there's an index (nth root), prepend it
+        if let Some(ref index_nodes) = rad.index {
+            if !index_nodes.is_empty() {
+                // Layout the index in script-script style
+                let index_context = context.superscript_variant();
+                let index_layout = self.layout_with(index_nodes, index_context)?.as_node();
+
+                // Get radical degree positioning constants from font
+                let kern_before = self.metrics_cache.constants().radical_kern_before_degree.to_px(self, context);
+                let kern_after = self.metrics_cache.constants().radical_kern_after_degree.to_px(self, context);
+                let raise_percent = self.metrics_cache.constants().radical_degree_bottom_raise_percent;
+
+                // Calculate vertical raise: raise the degree so its bottom is at
+                // raise_percent of the total radical height above the baseline
+                let total_radical_height = offset + rule_thickness + gap + (contents_height - contents_depth) + top_padding;
+                let raise = total_radical_height.scale(raise_percent as f64 / 100.0) - (index_layout.height - index_layout.depth);
+
+                let mut result = Vec::with_capacity(radical_body.len() + 3);
+                result.push(LayoutNode::horiz_kern(kern_before));
+                result.push(vbox![offset: -raise; index_layout]);
+                result.push(LayoutNode::horiz_kern(kern_after));
+                result.extend(radical_body);
+                return Ok(result);
+            }
+        }
+
+        Ok(radical_body)
     }
 
     fn substack<'a>(&self, stack: &Stack, context: LayoutContext) -> LayoutResult<Vec<LayoutNode<'f, F>>> {
