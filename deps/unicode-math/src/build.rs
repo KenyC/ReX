@@ -95,7 +95,7 @@ fn build_alphanumeric_table_reserved_replacements() {
     println!("cargo:rerun-if-changed=resources/math_alphanumeric_list.html");
 
     let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("math_alphanumeric_list.html");
-    let source = String::from_utf8(fs::read(&path).unwrap()).unwrap();
+    let source = String::from_utf8(fs::read(&path).unwrap()).unwrap().replace("\r\n", "\n");
     let mut out = String::new();
 
     writeln!(out, "[").unwrap();
@@ -125,8 +125,8 @@ fn build_symbol_table() {
 
 
     let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("unimathsymbols.txt");
-    let bytes = std::fs::read(path).unwrap();
-    let input = std::str::from_utf8(&bytes).unwrap();
+    let input_raw = String::from_utf8(std::fs::read(path).unwrap()).unwrap().replace("\r\n", "\n");
+    let input = input_raw.as_str();
 
 
     let (_, lines) = parser::lucr_math::parse_file(input).unwrap();
@@ -139,8 +139,8 @@ fn build_symbol_table() {
     // -- Load unicode-math date: use to complete some missing commands plus giving more explicit TeX symbol type information
     // For instance, LUCR does not differentiate between wide and not wide accents
     let path = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("resources").join("unicode-math-table.tex");
-    let bytes = std::fs::read(path).unwrap();
-    let input = std::str::from_utf8(&bytes).unwrap();
+    let input_raw = String::from_utf8(std::fs::read(path).unwrap()).unwrap().replace("\r\n", "\n");
+    let input = input_raw.as_str();
 
 
     let (_, lines) = parser::unicode_math::parse_file(input).unwrap();
