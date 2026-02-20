@@ -1,3 +1,4 @@
+#![allow(warnings)]
 /*! # A mathematical typesetting engine based on LuaTeX and XeTeX.
 
 This is a Rust mathematical typesetting engine library. It takes a formula written in TeX syntax (e.g. `\cos\frac{\pi}{4}`) and renders it to a screen, an image, etc.

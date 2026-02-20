@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use regex::Regex;
 use std::path::PathBuf;
 use std::{env, fs};

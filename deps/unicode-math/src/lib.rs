@@ -1,3 +1,4 @@
+#![allow(warnings)]
 mod common;
 
 pub use common::{Symbol, TexSymbolType::{self, *}};
