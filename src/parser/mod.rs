@@ -212,8 +212,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     use PrimitiveControlSequence::*;
                     match command {
                         Radical(character) => {
+                            // Check for optional argument: \sqrt[n]{...}
+                            let index = self.parse_optional_bracket_arg()?;
                             let inner = self.parse_control_seq_argument_as_nodes(control_sequence_name)?;
-                            results.push(ParseNode::Radical(nodes::Radical { inner, character, }));
+                            results.push(ParseNode::Radical(nodes::Radical { inner, character, index }));
                         },
                         Rule => {
                             let width_tokens = self.token_iter.capture_group().map_err(|e| match e {
@@ -516,6 +518,46 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                 ParseError::ExpectedToken => ParseError::MissingArgForCommand(Box::from(control_seq_name)),
                 e => e,
             })
+    }
+
+    /// Parse an optional bracket argument `[...]`, returning `Some(nodes)` or `None`.
+    ///
+    /// Used for `\sqrt[n]{...}` where `[n]` is the root index.
+    fn parse_optional_bracket_arg(&mut self) -> ParseResult<Option<Vec<ParseNode>>> {
+        // Peek at the next token to see if it's a '['
+        let peeked = self.token_iter.peek_token()?;
+        match peeked {
+            Some(TexToken::Char('[')) => {
+                // Consume the '[' (it was put back by peek, consume it now)
+                let _ = self.token_iter.next_token()?;
+
+                // Collect tokens until we find the matching ']'
+                let mut tokens = Vec::new();
+                let mut depth = 1u32;
+                loop {
+                    let token = self.token_iter.next_token()?
+                        .ok_or(ParseError::UnmatchedBrackets)?;
+                    match &token {
+                        TexToken::Char('[') => depth += 1,
+                        TexToken::Char(']') => {
+                            depth -= 1;
+                            if depth == 0 {
+                                break;
+                            }
+                        }
+                        _ => {}
+                    }
+                    tokens.push(token);
+                }
+
+                // Parse the collected tokens as nodes
+                let mut forked_parser = Parser::from_iter(Self::EMPTY_COMMAND_COLLECTION, tokens.into_iter());
+                forked_parser.current_style = self.current_style;
+                let list = forked_parser.parse_until_end_of_group()?;
+                Ok(Some(list.nodes))
+            }
+            _ => Ok(None),
+        }
     }
 
     fn parse_next_token_as_delimiter(&mut self) -> ParseResult<Symbol> {

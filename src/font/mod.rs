@@ -123,6 +123,10 @@ pub struct FontConstants {
     pub radical_vertical_gap: Unit<Em>,
     pub radical_rule_thickness: Unit<Em>,
     pub radical_extra_ascender: Unit<Em>,
+    pub radical_kern_before_degree: Unit<Em>,
+    pub radical_kern_after_degree: Unit<Em>,
+    /// Percentage (0–100) of the radical height to raise the degree bottom.
+    pub radical_degree_bottom_raise_percent: i16,
 
     pub stack_display_style_gap_min: Unit<Em>,
     pub stack_top_display_style_shift_up: Unit<Em>,

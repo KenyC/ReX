@@ -116,6 +116,9 @@ impl<'a> TtfMathFont<'a> {
             radical_vertical_gap:               em(math_constants.radical_vertical_gap().value.into()),
             radical_rule_thickness:             em(math_constants.radical_rule_thickness().value.into()),
             radical_extra_ascender:             em(math_constants.radical_extra_ascender().value.into()),
+            radical_kern_before_degree:         em(math_constants.radical_kern_before_degree().value.into()),
+            radical_kern_after_degree:          em(math_constants.radical_kern_after_degree().value.into()),
+            radical_degree_bottom_raise_percent: math_constants.radical_degree_bottom_raise_percent(),
 
             stack_display_style_gap_min:      em(math_constants.stack_display_style_gap_min().value.into()),
             stack_top_display_style_shift_up: em(math_constants.stack_top_display_style_shift_up().value.into()),
