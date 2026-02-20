@@ -659,6 +659,13 @@ fn tokens_as_string<'a, I : Iterator<Item = TexToken<'a>>>(iterator : I) -> Pars
             },
             TexToken::ControlSequence("{") => to_return.push('{'), 
             TexToken::ControlSequence("}") => to_return.push('}'),
+            // Handle common LaTeX escapes for special characters in \text{}
+            TexToken::ControlSequence("_") => to_return.push('_'),
+            TexToken::ControlSequence("&") => to_return.push('&'),
+            TexToken::ControlSequence("#") => to_return.push('#'),
+            TexToken::ControlSequence("%") => to_return.push('%'),
+            TexToken::ControlSequence("$") => to_return.push('$'),
+            TexToken::ControlSequence("textbackslash") => to_return.push('\\'),
             TexToken::BeginGroup | TexToken::EndGroup => (), 
             
             TexToken::ControlSequence(_) 

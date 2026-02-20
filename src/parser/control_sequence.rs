@@ -116,6 +116,7 @@ impl PrimitiveControlSequence {
             "mathsf"   => Self::StyleChange {family: Some(Family::SansSerif),  weight: None,                 takes_arg: true, },
             "mathtt"   => Self::StyleChange {family: Some(Family::Monospace),  weight: None,                 takes_arg: true, },
             "mathcal"  => Self::StyleChange {family: Some(Family::Script),     weight: None,                 takes_arg: true, },
+            "boldsymbol" => Self::StyleChange {family: None,                  weight: Some(Weight::BoldItalic), takes_arg: true, },
 
             "bf"   => Self::StyleChange {family: None,                     weight: Some(Weight::Bold),   takes_arg: false, },
             "it"   => Self::StyleChange {family: None,                     weight: Some(Weight::Italic), takes_arg: false, },
@@ -263,6 +264,7 @@ impl PrimitiveControlSequence {
             "mathsf"   => 1,
             "mathtt"   => 1,
             "mathcal"  => 1,
+            "boldsymbol" => 1,
 
 
 

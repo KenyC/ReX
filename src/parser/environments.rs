@@ -39,6 +39,11 @@ pub enum Environment {
     /// The `\begin{aligned} .. \end{aligned}` environment, an array with alternating right-aligned and left-aligned column, not separated with spaces.  
     ///  Except for spacing, equivalent to `\left\lVert\begin{array}{rlrl .. rl} .. \end{array}\right\rVert` 
     Aligned,
+    /// The `\begin{cases} .. \end{cases}` environment, an array with a left curly brace delimiter 
+    /// and left-aligned columns.
+    Cases,
+    /// The `\begin{dcases} .. \end{dcases}` environment, like `cases` but in display style.
+    DCases,
 }
 
 impl Environment {
@@ -53,6 +58,8 @@ impl Environment {
             "vmatrix"  => Some(Self::VMatrix),
             "Vmatrix"  => Some(Self::VvMatrix),
             "aligned"  => Some(Self::Aligned),
+            "cases"    => Some(Self::Cases),
+            "dcases"   => Some(Self::DCases),
             _ => None
         }
     }
@@ -86,6 +93,10 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
             Environment::Aligned
             => {
                 left_delimiter  = None;
+                right_delimiter = None;
+            },
+            Environment::Cases | Environment::DCases => {
+                left_delimiter  = Some(Symbol {codepoint : '{', atom_type : TexSymbolType::Inner});
                 right_delimiter = None;
             },
             Environment::PMatrix  => {
@@ -132,6 +143,12 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
                     separators: [Vec::new(), vec![ColSeparator::AtExpression(Vec::new())]].iter().cycle().cloned().take(n_cols + 1).collect(),
                 }
             }
+            else if matches!(env, Environment::Cases | Environment::DCases) {
+                ArrayColumnsFormatting {
+                    alignment:  vec![ArrayColumnAlign::Left; n_cols],
+                    separators: vec![vec![]; n_cols + 1],
+                }
+            }
             else {
                 ArrayColumnsFormatting { 
                     alignment:  vec![ArrayColumnAlign::Centered; n_cols], 
@@ -141,7 +158,7 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         });
 
         let extra_row_sep = match env {
-            Environment::Aligned => true,
+            Environment::Aligned | Environment::Cases | Environment::DCases => true,
             Environment::Array | Environment::Matrix | Environment::PMatrix 
             | Environment::BMatrix | Environment::BbMatrix | Environment::VMatrix 
             | Environment::VvMatrix 
@@ -149,7 +166,8 @@ impl<'a, I : Iterator<Item = TexToken<'a>>> Parser<'a, I> {
         };
 
         let cell_layout_style = match env {
-            Environment::Aligned => layout::Style::Display,
+            Environment::Aligned | Environment::DCases => layout::Style::Display,
+            Environment::Cases => layout::Style::Text,
             Environment::Array | Environment::Matrix | Environment::PMatrix 
             | Environment::BMatrix | Environment::BbMatrix | Environment::VMatrix 
             | Environment::VvMatrix 
