@@ -32,6 +32,7 @@ Ok(
                     ),
                 ],
                 character: '√',
+                index: None,
             },
         ),
     ],

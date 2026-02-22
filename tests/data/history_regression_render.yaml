@@ -11833,6 +11833,122 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
               glyph_id: 3730
               scale: 21.333333333333333
       img_render_path: "tests/data/imgs/ frac{    begin{pmat-Z299nAz2JqY.png"
+"should support custom degrees, baselines positioned at ~ 60% height - 1\\sqrt[f+1]{1+1}1":
+  tex: "1\\sqrt[f+1]{1+1}1"
+  description: "Radicals: should support custom degrees, baselines positioned at ~ 60% height"
+  render:
+    Ok:
+      width: 104.4361526582528
+      height: 27.050667951504388
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 16.576000787317754
+                - -12.157867244134346
+              glyph_id: 2503
+              scale: 12.799999999999999
+          - Symbol:
+              pos:
+                - 25.216001197695733
+                - -12.157867244134346
+              glyph_id: 44
+              scale: 12.799999999999999
+          - Symbol:
+              pos:
+                - 33.984001614153388
+                - -12.157867244134346
+              glyph_id: 50
+              scale: 12.799999999999999
+          - Symbol:
+              pos:
+                - 28.54400135576725
+                - 0.714666700611513
+              glyph_id: 1159
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 48.341335629423458
+                - -20.04266761864225
+              width: 45.428149855523198
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 48.341335629423458
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 63.74874354347034
+                - 0.0
+              glyph_id: 44
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 83.1028183116405
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 93.76948548494664
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/1 sqrt f+1 {1+1}1-2S93aZ6yAwk.png"
+"should support custom degrees, baselines positioned at ~ 60% height - 1\\sqrt[f]{1}1":
+  tex: "1\\sqrt[f]{1}1"
+  description: "Radicals: should support custom degrees, baselines positioned at ~ 60% height"
+  render:
+    Ok:
+      width: 52.970669182638328
+      height: 26.948267946640649
+      render:
+        commands:
+          - Symbol:
+              pos:
+                - 0.0
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 16.576000787317754
+                - -12.595200598239899
+              glyph_id: 2503
+              scale: 12.799999999999999
+          - Symbol:
+              pos:
+                - 11.840000562369824
+                - 0.27733334650595867
+              glyph_id: 1159
+              scale: 21.333333333333333
+          - Rule:
+              pos:
+                - 31.63733483602603
+                - -20.480000972747804
+              width: 10.666667173306147
+              height: 1.4080000668764115
+          - Symbol:
+              pos:
+                - 31.63733483602603
+                - -1.7763568394002506e-15
+              glyph_id: 50
+              scale: 21.333333333333333
+          - Symbol:
+              pos:
+                - 42.30400200933218
+                - 0.0
+              glyph_id: 50
+              scale: 21.333333333333333
+      img_render_path: "tests/data/imgs/1 sqrt f {1}1-rv76auiGBQk.png"
 "should typeset nucleus as cramped, and baseline unchanged. - \\hat{A^2} A^2":
   tex: "\\hat{A^2} A^2"
   description: "Accents: should typeset nucleus as cramped, and baseline unchanged."

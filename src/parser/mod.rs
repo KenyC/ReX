@@ -757,6 +757,16 @@ mod tests {
         insta::assert_debug_snapshot!(parse(r"\sqrt_2" ));
         insta::assert_debug_snapshot!(parse(r"\sqrt^2"));
     }
+    
+    #[test]
+    fn snapshot_radical_degrees() {
+        // success
+        insta::assert_debug_snapshot!(parse(r"\sqrt[f]{2}"));
+        insta::assert_debug_snapshot!(parse(r"\sqrt[f][g]")); // should parse the '[' as part of sqrt
+
+        // fail
+        insta::assert_debug_snapshot!(parse(r"\sqrt[f]" ));
+    }
 
 
     #[test]

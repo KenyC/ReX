@@ -25,6 +25,7 @@ Ok(
                     ),
                 ],
                 character: '√',
+                index: None,
             },
         ),
     ],

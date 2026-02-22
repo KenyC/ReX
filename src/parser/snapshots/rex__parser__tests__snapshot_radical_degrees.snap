@@ -1,6 +1,6 @@
 ---
 source: src/parser/mod.rs
-expression: "parse(r\"\\sqrt2\")"
+expression: "parse(r\"\\sqrt[f]{2}\")"
 ---
 Ok(
     [
@@ -15,7 +15,16 @@ Ok(
                     ),
                 ],
                 character: '√',
-                index: None,
+                index: Some(
+                    [
+                        Symbol(
+                            Symbol {
+                                codepoint: '𝑓',
+                                atom_type: Alpha,
+                            },
+                        ),
+                    ],
+                ),
             },
         ),
     ],

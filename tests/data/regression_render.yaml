@@ -184,6 +184,11 @@ Radicals:
     Snippets:
     - \cuberoot{1+1}
     - \fourthroot{1+1}
+  - Description: should support custom degrees, baselines positioned at ~ 60% height
+    Snippets:
+    - 1\sqrt[f]{1}1
+    - 1\sqrt[f+1]{1+1}1
+    
 
 Color:
   - Description: should handle scripts and scale properly
