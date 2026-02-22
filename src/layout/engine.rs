@@ -15,6 +15,7 @@ use crate::font::{
     VariantGlyph,
     TexSymbolType
 };
+use crate::layout::builders::VBox;
 use crate::layout::constants::{BASELINE_SKIP, COLUMN_SEP, DOUBLE_RULE_SEP, JOT, LINE_SKIP_ARRAY, LINE_SKIP_LIMIT_ARRAY, RULE_WIDTH, STRUT_DEPTH, STRUT_HEIGHT};
 use super::convert::ToPx;
 use super::spacing::{atom_space, Spacing};
@@ -893,13 +894,18 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         let offset = rule_thickness + gap + contents_height;
         let offset = sqrt.height - offset;
 
+        
         // padding above sqrt
         // TODO: This is unclear
         let top_padding = rule_ascender - rule_thickness;
 
         // Build the radical body (sqrt glyph + bar + contents)
+        let radical_symbol_vbox = vbox![offset: offset; sqrt];
+        // For use in positioning degree
+        let radical_symbol_depth = radical_symbol_vbox.depth;
+        let radical_symbol_height = radical_symbol_vbox.height;
         let radical_body = vec![
-            vbox![offset: offset; sqrt],
+            radical_symbol_vbox,
             vbox![
                 LayoutNode::vert_kern(top_padding),
                 rule!(width: contents_width, height: rule_thickness),
@@ -912,7 +918,9 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
         if let Some(ref index_nodes) = rad.index {
             if !index_nodes.is_empty() {
                 // Layout the index in script-script style
-                let index_context = context.superscript_variant();
+                // NB: we're matching XeTeX here and it produces the most esthetically pleasing outcome 
+                // but not sure where this is specified in the Unicode MATH spec.
+                let index_context = context.superscript_variant().superscript_variant();
                 let index_layout = self.layout_with(index_nodes, index_context)?.as_node();
 
                 // Get radical degree positioning constants from font
@@ -921,9 +929,17 @@ impl<'f, F : MathFont> LayoutEngine<'f, F> {
                 let raise_percent = self.metrics_cache.constants().radical_degree_bottom_raise_percent;
 
                 // Calculate vertical raise: raise the degree so its bottom is at
-                // raise_percent of the total radical height above the baseline
-                let total_radical_height = offset + rule_thickness + gap + (contents_height - contents_depth) + top_padding;
-                let raise = total_radical_height.scale(raise_percent as f64 / 100.0) - (index_layout.height - index_layout.depth);
+                // raise_percent of the height (ascender + descender) of the radical sign
+                // counting from the bottom of the radical sign
+                //            
+                //                                 ______  ∧
+                // degree (to be raised) →     3  /        | 
+                //                          ∧    /         |   total_radical height
+                //  total_radical_height    |---/ ---------+--------- baseline
+                //  × raise                 ⊥ \/           ⊥
+                // 
+                let raise_from_bottom_radical = (radical_symbol_height - radical_symbol_depth).scale(raise_percent as f64 / 100.0);
+                let raise = raise_from_bottom_radical + radical_symbol_depth;
 
                 let mut result = Vec::with_capacity(radical_body.len() + 3);
                 result.push(LayoutNode::horiz_kern(kern_before));
