@@ -6,8 +6,9 @@ extern crate serde_derive;
 extern crate serde_yaml;
 
 use std::convert::AsRef;
+use std::ffi::OsStr;
 use std::path::Path;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
 use std::io::BufReader;
 
@@ -212,11 +213,6 @@ macro_rules! function_name {
 
 
 fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDiffs<'a> {
-    if old.len() != new.len() {
-        eprintln!("Detected a change in the number of tests. Please be sure to run \
-               `cargo test --all-features -- {} --ignored` to update the test history.", function_name!(save_renders_to_history));
-    }
-
     let mut diffs: Vec<(&'a Equation, &'a Equation)> = Vec::new();
     let mut new_eqs = Vec::new();
 
@@ -247,6 +243,10 @@ fn render_regression() {
     let rendered = render_tests(&fonts, tests, img_dir.as_path());
     let history = load_history(HISTORY_META_FILE);
     let diff = equation_diffs(&history, &rendered);
+    if history.len() != rendered.len() {
+        eprintln!("Detected a change in the number of tests. Please be sure to run \
+               `cargo test --all-features -- {} --ignored` to update the test history.", function_name!(save_renders_to_history));
+    }
 
     if !diff.no_diff() {
         let diff_count = diff.diffs.len();
@@ -267,22 +267,61 @@ fn save_renders_to_history() {
 
     use std::io::BufWriter;
 
-    // Remove PNG images from HISTORY_IMG_DIR
+
+    // Load the tests in yaml, and render it to bincode
+    let tests = collect_tests(REGRESSION_RENDER_YAML);
+    // Render everything to temp directory
+    let rendered = render_tests(&fonts, tests, &std::env::temp_dir());
+    let history = load_history(HISTORY_META_FILE);
+    let diffs = equation_diffs(&history, &rendered);
+   
+    
+    // Create a set of filenames of new renders
+    let new_images : HashSet<&std::ffi::OsStr> = 
+        rendered
+            .values()
+            .map(|e| 
+                e.render.as_ref().ok()
+                .and_then(|render| render.img_render_path.as_ref()) // Getting the render path if it exists
+                .and_then(|path| path.file_name())                  // Extracting the file name
+            )
+            .flatten() // removing the None's
+            .collect()
+    ;
+    
+    
+    // Remove PNG images which are not in `rendered`
     let img_dir = Path::new(HISTORY_IMG_DIR);
     for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
         if let Ok(entry) = entry {
             let file_path = entry.path();
-            if let Some(extension) = file_path.extension() {
-                if extension == "png" {
+            if file_path.extension() == Some(OsStr::new("png")) {
+                if !new_images.contains(entry.file_name().as_os_str()) {
                     std::fs::remove_file(file_path).expect("failed to remove PNG image");
                 }
             }
+            
         }
     }
-
-    // Load the tests in yaml, and render it to bincode
-    let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&fonts, tests, img_dir);
+    
+    // For all diffs, copy from tmp dir to HISTORY_IMG_DIR
+    let modified_equations_iter = std::iter::chain(
+        diffs.new_eqs.into_iter(),              // new equations
+        diffs.diffs.into_iter().map(|c| c.1)    // old ones that have changed compared to history
+    ); 
+    for equation in modified_equations_iter {
+        if let Ok(render) = equation.render.as_ref() {
+            let equation_str = &equation.tex; // Caching this for use in error msg below 
+            let render_path = render.img_render_path.as_ref().ok_or_else(|| format!("Equation {} does not have a render", equation_str)).unwrap().as_path();
+            let render_path_filename = render_path.file_name().ok_or_else(|| format!("Equation {} does not have a filename", equation_str)).unwrap();
+            std::fs::copy(
+                render_path, 
+                img_dir.join(render_path_filename),
+            )
+            .map_err(|e| format!("Equation {} render could not be copied (filename {:?}): {}", equation_str, render_path_filename, e))
+            .unwrap();
+        }
+    }
 
     let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
     let writer = BufWriter::new(out);
