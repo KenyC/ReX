@@ -271,32 +271,48 @@ fn save_renders_to_history() {
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(REGRESSION_RENDER_YAML);
     // Render everything to temp directory
-    let rendered = render_tests(&fonts, tests, &std::env::temp_dir());
+    let mut rendered = render_tests(&fonts, tests, &std::env::temp_dir());
     let history = load_history(HISTORY_META_FILE);
-    let diffs = equation_diffs(&history, &rendered);
-   
-    
-    // Create a set of filenames of new renders
-    let new_images : HashSet<&std::ffi::OsStr> = 
-        rendered
-            .values()
-            .map(|e| 
-                e.render.as_ref().ok()
-                .and_then(|render| render.img_render_path.as_ref()) // Getting the render path if it exists
-                .and_then(|path| path.file_name())                  // Extracting the file name
-            )
-            .flatten() // removing the None's
-            .collect()
+    let EquationDiffs { diffs, new_eqs } = equation_diffs(&history, &rendered);
+    let modified_equations : HashSet<_> = 
+        std::iter::chain(
+            diffs.into_iter().map(|c| c.1),
+            new_eqs.into_iter(),
+        )
+        .map(|e| e.tex.clone())
+        .collect()
     ;
+    
+    let mut images_to_keep = HashSet::new();
+    let img_dir = Path::new(HISTORY_IMG_DIR);
+    for (equation, Equation { render, tex, .. }) in rendered.iter_mut() {
+        let old_render_path = render.as_mut().ok().and_then(|render| render.img_render_path.as_mut());
+        if let Some(old_render_path) = old_render_path {
+            let render_filename = old_render_path
+                .file_name()
+                .ok_or_else(|| format!("Equation {} has no filename", equation.as_str())).unwrap()
+                .to_os_string()
+            ;
+            images_to_keep.insert(render_filename.clone());
+            let new_render_path = img_dir.join(render_filename);
+            
+            if modified_equations.contains(tex.as_str()) {
+                std::fs::copy(&old_render_path, &new_render_path)
+                    .map_err(|e| format!("Could not copy equation {} from {:?} to {:?} has no render: {}", equation.as_str(), old_render_path, new_render_path, e)).unwrap();
+            }
+            
+            *old_render_path = new_render_path;
+        }
+    }
+    
     
     
     // Remove PNG images which are not in `rendered`
-    let img_dir = Path::new(HISTORY_IMG_DIR);
     for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
         if let Ok(entry) = entry {
             let file_path = entry.path();
             if file_path.extension() == Some(OsStr::new("png")) {
-                if !new_images.contains(entry.file_name().as_os_str()) {
+                if !images_to_keep.contains(entry.file_name().as_os_str()) {
                     std::fs::remove_file(file_path).expect("failed to remove PNG image");
                 }
             }
@@ -304,26 +320,8 @@ fn save_renders_to_history() {
         }
     }
     
-    // For all diffs, copy from tmp dir to HISTORY_IMG_DIR
-    let modified_equations_iter = std::iter::chain(
-        diffs.new_eqs.into_iter(),              // new equations
-        diffs.diffs.into_iter().map(|c| c.1)    // old ones that have changed compared to history
-    ); 
-    for equation in modified_equations_iter {
-        if let Ok(render) = equation.render.as_ref() {
-            let equation_str = &equation.tex; // Caching this for use in error msg below 
-            let render_path = render.img_render_path.as_ref().ok_or_else(|| format!("Equation {} does not have a render", equation_str)).unwrap().as_path();
-            let render_path_filename = render_path.file_name().ok_or_else(|| format!("Equation {} does not have a filename", equation_str)).unwrap();
-            std::fs::copy(
-                render_path, 
-                img_dir.join(render_path_filename),
-            )
-            .map_err(|e| format!("Equation {} render could not be copied (filename {:?}): {}", equation_str, render_path_filename, e))
-            .unwrap();
-        }
-    }
 
-    let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
+    let out = File::create(HISTORY_META_FILE).expect("failed to create yaml file for regression test results");
     let writer = BufWriter::new(out);
     serde_yaml::to_writer(writer, &rendered)
         .expect("failed to serialize tex results to bincode");
