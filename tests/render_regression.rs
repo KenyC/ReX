@@ -6,8 +6,9 @@ extern crate serde_derive;
 extern crate serde_yaml;
 
 use std::convert::AsRef;
+use std::ffi::OsStr;
 use std::path::Path;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
 use std::io::BufReader;
 
@@ -212,11 +213,6 @@ macro_rules! function_name {
 
 
 fn equation_diffs<'a>(old: &'a TestResults, new: &'a TestResults) -> EquationDiffs<'a> {
-    if old.len() != new.len() {
-        eprintln!("Detected a change in the number of tests. Please be sure to run \
-               `cargo test --all-features -- {} --ignored` to update the test history.", function_name!(save_renders_to_history));
-    }
-
     let mut diffs: Vec<(&'a Equation, &'a Equation)> = Vec::new();
     let mut new_eqs = Vec::new();
 
@@ -247,6 +243,10 @@ fn render_regression() {
     let rendered = render_tests(&fonts, tests, img_dir.as_path());
     let history = load_history(HISTORY_META_FILE);
     let diff = equation_diffs(&history, &rendered);
+    if history.len() != rendered.len() {
+        eprintln!("Detected a change in the number of tests. Please be sure to run \
+               `cargo test --all-features -- {} --ignored` to update the test history.", function_name!(save_renders_to_history));
+    }
 
     if !diff.no_diff() {
         let diff_count = diff.diffs.len();
@@ -267,24 +267,61 @@ fn save_renders_to_history() {
 
     use std::io::BufWriter;
 
-    // Remove PNG images from HISTORY_IMG_DIR
-    let img_dir = Path::new(HISTORY_IMG_DIR);
-    for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
-        if let Ok(entry) = entry {
-            let file_path = entry.path();
-            if let Some(extension) = file_path.extension() {
-                if extension == "png" {
-                    std::fs::remove_file(file_path).expect("failed to remove PNG image");
-                }
-            }
-        }
-    }
 
     // Load the tests in yaml, and render it to bincode
     let tests = collect_tests(REGRESSION_RENDER_YAML);
-    let rendered = render_tests(&fonts, tests, img_dir);
+    // Render everything to temp directory
+    let mut rendered = render_tests(&fonts, tests, &std::env::temp_dir());
+    let history = load_history(HISTORY_META_FILE);
+    let EquationDiffs { diffs, new_eqs } = equation_diffs(&history, &rendered);
+    let modified_equations : HashSet<_> = 
+        std::iter::chain(
+            diffs.into_iter().map(|c| c.1),
+            new_eqs.into_iter(),
+        )
+        .map(|e| e.tex.clone())
+        .collect()
+    ;
+    
+    let mut images_to_keep = HashSet::new();
+    let img_dir = Path::new(HISTORY_IMG_DIR);
+    for (equation, Equation { render, tex, .. }) in rendered.iter_mut() {
+        let old_render_path = render.as_mut().ok().and_then(|render| render.img_render_path.as_mut());
+        if let Some(old_render_path) = old_render_path {
+            let render_filename = old_render_path
+                .file_name()
+                .ok_or_else(|| format!("Equation {} has no filename", equation.as_str())).unwrap()
+                .to_os_string()
+            ;
+            images_to_keep.insert(render_filename.clone());
+            let new_render_path = img_dir.join(render_filename);
+            
+            if modified_equations.contains(tex.as_str()) {
+                std::fs::copy(&old_render_path, &new_render_path)
+                    .map_err(|e| format!("Could not copy equation {} from {:?} to {:?} has no render: {}", equation.as_str(), old_render_path, new_render_path, e)).unwrap();
+            }
+            
+            *old_render_path = new_render_path;
+        }
+    }
+    
+    
+    
+    // Remove PNG images which are not in `rendered`
+    for entry in std::fs::read_dir(img_dir).expect("failed to read image directory") {
+        if let Ok(entry) = entry {
+            let file_path = entry.path();
+            if file_path.extension() == Some(OsStr::new("png")) {
+                if !images_to_keep.contains(entry.file_name().as_os_str()) {
+                    std::fs::remove_file(file_path).expect("failed to remove PNG image");
+                }
+            }
+            
+        }
+    }
+    
 
-    let out = File::create(HISTORY_META_FILE).expect("failed to create bincode file for layout tests");
+    let out = File::create(HISTORY_META_FILE).expect("failed to create yaml file for regression test results");
     let writer = BufWriter::new(out);
     serde_yaml::to_writer(writer, &rendered)
         .expect("failed to serialize tex results to bincode");

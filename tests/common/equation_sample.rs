@@ -42,7 +42,9 @@ pub struct EquationRender {
 
 #[derive(Debug,)]
 pub struct EquationDiffs<'a> {
-    /// Equation diff between history test results and current test results
+    /// Equation diff between history test results and current test results.
+    /// The first member of the pair is the render from history.
+    /// The second member of the pair is the new render.
     pub diffs   : Vec<(&'a Equation, &'a Equation)>,
     /// Current test results with no correspondent in history
     pub new_eqs : Vec<&'a Equation>,
