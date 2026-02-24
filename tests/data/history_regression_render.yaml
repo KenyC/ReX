@@ -56,7 +56,7 @@
                 - -8.533333738644917
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/ hat A^2  hat{A}^2 A-9dgJwXJ1pG8.png"
+      img_render_path: tests/data/imgs/_hat_a_2__hat_a__2_a-HiLjLBaKiOP9gq2oQ2uqFAx1leR-hQvitRgPeIZzyEY.png
 "@-expressions in array - \\begin{array}{l@{}l}  a&a \\end{array}aa":
   tex: "\\begin{array}{l@{}l}  a&a \\end{array}aa"
   description: "Arrays: @-expressions in array"
@@ -90,7 +90,7 @@
                 - 0.0
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{l {}l}-wjI3Jmgz6sQ.png"
+      img_render_path: tests/data/imgs/_begin_array__l___l_-QNrLg7fRdj5NG7fnVagfWY86evAUrjVI_6MgHUmU2fA.png
 "@-expressions in array - \\begin{array}{l@{}l} a&= \\end{array}a=":
   tex: "\\begin{array}{l@{}l} a&= \\end{array}a="
   description: "Arrays: @-expressions in array"
@@ -124,7 +124,7 @@
                 - 0.0
               glyph_id: 62
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{l {}l}-4z8RWrJbqe8.png"
+      img_render_path: tests/data/imgs/_begin_array__l___l_--Pxv9zk56_LGlCp5OUmJtzprqy9ZM9in0eUJPFCk9Qk.png
 "Bug \\#16 ; fence character should be properly spaced - \\Vert y\\Vert = 1":
   tex: "\\Vert y\\Vert = 1"
   description: "Spacing: Bug \\#16 ; fence character should be properly spaced"
@@ -164,7 +164,7 @@
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ Vert y Vert = 1-sMrhHOasKEA.png
+      img_render_path: tests/data/imgs/_vert_y_vert___1-4M6TlRLlVMI9YzIXzKaJ_-KD55syHkB71J2UGn2sbtA.png
 "Bug \\#16 ; fence character should be properly spaced - |x| = 1":
   tex: "|x| = 1"
   description: "Spacing: Bug \\#16 ; fence character should be properly spaced"
@@ -204,7 +204,7 @@
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ x  = 1-WY15j7BpzXo.png
+      img_render_path: tests/data/imgs/_x____1-mfE_z-hHTs5ThWyqZPfiHNAdzl55hmolSYKrRyNIQUM.png
 "Example from mathdoc.pdf ; equal sign should have space only in top and bottom row - \\begin{aligned} 1&=1\\\\ 1=&1 \\\\ 1={}&1\\end{aligned}":
   tex: "\\begin{aligned} 1&=1\\\\ 1=&1 \\\\ 1={}&1\\end{aligned}"
   description: "Aligned: Example from mathdoc.pdf ; equal sign should have space only in top and bottom row"
@@ -268,7 +268,7 @@
                 - 29.386666413346928
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{aligned} 1&=1-5goydCal1mM.png"
+      img_render_path: tests/data/imgs/_begin_aligned__1__1-YEDIoj4TnUt6P6MyqTEIX4PlXfWmXi_nzWEe5Jz-ueg.png
 "Fixed size delimiter should work - \\big\\langle w, V(z)\\big\\rangle_E":
   tex: "\\big\\langle w, V(z)\\big\\rangle_E"
   description: "Delimiters: Fixed size delimiter should work"
@@ -332,7 +332,7 @@
                 - 8.853333753844101
               glyph_id: 2476
               scale: 16.0
-      img_render_path: tests/data/imgs/ big langle w  V(z) --1fGpQHU_RU.png
+      img_render_path: tests/data/imgs/_big_langle_w__v_z__-cBCPDsItTEDx9oetImnhPAgovlVI80YWqS2fWVsGNxQ.png
 "Fixed size delimiter should work - \\bigl(\\Bigl(\\biggl(\\Biggl(":
   tex: "\\bigl(\\Bigl(\\biggl(\\Biggl("
   description: "Delimiters: Fixed size delimiter should work"
@@ -384,7 +384,7 @@
                 - 30.70933479194841
               glyph_id: 1436
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ bigl( Bigl( biggl( -NgteRmph4sA.png
+      img_render_path: tests/data/imgs/_bigl__bigl__biggl__-wLTwRo8ZzowqgA0ruREd3-k6DigySS5uMvjV30_YG-M.png
 "In superscripts, \\mbox should not affect font size beyond its exponent. - 1^{2\\mbox{ab}2}":
   tex: "1^{2\\mbox{ab}2}"
   description: "Text: In superscripts, \\mbox should not affect font size beyond its exponent."
@@ -424,7 +424,7 @@
                 - -8.533333738644919
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/1^{2 mbox{ab}2}-__LPknftrew.png"
+      img_render_path: tests/data/imgs/1__2_mbox_ab_2_-9mfTTDOjeRiskYvd45hJF-Wwf5M67QTGw0rLPIGnvVQ.png
 "Operator name should behave like other operators - \\operatorname{pre-norm} (x+y)":
   tex: "\\operatorname{pre-norm} (x+y)"
   description: "Operators: Operator name should behave like other operators"
@@ -512,7 +512,7 @@
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ operatorname{pre-no-Kh_n5p2JpYo.png"
+      img_render_path: tests/data/imgs/_operatorname_pre-no-KF9nVi46g9HiA6ojyb__S6V1u3VbZRhNNiPcF3lM22k.png
 "Operator name should behave like other operators - \\operatorname{sin} x + \\operatorname{sin}(x+y) + a\\operatorname{sin} z":
   tex: "\\operatorname{sin} x + \\operatorname{sin}(x+y) + a\\operatorname{sin} z"
   description: "Operators: Operator name should behave like other operators"
@@ -636,7 +636,7 @@
                 - 0.0
               glyph_id: 2522
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ operatorname{sin} x-bCn00mijGqQ.png"
+      img_render_path: tests/data/imgs/_operatorname_sin__x-Hy9nKr9t9TDegAHb8HJhFf1NoyRLLpho2BNu1iBJM7w.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - (+2)":
   tex: (+2)
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -670,7 +670,7 @@
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/(+2)-xIRBOnBoqj0.png
+      img_render_path: tests/data/imgs/__2_-ept9Kps0gomdIyrLHxovFXGZVHuTud3VwUuW_LA05yc.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - ++2":
   tex: ++2
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -698,7 +698,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/++2-xIRBOnNoqhQ.png
+      img_render_path: tests/data/imgs/__2-xShaCe25mpPjJcsTo0dxDy5ISBLxzkN6b7i0Nb5x8O4.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - +2":
   tex: "+2"
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -720,7 +720,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/+2-xIRBOnNveBQ.png
+      img_render_path: tests/data/imgs/_2-6Pjc_TXVLe4GFFEuHy3fExL4_ohXMKepLiAxTdJV0i8.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - .+2":
   tex: ".+2"
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -748,7 +748,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ +2-xIRBOnZoqhQ.png
+      img_render_path: tests/data/imgs/__2-RK94pi_aZygn2utQRdGk_W8UwEoHbMpDb1Qzr3JcZxM.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - 1<+2":
   tex: 1<+2
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -782,7 +782,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/1<+2-xIRBOnl5o0Y.png
+      img_render_path: tests/data/imgs/1__2-8sM5WReEVEL_sC5PSNFT_k9C1N0HXySneR-su9oQtys.png
 "Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n - \\int+2":
   tex: "\\int+2"
   description: "Spacing: Rule 5. If the current item is a Bin atom, and if this was the first atom in the list, or if the most recent previous atom was Bin, Op, Rel, Open, or Punct, change the current Bin to Ord.\n"
@@ -810,7 +810,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ int+2-77ZBOqSm5og.png
+      img_render_path: tests/data/imgs/_int_2-2cq19rNWURrWDcTURTW5UbCY4rK4uNpQ7KRb0jtbUF0.png
 "Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n - 1+)":
   tex: 1+)
   description: "Spacing: Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n"
@@ -838,7 +838,7 @@
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/1+)-PIIAvduXLLs.png
+      img_render_path: tests/data/imgs/1__-0wMd1NjCwfYxYJMqGM1jotnVXnrPgjdcqVCAnpHWFlU.png
 "Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n - 1+<2":
   tex: 1+<2
   description: "Spacing: Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n"
@@ -872,7 +872,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/1+<2-PIIAvduXP-0.png
+      img_render_path: tests/data/imgs/1__2-epfME4SF-t3g7AaivniG_QaLpzLEFzowtLiuImPtUAQ.png
 "Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n - 1-.":
   tex: 1-.
   description: "Spacing: Rule 6. If the current item is a Rel or Close or Punct atom, and if the most recent previous atom was Bin, change that previous Bin to Ord.\n"
@@ -900,7 +900,7 @@
                 - 0.0
               glyph_id: 47
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/1- -PIIAvduZMbs.png
+      img_render_path: tests/data/imgs/1-_-MtwcLzAibP6orJg--KmympCuxG8lajtyyu7YXqqRC0A.png
 "Spaces should render, dash should be dashes - \\mbox{log-in to}":
   tex: "\\mbox{log-in to}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -958,7 +958,7 @@
                 - 0.0
               glyph_id: 112
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ mbox{log-in to}-Vwsc3BdRqbA.png"
+      img_render_path: tests/data/imgs/_mbox_log-in_to_-rRWvbuqjf5qoiTtFp-qgUJ4wHZYhlL-cfj2uWo-1yHI.png
 "Spaces should render, dash should be dashes - \\text{10 + 12}":
   tex: "\\text{10 + 12}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -998,7 +998,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ text{10 + 12}-YGFglRwLdb4.png"
+      img_render_path: tests/data/imgs/_text_10___12_-mJNrXBUrSKLh7MIjkkw8JSLOHiz05zrP2ctcLffu8PU.png
 "Spaces should render, dash should be dashes - \\text{a{\\}}}":
   tex: "\\text{a{\\}}}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -1020,7 +1020,7 @@
                 - 0.0
               glyph_id: 126
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ text{a{ }}}-45Gr0W5owYw.png"
+      img_render_path: tests/data/imgs/_text_a_____-OdBJC_T7zUkvCsu1J66gigNVGDhGRlgXPEycgpTI22s.png
 "Spaces should render, dash should be dashes - \\text{log-in}":
   tex: "\\text{log-in}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -1066,7 +1066,7 @@
                 - 0.0
               glyph_id: 111
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ text{log-in}-45yf3B5Usgk.png"
+      img_render_path: tests/data/imgs/_text_log-in_-3iFczHuKslIvWdVH3y52w5HTwVlCszildIwbuLr849U.png
 "Spaces should render, dash should be dashes - \\text{{}\\{{}\\}}":
   tex: "\\text{{}\\{{}\\}}"
   description: "Text: Spaces should render, dash should be dashes"
@@ -1088,7 +1088,7 @@
                 - 0.0
               glyph_id: 126
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ text{{} {{} }}-YCit0Wxmweg.png"
+      img_render_path: tests/data/imgs/_text__________-Yp1ObYP4Oad-wmQAkGTP9DfsdLVsqtu_hX9kLnq-Eyg.png
 "Typical examples - \\begin{aligned} a=&\\frac{1}{2}\\sqrt{1-e_3^2} \\cos(\\gamma),\\\\ b=&\\frac{1}{2}\\sqrt{1-e_3^2} \\sin(\\gamma),\\\\ c=&\\frac{1}{2}(1+e_3).\\end{aligned}":
   tex: "\\begin{aligned} a=&\\frac{1}{2}\\sqrt{1-e_3^2} \\cos(\\gamma),\\\\ b=&\\frac{1}{2}\\sqrt{1-e_3^2} \\sin(\\gamma),\\\\ c=&\\frac{1}{2}(1+e_3).\\end{aligned}"
   description: "Aligned: Typical examples"
@@ -1398,7 +1398,7 @@
                 - 48.336002042517069
               glyph_id: 47
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{aligned} a=& -ex9f2gQHeqA.png"
+      img_render_path: tests/data/imgs/_begin_aligned__a___-5gcyiH8PE5Sz4oiZ0zcjohc5_BENC4UxOg3oUcpXabg.png
 "Typical examples - \\begin{aligned}\\cos(t)\\cos(\\gamma)-\\sin(t)\\sin(\\gamma)=&\\cos(t+\\gamma),\\\\ \\sin(t)\\cos(\\gamma)+\\cos(t)\\sin(\\gamma)=&\\sin(t+\\gamma). \\end{aligned}":
   tex: "\\begin{aligned}\\cos(t)\\cos(\\gamma)-\\sin(t)\\sin(\\gamma)=&\\cos(t+\\gamma),\\\\ \\sin(t)\\cos(\\gamma)+\\cos(t)\\sin(\\gamma)=&\\sin(t+\\gamma). \\end{aligned}"
   description: "Aligned: Typical examples"
@@ -1828,7 +1828,7 @@
                 - 14.586666413346926
               glyph_id: 47
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{aligned} cos(-PJvF73j5Hws.png"
+      img_render_path: tests/data/imgs/_begin_aligned__cos_-OhYmCdyF9V2yzyJwOsLUrJCPRBXlcqKERyOv-DmdRRo.png
 "\\text should adapt size in exponents but not \\mbox - \\text{ab}^{\\mbox{ab}}":
   tex: "\\text{ab}^{\\mbox{ab}}"
   description: "Text: \\text should adapt size in exponents but not \\mbox"
@@ -1862,7 +1862,7 @@
                 - -8.533333738644919
               glyph_id: 99
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ text{ab}^{ mbox{ab}-aPlIzvd66wo.png"
+      img_render_path: tests/data/imgs/_text_ab____mbox_ab_-jbRJWQfph5IbijKTmNFWQCcEULss9Moag9oDToaEAf4.png
 "\\text should adapt size in exponents but not \\mbox - \\text{ab}^{\\text{ab}}":
   tex: "\\text{ab}^{\\text{ab}}"
   description: "Text: \\text should adapt size in exponents but not \\mbox"
@@ -1896,7 +1896,7 @@
                 - -8.533333738644917
               glyph_id: 99
               scale: 16.0
-      img_render_path: "tests/data/imgs/ text{ab}^{ text{ab}-cfVIzvd68g0.png"
+      img_render_path: tests/data/imgs/_text_ab____text_ab_-XCvQWcgz7BpKRCwb1NK8nT167_UDnbr9SOLVgwR3HrY.png
 "array cells should be in textstyle (i.e. limits as subscripts/superscripts) - \\begin{array}{c} \\int_0^1 \\end{array}":
   tex: "\\begin{array}{c} \\int_0^1 \\end{array}"
   description: "Arrays: array cells should be in textstyle (i.e. limits as subscripts/superscripts)"
@@ -1924,7 +1924,7 @@
                 - 9.018667095030346
               glyph_id: 49
               scale: 16.0
-      img_render_path: "tests/data/imgs/ begin{array}{c}  in-SMS726SsApw.png"
+      img_render_path: tests/data/imgs/_begin_array__c___in-e4P5TugfkdGAbgpT0NRoZPP595gYyojRHKgR4LVDHNk.png
 "array column alignment should be honored - \\begin{array}{c}a\\\\ aa\\\\ aaa\\end{array}":
   tex: "\\begin{array}{c}a\\\\ aa\\\\ aaa\\end{array}"
   description: "Arrays: array column alignment should be honored"
@@ -1970,7 +1970,7 @@
                 - 25.386666413346924
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{c}a   -hh4l4d6v27I.png"
+      img_render_path: tests/data/imgs/_begin_array__c_a___-FksnxJRGM274185TGlR9oK8qJu5MHQBgleYyC2BsqHs.png
 "array column alignment should be honored - \\begin{array}{lcr}lorem & ipsum & sit \\\\ amet & consectetur & adipscing \\\\ elit & set & do\\end{array}":
   tex: "\\begin{array}{lcr}lorem & ipsum & sit \\\\ amet & consectetur & adipscing \\\\ elit & set & do\\end{array}"
   description: "Arrays: array column alignment should be honored"
@@ -2256,7 +2256,7 @@
                 - 25.386666413346928
               glyph_id: 2511
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{lcr}lo-AM9OOUxoSh4.png"
+      img_render_path: tests/data/imgs/_begin_array__lcr_lo-oemTe2_Ws8sIhjILpZlvAE1IQvuIeHxjHYKf0DlZpLM.png
 "array column alignment should be honored - \\begin{array}{l}a\\\\ aa\\\\ aaa\\end{array}":
   tex: "\\begin{array}{l}a\\\\ aa\\\\ aaa\\end{array}"
   description: "Arrays: array column alignment should be honored"
@@ -2302,7 +2302,7 @@
                 - 25.386666413346924
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{l}a   -hh4l4d6v5LI.png"
+      img_render_path: tests/data/imgs/_begin_array__l_a___-HCJq8h8-vzWSnfHzSx0XAyjbXAMkAPFfUNQK9RqcXaU.png
 "array column alignment should be honored - \\begin{array}{r}a\\\\ aa\\\\ aaa\\end{array}":
   tex: "\\begin{array}{r}a\\\\ aa\\\\ aaa\\end{array}"
   description: "Arrays: array column alignment should be honored"
@@ -2348,7 +2348,7 @@
                 - 25.386666413346924
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{r}a   -hh4l4d6v6rI.png"
+      img_render_path: tests/data/imgs/_begin_array__r_a___-bMWqZDUI9LFULG-4A38Fun69uk35z-e0_Fh_8Xl6s-E.png
 "atom change items should space properly - a\\mathop{a}a\\ aaa":
   tex: "a\\mathop{a}a\\ aaa"
   description: "Spacing: atom change items should space properly"
@@ -2394,7 +2394,7 @@
                 - 0.0
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/a mathop{a}a  aaa-kcfpi1Xto98.png"
+      img_render_path: tests/data/imgs/a_mathop_a_a__aaa-6CP8ExXNVCFKjUF4fxnDK6p6yxUm5p5cyLCv1GZfIrk.png
 "atom change items should space properly - a\\mathord{+}a\\ a{+}a\\ aaa":
   tex: "a\\mathord{+}a\\ a{+}a\\ aaa"
   description: "Spacing: atom change items should space properly"
@@ -2458,7 +2458,7 @@
                 - 0.0
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/a mathord{+}a  a{+}a-1vJm7LENBkM.png"
+      img_render_path: tests/data/imgs/a_mathord___a__a___a-QSXR3ISW10AMqJjaJTbqwzbHTmQoQiXvTQlw7fZdKoU.png
 "atom change items should space properly - a\\mathord{a}a\\ aaa":
   tex: "a\\mathord{a}a\\ aaa"
   description: "Spacing: atom change items should space properly"
@@ -2504,7 +2504,7 @@
                 - 0.0
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/a mathord{a}a  aaa-DKsFkJGspcg.png"
+      img_render_path: tests/data/imgs/a_mathord_a_a__aaa-BgqauqAP0UvZqF5A1gpD98EY3XSDydFp_q0W2t4z-hc.png
 "atom change items should space properly - a\\mathrel{a}a\\ aaa":
   tex: "a\\mathrel{a}a\\ aaa"
   description: "Spacing: atom change items should space properly"
@@ -2550,7 +2550,7 @@
                 - 0.0
               glyph_id: 2498
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/a mathrel{a}a  aaa-DKsFkJGvmNA.png"
+      img_render_path: tests/data/imgs/a_mathrel_a_a__aaa-8Neflic1uWdD5Jol-VY5vhSYu5xUXqkAodTvpB54uis.png
 "basic underline and overline over various unicodecdots - 1\\underline{a} + 1":
   tex: "1\\underline{a} + 1"
   description: "FontEffects: basic underline and overline over various unicodecdots"
@@ -2590,7 +2590,7 @@
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1 underline{a} + 1-tynLejxJTTk.png"
+      img_render_path: tests/data/imgs/1_underline_a____1-ngymSHG1sW4J5Gn2Oj4TAoWrffHYsIRLuZwcEV0gxBQ.png
 "basic underline and overline over various unicodecdots - \\frac{\\underline{f}}{\\underline{g}}":
   tex: "\\frac{\\underline{f}}{\\underline{g}}"
   description: "FontEffects: basic underline and overline over various unicodecdots"
@@ -2630,7 +2630,7 @@
                 - 23.14666776607434
               width: 10.496000498533249
               height: 1.4080000668764115
-      img_render_path: "tests/data/imgs/ frac{ underline{f}}-IPy5Rk51o1A.png"
+      img_render_path: tests/data/imgs/_frac__underline_f__-vyV59MkfIbYYfXpGS-0fjZiiK2kUnY1fA_-oEjZLWDo.png
 "basic underline and overline over various unicodecdots - \\underline{abc}":
   tex: "\\underline{abc}"
   description: "FontEffects: basic underline and overline over various unicodecdots"
@@ -2664,7 +2664,7 @@
                 - 4.458666878441972
               width: 29.58933473875125
               height: 1.4080000668764115
-      img_render_path: "tests/data/imgs/ underline{abc}-xgXNbZMbXRg.png"
+      img_render_path: tests/data/imgs/_underline_abc_-_7A_xYhnD4QO9UGUqeAy7VhrENL8NJe6YI5NDs8Z1VY.png
 "color should be transparent to atom spacing - 1\\red{<}+2":
   tex: "1\\red{<}+2"
   description: "Spacing: color should be transparent to atom spacing"
@@ -2698,7 +2698,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1 red{<}+2-A93-3XpDHyI.png"
+      img_render_path: tests/data/imgs/1_red____2-pTcfUeY0aEOipKj-F6aUUF409U-6noWfxNTkCWpViJE.png
 "color should be transparent to atom spacing - \\blue{(}\\red{+}2)":
   tex: "\\blue{(}\\red{+}2)"
   description: "Spacing: color should be transparent to atom spacing"
@@ -2732,7 +2732,7 @@
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ blue{(} red{+}2)-LkYwYsCik54.png"
+      img_render_path: tests/data/imgs/_blue____red___2_-uVXDBBulr8jCKr7bi_Q_i_iiB5-6WmFL1yAZ4Tdh7y8.png
 "color should be transparent to atom spacing - \\blue{\\int}+2":
   tex: "\\blue{\\int}+2"
   description: "Spacing: color should be transparent to atom spacing"
@@ -2760,7 +2760,7 @@
                 - 0.0
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ blue{ int}+2-A_3qS8K6WlU.png"
+      img_render_path: tests/data/imgs/_blue__int__2-GiMhEvgipTJlw8rERY0DohoK-kxuQ_OJ7e3MaKbUTHI.png
 "color should be transparent to atom spacing - \\color{red}{a} + b\\ a\\color{blue}{+}b\\ \\color{red}{+}\\color{blue}{+}\\color{red}{+}":
   tex: "\\color{red}{a} + b\\ a\\color{blue}{+}b\\ \\color{red}{+}\\color{blue}{+}\\color{red}{+}"
   description: "Spacing: color should be transparent to atom spacing"
@@ -2824,7 +2824,7 @@
                 - 0.0
               glyph_id: 44
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ color{red}{a} + b  -pWpulcS1vcU.png"
+      img_render_path: tests/data/imgs/_color_red__a____b__-ClkER4oUuEmLqb1WvgNZkG1gtpl43Y1e2GvHQAuPWh4.png
 "delimiters should size correctly - \\begin{Bmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{Bmatrix}":
   tex: "\\begin{Bmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{Bmatrix}"
   description: "Arrays: delimiters should size correctly"
@@ -2948,7 +2948,7 @@
                 - 57.749336076279487
               glyph_id: 1452
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{Bmatrix}1   1--rxhwTSRGuM.png"
+      img_render_path: tests/data/imgs/_begin_bmatrix_1___1-r4i_92070k2KQE92KnvDX1YclfwBjiJ3EawPY1z-lxo.png
 "delimiters should size correctly - \\begin{bmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{bmatrix}":
   tex: "\\begin{bmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{bmatrix}"
   description: "Arrays: delimiters should size correctly"
@@ -3072,7 +3072,7 @@
                 - 57.621336070199799
               glyph_id: 1445
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{bmatrix}1   1--rxhwTSxGgM.png"
+      img_render_path: tests/data/imgs/_begin_bmatrix_1___1-c4L9QeimVbWmiPndABslJ4fzdYoO1dRfKL8z9mJ6YGE.png
 "delimiters should size correctly - \\begin{pmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{pmatrix}":
   tex: "\\begin{pmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{pmatrix}"
   description: "Arrays: delimiters should size correctly"
@@ -3196,7 +3196,7 @@
                 - 57.621336070199799
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}1   1--rxhwTS_GhE.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix_1___1-iPTDwvt1iX7Dcp_AX_y3C-RSJZ217B30rhQpinvMTOI.png
 "delimiters should size correctly - \\begin{vmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{vmatrix}":
   tex: "\\begin{vmatrix}1\\\\ 1\\\\ 1\\\\ 1\\\\ 1\\end{vmatrix}"
   description: "Arrays: delimiters should size correctly"
@@ -3332,7 +3332,7 @@
                 - 53.568002544343489
               glyph_id: 125
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{vmatrix}1   1--rxhwTTFGhc.png"
+      img_render_path: tests/data/imgs/_begin_vmatrix_1___1-i5hyLL1McisQasIbYPFA0rLZEfgqowMNY4cy9ydC680.png
 "have same baseline with small scripts - \\mathop{\\mathrm{lim\\,sup}}\\limits_{x \\to \\infty}\\mathop{\\mathrm{lim\\,sup}}\\limits_{M \\to \\infty}":
   tex: "\\mathop{\\mathrm{lim\\,sup}}\\limits_{x \\to \\infty}\\mathop{\\mathrm{lim\\,sup}}\\limits_{M \\to \\infty}"
   description: "Operators: have same baseline with small scripts"
@@ -3450,7 +3450,7 @@
                 - 18.277334201460083
               glyph_id: 1163
               scale: 16.0
-      img_render_path: "tests/data/imgs/ mathop{ mathrm{lim -IZLrbWfUnjc.png"
+      img_render_path: tests/data/imgs/_mathop__mathrm_lim_-So0jRtaNkAD81XZvK3tZABn7j7T5F9pAspCuuTF63No.png
 "have same baseline with small scripts - \\mathop{\\mathrm{lim}}\\limits_{x \\to \\infty}\\mathop{\\mathrm{lim}}\\limits_{M \\to \\infty}":
   tex: "\\mathop{\\mathrm{lim}}\\limits_{x \\to \\infty}\\mathop{\\mathrm{lim}}\\limits_{M \\to \\infty}"
   description: "Operators: have same baseline with small scripts"
@@ -3532,7 +3532,7 @@
                 - 13.648000648245218
               glyph_id: 1163
               scale: 16.0
-      img_render_path: "tests/data/imgs/ mathop{ mathrm{lim}-eV15RMjuRc0.png"
+      img_render_path: tests/data/imgs/_mathop__mathrm_lim_-Uc_KSnU_UmCFTGsdHVvfbeFjKAy3saubz0AvV81lgJI.png
 "middle renders correctly - \\left( \\frac{a}{b} \\middle| c \\right)^{\\frac{d}{e}}":
   tex: "\\left( \\frac{a}{b} \\middle| c \\right)^{\\frac{d}{e}}"
   description: "Delimiters: middle renders correctly"
@@ -3602,7 +3602,7 @@
                 - -9.333333776642875
               glyph_id: 2502
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ left(  frac{a}{b}  -BV_iSqQgAdI.png"
+      img_render_path: tests/data/imgs/_left___frac_a__b___-v07Z5VwLBdIK2OBG9OqE7JwnHmftugN0LGyTwrcR1WY.png
 "middle renders correctly - \\left( c \\middle| \\frac{a}{b} \\middle\\| e \\right)^{\\frac{d}{e}}":
   tex: "\\left( c \\middle| \\frac{a}{b} \\middle\\| e \\right)^{\\frac{d}{e}}"
   description: "Delimiters: middle renders correctly"
@@ -3684,7 +3684,7 @@
                 - -9.333333776642875
               glyph_id: 2502
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ left( c  middle   f-DPSbeqELufU.png
+      img_render_path: tests/data/imgs/_left__c__middle___f-SR8V65cDTC7XkjrssJCG2i_eBKe7kAxfeipcDniOWOY.png
 "middle renders correctly - \\left( c \\middle| \\frac{a}{b} \\right)^{\\frac{d}{e}}":
   tex: "\\left( c \\middle| \\frac{a}{b} \\right)^{\\frac{d}{e}}"
   description: "Delimiters: middle renders correctly"
@@ -3754,7 +3754,7 @@
                 - -9.333333776642875
               glyph_id: 2502
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ left( c  middle   f-zgQpnKwb79o.png
+      img_render_path: tests/data/imgs/_left__c__middle___f-Wa_UI6JObGidkvOY-2H112njPIDSoeFx-icbnU6CoMk.png
 "middle renders correctly - \\left\\{ x \\in \\mathbb{R}\\,\\middle|\\, x \\geq 0\\right\\}":
   tex: "\\left\\{ x \\in \\mathbb{R}\\,\\middle|\\, x \\geq 0\\right\\}"
   description: "Delimiters: middle renders correctly"
@@ -3818,7 +3818,7 @@
                 - 0.0
               glyph_id: 126
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left { x  in  mathb-Bb4AdLt7y4k.png"
+      img_render_path: tests/data/imgs/_left___x__in__mathb-bF6x_VKteDIZU6xJ2h0hEtxlVjFBIEnB9nROE_I2oys.png
 "position of scripts and interaction with primes - g'^2":
   tex: "g'^2"
   description: "Scripts: position of scripts and interaction with primes"
@@ -3846,7 +3846,7 @@
                 - -9.173333769043288
               glyph_id: 3417
               scale: 14.933333333333334
-      img_render_path: tests/data/imgs/g ^2-Gf3Sl55pjzo.png
+      img_render_path: tests/data/imgs/g__2-TzfytD7XJk2fXL4izOq_sIPkWM0PYLo_S45W7us1mD0.png
 "position of scripts and interaction with primes - g'_2":
   tex: "g'_2"
   description: "Scripts: position of scripts and interaction with primes"
@@ -3874,7 +3874,7 @@
                 - 9.386667112509409
               glyph_id: 3417
               scale: 14.933333333333334
-      img_render_path: tests/data/imgs/g _2-Gf7Sl55pjzo.png
+      img_render_path: tests/data/imgs/g__2-d9f3D0JP6kmdHz9thkouBtrmLP_aTpT_qsiYrKFz-LI.png
 "position of scripts and interaction with primes - g_2'":
   tex: "g_2'"
   description: "Scripts: position of scripts and interaction with primes"
@@ -3902,7 +3902,7 @@
                 - 9.386667112509409
               glyph_id: 3417
               scale: 14.933333333333334
-      img_render_path: tests/data/imgs/g_2 -UdHHl55pjzo.png
+      img_render_path: tests/data/imgs/g_2_-SoTZnr8MMc60GCFnlsgQ3aPPvtjPlyYpUyQO0RKzbh0.png
 "position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others - f_i":
   tex: f_i
   description: "Scripts: position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others"
@@ -3924,7 +3924,7 @@
                 - 9.386667112509409
               glyph_id: 3827
               scale: 14.933333333333334
-      img_render_path: tests/data/imgs/f_i-gWrNV4LfWPg.png
+      img_render_path: tests/data/imgs/f_i-Wv8y4Pbjw2BRaS13xNkSVdrc6lq0TBUiHfZqxr3i1TA.png
 "position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others - f_{i,w,g}":
   tex: "f_{i,w,g}"
   description: "Scripts: position of scripts attached to italic base, shouldn't be a difference between atomic scripts and others"
@@ -3970,7 +3970,7 @@
                 - 9.386667112509409
               glyph_id: 3825
               scale: 14.933333333333334
-      img_render_path: "tests/data/imgs/f_{i w g}-_mrfwK5WhF8.png"
+      img_render_path: tests/data/imgs/f__i_w_g_-sBKRIQq_xSbem_5JmRXHwNP3X-dd2LA8M9GCjRAzIUM.png
 "position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - 1-\\overbrace{\\frac 12}":
   tex: "1-\\overbrace{\\frac 12}"
   description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
@@ -4016,7 +4016,7 @@
                 - 14.933334042628598
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1- overbrace{ frac 1-qe3V27eURr0.png"
+      img_render_path: tests/data/imgs/1-_overbrace__frac_1-CLlHfcf_YegHbdOneGKQYI6N-BjeIlZoHnnWpEnIp2g.png
 "position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - 1-\\underbrace{\\frac 12}":
   tex: "1-\\underbrace{\\frac 12}"
   description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
@@ -4062,7 +4062,7 @@
                 - 10.666667173306143
               glyph_id: 1470
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1- underbrace{ frac -fFPZ3MbVOZ4.png"
+      img_render_path: tests/data/imgs/1-_underbrace__frac_-1CTQQcNEMwYx7Ma67QM3X8SwMajZeoR0W7jKvqSooUI.png
 "position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - \\frac1{\\overbrace{\\frac 12}}":
   tex: "\\frac1{\\overbrace{\\frac 12}}"
   description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
@@ -4108,7 +4108,7 @@
                 - 42.1546686689059
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/ frac1{ overbrace{ f-b1TgOE9l99E.png"
+      img_render_path: tests/data/imgs/_frac1__overbrace__f-xn3oQaSSODesZ3tt2UApHpjRF3BqpJQTeD_kboz8zW4.png
 "position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar) - \\frac1{\\underbrace{\\frac 12}}":
   tex: "\\frac1{\\underbrace{\\frac 12}}"
   description: "Accents: position of underbrace ; the underbrace should not affect the baseline (the minus in front of the frac bar)"
@@ -4154,7 +4154,7 @@
                 - 26.62400126457215
               glyph_id: 1470
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac1{ underbrace{ -cGMhKzA44FI.png"
+      img_render_path: tests/data/imgs/_frac1__underbrace__-F323TvHy7o_o_mmW-FcdxneCmWsNO3AlW2k5x57zNWo.png
 "scripts should be above or below under- and overbrace - \\underbrace{1+1}_{=2}^{a:=}":
   tex: "\\underbrace{1+1}_{=2}^{a:=}"
   description: "Accents: scripts should be above or below under- and overbrace"
@@ -4218,7 +4218,7 @@
                 - 20.544000975787644
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/ underbrace{1+1}_{=2-rsWQlzn4iTg.png"
+      img_render_path: tests/data/imgs/_underbrace_1_1____2-gAtl2H8KoZ1WBibeBS-_YqKrU5KY5Edl9v9LgkGiJnM.png
 "scripts should be above or below under- and overbrace - x=\\overbrace{y-1}^{\\omega}":
   tex: "x=\\overbrace{y-1}^{\\omega}"
   description: "Accents: scripts should be above or below under- and overbrace"
@@ -4270,7 +4270,7 @@
                 - 3.552713678800501e-15
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/x= overbrace{y-1}^{ -zRLgjeNqcuU.png"
+      img_render_path: tests/data/imgs/x__overbrace_y-1____-M06pcgY5pyZjZBE9UBS60U_G9WT5Y7y1olwnt6o6rsc.png
 sequence of letters should look properly spaced - abcdefghijklmnopqrstuvwxyz:
   tex: abcdefghijklmnopqrstuvwxyz
   description: "Spacing: sequence of letters should look properly spaced"
@@ -4436,7 +4436,7 @@ sequence of letters should look properly spaced - abcdefghijklmnopqrstuvwxyz:
                 - 0.0
               glyph_id: 2522
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/abcdefghijklmnopqrst-rNCNOcXO0Zs.png
+      img_render_path: tests/data/imgs/abcdefghijklmnopqrst-1VDGw6BJQrtIp1crKRbIgZpBSBzm47XwpCciZIDALM4.png
 sequence of letters should look properly spaced - arupdhlxbztiqfjmcneyosgkwv:
   tex: arupdhlxbztiqfjmcneyosgkwv
   description: "Spacing: sequence of letters should look properly spaced"
@@ -4602,7 +4602,7 @@ sequence of letters should look properly spaced - arupdhlxbztiqfjmcneyosgkwv:
                 - 0.0
               glyph_id: 2518
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/arupdhlxbztiqfjmcney-xN2bNry-0YQ.png
+      img_render_path: tests/data/imgs/arupdhlxbztiqfjmcney-ha8zSCo_Bp6E38VTSEYNd-qIc3Bn52TPSeUaf_uNK9U.png
 sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
   tex: azertyuiopqsdfghjklmwxcvbn
   description: "Spacing: sequence of letters should look properly spaced"
@@ -4768,7 +4768,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2510
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/azertyuiopqsdfghjklm-t9GbQdLAyIM.png
+      img_render_path: tests/data/imgs/azertyuiopqsdfghjklm-NOM4UczEFKVt8tGpmSKJzWBD6TQEq1mCsWGuEwMDKmE.png
 "should be centered with respect to scripts - \\displaystyle\\mathop{\\mathrm{lim}}\\limits_{x \\to \\infty}":
   tex: "\\displaystyle\\mathop{\\mathrm{lim}}\\limits_{x \\to \\infty}"
   description: "Operators: should be centered with respect to scripts"
@@ -4814,7 +4814,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.800000607967379
               glyph_id: 1163
               scale: 16.0
-      img_render_path: tests/data/imgs/ displaystyle mathop-kTtMFA4vhFE.png
+      img_render_path: tests/data/imgs/_displaystyle_mathop-Nh8KUBQeg9CkVg8gsF5jSJCeCPA2yG8LwIE8Y2sirPA.png
 "should be centered with respect to scripts - \\displaystyle\\sum_{a+b+c+d}^{a+b+c+d+e+f}":
   tex: "\\displaystyle\\sum_{a+b+c+d}^{a+b+c+d+e+f}"
   description: "Operators: should be centered with respect to scripts"
@@ -4938,7 +4938,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 24.02133447428544
               glyph_id: 2501
               scale: 16.0
-      img_render_path: "tests/data/imgs/ displaystyle sum_{a-7EyUMhAjcHQ.png"
+      img_render_path: tests/data/imgs/_displaystyle_sum__a-JgAGwWsVmh4ttuK9P2LCQQP77IT_5mDl1qLYE_iZ5M0.png
 "should be transparent to operators and accents - \\color{red}{\\hat A}_0^1 A_0^1":
   tex: "\\color{red}{\\hat A}_0^1 A_0^1"
   description: "Color: should be transparent to operators and accents"
@@ -4990,7 +4990,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 8.533333738644917
               glyph_id: 49
               scale: 16.0
-      img_render_path: "tests/data/imgs/ color{red}{ hat A}_-x-NpwaIwvXg.png"
+      img_render_path: tests/data/imgs/_color_red___hat_a__-54ivIsWbmpmPuBZXXEjdpJi3YMTRdqY98zL__3Pp_r8.png
 "should be transparent to operators and accents - \\color{red}{\\int}_0^1":
   tex: "\\color{red}{\\int}_0^1"
   description: "Color: should be transparent to operators and accents"
@@ -5018,7 +5018,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 19.93600094690919
               glyph_id: 49
               scale: 16.0
-      img_render_path: "tests/data/imgs/ color{red}{ int}_0^-SoQ5ZH4Q2Tc.png"
+      img_render_path: tests/data/imgs/_color_red___int__0_-lmCd-j8iwQnGiLtGOqZD47evJ9g3TGkoww3E4wMeqgY.png
 "should be transparent to operators and accents - \\color{red}{\\sum}_0^1":
   tex: "\\color{red}{\\sum}_0^1"
   description: "Color: should be transparent to operators and accents"
@@ -5046,7 +5046,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 24.149334480365114
               glyph_id: 49
               scale: 16.0
-      img_render_path: "tests/data/imgs/ color{red}{ sum}_0^-SoQ5boUJ2Tc.png"
+      img_render_path: tests/data/imgs/_color_red___sum__0_-yW9RfQavTSkp2OYm4dfV4Hi5HDZeFH7egLEC0sMfsZQ.png
 "should center the numerator/denominator - \\frac{1}{x+y}\\frac{x+y}{1}":
   tex: "\\frac{1}{x+y}\\frac{x+y}{1}"
   description: "Fractions: should center the numerator/denominator"
@@ -5116,7 +5116,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628602
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{1}{x+y} frac{x-3OaD6nPRUAQ.png"
+      img_render_path: tests/data/imgs/_frac_1__x_y__frac_x-Qx8DjqxTb6SFo2AgcPx22Jp_fh_I-xA5hfjArMKfCTM.png
 "should center the numerator/denominator - \\scriptscriptstyle\\frac{1}{x+y}\\frac{x+y}{1}":
   tex: "\\scriptscriptstyle\\frac{1}{x+y}\\frac{x+y}{1}"
   description: "Fractions: should center the numerator/denominator"
@@ -5186,7 +5186,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 6.720000319182868
               glyph_id: 50
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ scriptscriptstyle f-0gPR1FiwIto.png
+      img_render_path: tests/data/imgs/_scriptscriptstyle_f-3Hd3OZrW9cAfwbhQvONnLDLa-DLkx9ym7Q5eUf3Q5Lc.png
 "should center the numerator/denominator - \\scriptstyle\\frac{1}{x+y}\\frac{x+y}{1}":
   tex: "\\scriptstyle\\frac{1}{x+y}\\frac{x+y}{1}"
   description: "Fractions: should center the numerator/denominator"
@@ -5256,7 +5256,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 7.680000364780425
               glyph_id: 50
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ scriptstyle frac{1}-WrFysVFJq3Y.png"
+      img_render_path: tests/data/imgs/_scriptstyle_frac_1_-Xxhn5L4ayXUjUdwV4vZij3vtNKHLS-5GNNQbwdGSzlY.png
 "should center the numerator/denominator - \\textstyle\\frac{1}{x+y}\\frac{x+y}{1}":
   tex: "\\textstyle\\frac{1}{x+y}\\frac{x+y}{1}"
   description: "Fractions: should center the numerator/denominator"
@@ -5326,7 +5326,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 10.240000486373902
               glyph_id: 50
               scale: 16.0
-      img_render_path: "tests/data/imgs/ textstyle frac{1}{x-YZxna-g8r3c.png"
+      img_render_path: tests/data/imgs/_textstyle_frac_1__x-JzI0UAn5LSksDuTeoS6pXh7eoi9aR_dqKVKURL6chBM.png
 "should display appropriate limits - \\displaystyle\\int_0^1\\int\\nolimits_0^1\\int\\limits_0^1":
   tex: "\\displaystyle\\int_0^1\\int\\nolimits_0^1\\int\\limits_0^1"
   description: "Operators: should display appropriate limits"
@@ -5390,7 +5390,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 32.88533489530285
               glyph_id: 49
               scale: 16.0
-      img_render_path: tests/data/imgs/ displaystyle int_0^-zrxKJ0wmPf8.png
+      img_render_path: tests/data/imgs/_displaystyle_int_0_-CbCJDuyYqXBdYgPtx6o9s4gt21w6At4xr44KR7MD23Y.png
 "should display appropriate limits - \\displaystyle\\sum_0^1\\sum\\nolimits_0^1\\sum\\limits_0^1":
   tex: "\\displaystyle\\sum_0^1\\sum\\nolimits_0^1\\sum\\limits_0^1"
   description: "Operators: should display appropriate limits"
@@ -5454,7 +5454,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 24.149334480365114
               glyph_id: 49
               scale: 16.0
-      img_render_path: tests/data/imgs/ displaystyle sum_0^-5rVDJ0wmPRM.png
+      img_render_path: tests/data/imgs/_displaystyle_sum_0_-_KRADk86jjYcpOjIUhwQOdp61pNBGe6wwXE5u9BBwoA.png
 "should display appropriate limits - \\scriptstyle\\int_0^1\\scriptscriptstyle\\int_0^1":
   tex: "\\scriptstyle\\int_0^1\\scriptscriptstyle\\int_0^1"
   description: "Operators: should display appropriate limits"
@@ -5500,7 +5500,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 5.702400270849466
               glyph_id: 49
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ scriptstyle int_0^1-ZSrkMMoKZqQ.png
+      img_render_path: tests/data/imgs/_scriptstyle_int_0_1-f-5neSE8ZJMuu7x0VF_ZsRAQeyI5dfAFULSXkyu_t-U.png
 "should display appropriate limits - \\textstyle\\int_0^1\\int\\nolimits_0^1\\int\\limits_0^1":
   tex: "\\textstyle\\int_0^1\\int\\nolimits_0^1\\int\\limits_0^1"
   description: "Operators: should display appropriate limits"
@@ -5564,7 +5564,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 20.84266765664021
               glyph_id: 49
               scale: 16.0
-      img_render_path: tests/data/imgs/ textstyle int_0^1 i-NT_f4CJSwg8.png
+      img_render_path: tests/data/imgs/_textstyle_int_0_1_i-h1IMLtOoeyEwj6NpH6RRM0DZX1kVftiXal2K9sL1rCc.png
 "should display appropriate limits - \\textstyle\\sum_0^1\\sum\\nolimits_0^1\\sum\\limits_0^1":
   tex: "\\textstyle\\sum_0^1\\sum\\nolimits_0^1\\sum\\limits_0^1"
   description: "Operators: should display appropriate limits"
@@ -5628,7 +5628,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 19.541334261496865
               glyph_id: 49
               scale: 16.0
-      img_render_path: tests/data/imgs/ textstyle sum_0^1 s-NT_f4DZquwg.png
+      img_render_path: tests/data/imgs/_textstyle_sum_0_1_s-ryChDfPJhGdmS9bNIVeVpgfJvM_ktiI_m_HopV_4AKA.png
 "should display vertical bars and increase col separation accordingly - \\begin{array}{c|l} a & x \\\\ b & y \\\\ c & z \\\\ \\end{array}":
   tex: "\\begin{array}{c|l} a & x \\\\ b & y \\\\ c & z \\\\ \\end{array}"
   description: "Arrays: should display vertical bars and increase col separation accordingly"
@@ -5680,7 +5680,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 25.386666413346924
               glyph_id: 2522
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{c l} a-fITYRe-q-oc.png"
+      img_render_path: tests/data/imgs/_begin_array__c_l__a-pD0U_oGpZzqqESENzyY2HjwI9vVJ1p035G-1PQkZftk.png
 "should display vertical bars and increase col separation accordingly - \\begin{array}{l|r} x & 1 \\\\ y & 2 \\\\ z & 3 \\\\ \\end{array}":
   tex: "\\begin{array}{l|r} x & 1 \\\\ y & 2 \\\\ z & 3 \\\\ \\end{array}"
   description: "Arrays: should display vertical bars and increase col separation accordingly"
@@ -5732,7 +5732,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 25.386666413346928
               glyph_id: 52
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{array}{l r} x-k5vh_q5j-p4.png"
+      img_render_path: tests/data/imgs/_begin_array__l_r__x-Eg52J8xmPFy87QBwEyRWyCte2qI5j-vXzbtCDn_ktMI.png
 "should display vertical bars and increase col separation accordingly - \\begin{array}{|c|c|} a & b \\\\ x & y \\\\ \\end{array}":
   tex: "\\begin{array}{|c|c|} a & b \\\\ x & y \\\\ \\end{array}"
   description: "Arrays: should display vertical bars and increase col separation accordingly"
@@ -5784,7 +5784,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -30.93333358665307
               width: 0.5333333333333333
               height: 51.199999999999999
-      img_render_path: "tests/data/imgs/ begin{array}{ c c }-RZj4k3-jAGE.png"
+      img_render_path: tests/data/imgs/_begin_array___c_c__-6Z5cdqxVRvOsaL1T-aIX3isR2oP8cuFiU88IkqKl62I.png
 "should display vertical bars and increase col separation accordingly - \\begin{array}{|r||c|} 1 & a \\\\ 2 & b \\\\ 3 & c \\\\ \\end{array}":
   tex: "\\begin{array}{|r||c|} 1 & a \\\\ 2 & b \\\\ 3 & c \\\\ \\end{array}"
   description: "Arrays: should display vertical bars and increase col separation accordingly"
@@ -5854,7 +5854,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -43.73333358665307
               width: 0.5333333333333333
               height: 76.79999999999999
-      img_render_path: "tests/data/imgs/ begin{array}{ r  c -zLw432Zyb_Y.png"
+      img_render_path: tests/data/imgs/_begin_array___r__c_-OSsdAGLnG-dVZR3D_A_mJoDQg0wxSXFTEbwrhVuNDw0.png
 "should extend when possible - \\mathop{\\overbrace{1+2+3+4+5+6}}\\limits^{\\mathrm{Arithmetic}} = 21":
   tex: "\\mathop{\\overbrace{1+2+3+4+5+6}}\\limits^{\\mathrm{Arithmetic}} = 21"
   description: "Accents: should extend when possible"
@@ -6146,7 +6146,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ mathop{ overbrace{1-T881kVcf_TQ.png"
+      img_render_path: tests/data/imgs/_mathop__overbrace_1-kHiZz2U8KIf1PGZzyYNN26Sl0piR2PiRfBxfXWBbSpE.png
 "should handle delimiters - \\binom{k}{p}\\tbinom{k}{p}\\dbinom{k}{p}":
   tex: "\\binom{k}{p}\\tbinom{k}{p}\\dbinom{k}{p}"
   description: "Fractions: should handle delimiters"
@@ -6246,7 +6246,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ binom{k}{p} tbinom{-f1JnjVQyvfE.png"
+      img_render_path: tests/data/imgs/_binom_k__p__tbinom_-AQCLfPO86hofdl6nY9cNnr3fm10pJZy-PWXCASW3Rjo.png
 "should handle delimiters - \\displaystyle\\dbinom{k}{p}\\textstyle\\dbinom{k}{p}\\scriptstyle\\dbinom{k}{p}\\scriptscriptstyle\\dbinom{k}{p}":
   tex: "\\displaystyle\\dbinom{k}{p}\\textstyle\\dbinom{k}{p}\\scriptstyle\\dbinom{k}{p}\\scriptscriptstyle\\dbinom{k}{p}"
   description: "Fractions: should handle delimiters"
@@ -6376,7 +6376,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ displaystyle dbinom-ZgC566ZolO8.png
+      img_render_path: tests/data/imgs/_displaystyle_dbinom-V9UHJZF8anUkRSOi5djG4wRf_5XGZWCLfxA8O7IE670.png
 "should handle delimiters - \\displaystyle\\tbinom{k}{p}\\textstyle\\tbinom{k}{p}\\scriptstyle\\tbinom{k}{p}\\scriptscriptstyle\\tbinom{k}{p}":
   tex: "\\displaystyle\\tbinom{k}{p}\\textstyle\\tbinom{k}{p}\\scriptstyle\\tbinom{k}{p}\\scriptscriptstyle\\tbinom{k}{p}"
   description: "Fractions: should handle delimiters"
@@ -6506,7 +6506,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 8.394667065391939
               glyph_id: 3682
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ displaystyle tbinom-ZgC566aItO8.png
+      img_render_path: tests/data/imgs/_displaystyle_tbinom-49lAWUua8p734jC0aKx3M127mUpDEJYPysjw9T730ek.png
 "should handle depth - \\frac{g}{x}\\frac{x}{x}":
   tex: "\\frac{g}{x}\\frac{x}{x}"
   description: "Fractions: should handle depth"
@@ -6552,7 +6552,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628605
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{g}{x} frac{x}{-rhIbMyfwvA4.png"
+      img_render_path: tests/data/imgs/_frac_g__x__frac_x__-I3JTTpJMRiNMn5KUlrg4u2bkH2aXhWPJ1HpLEtPhnG4.png
 "should handle depth - \\frac{x}{g}\\frac{x}{x}":
   tex: "\\frac{x}{g}\\frac{x}{x}"
   description: "Fractions: should handle depth"
@@ -6598,7 +6598,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628605
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{x}{g} frac{x}{-riMbMxbwvA4.png"
+      img_render_path: tests/data/imgs/_frac_x__g__frac_x__-GFre8Hi0Qz8Cq6RF4ufs8DIBg_g229t0ksxU1_T_YjY.png
 "should handle display/textstyle - \\displaystyle\\dfrac12\\textstyle\\dfrac12\\scriptstyle\\dfrac12\\scriptscriptstyle\\dfrac12":
   tex: "\\displaystyle\\dfrac12\\textstyle\\dfrac12\\scriptstyle\\dfrac12\\scriptscriptstyle\\dfrac12"
   description: "Fractions: should handle display/textstyle"
@@ -6680,7 +6680,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628602
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ displaystyle dfrac1-Gzy46YYacfc.png
+      img_render_path: tests/data/imgs/_displaystyle_dfrac1-xiZBNn9Aa5fjONVBX9Ja6BxuIJaf3se11QbH942bAB0.png
 "should handle display/textstyle - \\displaystyle\\tfrac12\\textstyle\\tfrac12\\scriptstyle\\tfrac12\\scriptscriptstyle\\tfrac12":
   tex: "\\displaystyle\\tfrac12\\textstyle\\tfrac12\\scriptstyle\\tfrac12\\scriptscriptstyle\\tfrac12"
   description: "Fractions: should handle display/textstyle"
@@ -6762,7 +6762,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 10.240000486373902
               glyph_id: 51
               scale: 16.0
-      img_render_path: tests/data/imgs/ displaystyle tfrac1-Gzy4-YY6cQc.png
+      img_render_path: tests/data/imgs/_displaystyle_tfrac1-pjedANQL-fZhOwSh-9gfwdXBOqd06MwBTZsfpHIqAbU.png
 "should handle display/textstyle - \\frac12\\tfrac12\\dfrac12":
   tex: "\\frac12\\tfrac12\\dfrac12"
   description: "Fractions: should handle display/textstyle"
@@ -6826,7 +6826,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628602
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ frac12 tfrac12 dfra-8RDV31a1FWo.png
+      img_render_path: tests/data/imgs/_frac12_tfrac12_dfra-6lmIcFeMSbcOa2vNBCkd_lY0aPOFaGxteO8sCAl--2k.png
 "should handle scripts and scale properly - a^{\\color{red}{2}}\\textstyle a^{\\color{red}{2}}\\scriptstyle a^{\\color{red}{2}}\\scriptscriptstyle a^{\\color{red}{2}}":
   tex: "a^{\\color{red}{2}}\\textstyle a^{\\color{red}{2}}\\scriptstyle a^{\\color{red}{2}}\\scriptscriptstyle a^{\\color{red}{2}}"
   description: "Color: should handle scripts and scale properly"
@@ -6884,7 +6884,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -5.120000243186949
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/a^{ color{red}{2}} t-31S3o2Cz7ZU.png"
+      img_render_path: tests/data/imgs/a___color_red__2___t-o4t80eSDRvhHjV_6sKeFAoxaM6f4Zz8Nj9Ip0Zj6Ihg.png
 "should handle scripts and scale properly - a^{\\color{red}{2}}_{\\color{blue}{2}}":
   tex: "a^{\\color{red}{2}}_{\\color{blue}{2}}"
   description: "Color: should handle scripts and scale properly"
@@ -6912,7 +6912,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 8.533333738644917
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/a^{ color{red}{2}}_{-VMtpQ5lGgFw.png"
+      img_render_path: tests/data/imgs/a___color_red__2____-ZCsSJofLBakFTcldBYunI9Zehd4TnTNTB8lMiFfuOlA.png
 "should handle scripts and scale properly - a_{\\color{red}{2}}\\textstyle a_{\\color{red}{2}}\\scriptstyle a_{\\color{red}{2}}\\scriptscriptstyle a_{\\color{red}{2}}":
   tex: "a_{\\color{red}{2}}\\textstyle a_{\\color{red}{2}}\\scriptstyle a_{\\color{red}{2}}\\scriptscriptstyle a_{\\color{red}{2}}"
   description: "Color: should handle scripts and scale properly"
@@ -6970,7 +6970,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 5.12000024318695
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/a_{ color{red}{2}} t-31W4o2C07pU.png"
+      img_render_path: tests/data/imgs/a___color_red__2___t-0irvKX19_A1adgcRhsFYfko5rcBBaL8OPV8abPbKBHQ.png
 "should handle state changes (Issue 27) - R_{\\mathfrak{E}}X\\ R^{\\mathfrak{E}}X":
   tex: "R_{\\mathfrak{E}}X\\ R^{\\mathfrak{E}}X"
   description: "Scripts: should handle state changes (Issue 27)"
@@ -7016,7 +7016,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2495
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/R_{ mathfrak{E}}X  R-8uuD1UsrHds.png"
+      img_render_path: tests/data/imgs/r___mathfrak_e__x__r-Pz2j3PDY-ErG630cZ523Syky7gqdPN40dJ0aoU8Qcc4.png
 "should handle state changes (Issue 27) - \\frac{\\mathfrak{E}}2":
   tex: "\\frac{\\mathfrak{E}}2"
   description: "Fractions: should handle state changes (Issue 27)"
@@ -7044,7 +7044,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628605
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{ mathfrak{E}}2-aA2gL1pGaRQ.png"
+      img_render_path: tests/data/imgs/_frac__mathfrak_e__2-EYxZgHMnW4e2G0CXqkwSovqgLkPhYQjeSy2o_l5ohG4.png
 "should handle tall symbols - \\frac{\\int x}{\\int x}":
   tex: "\\frac{\\int x}{\\int x}"
   description: "Fractions: should handle tall symbols"
@@ -7084,7 +7084,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 17.1733341490229
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{ int x}{ int x-ZIcrovxCUy4.png"
+      img_render_path: tests/data/imgs/_frac__int_x___int_x-mAC0YswVxeKhYyc-TXEdUm1xnq5RADaFfsRK6V_kwnY.png
 "should handle tall symbols - \\frac{\\int x}{x}":
   tex: "\\frac{\\int x}{x}"
   description: "Fractions: should handle tall symbols"
@@ -7118,7 +7118,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.93333404262861
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{ int x}{x}-gJu9LtzK1i4.png"
+      img_render_path: tests/data/imgs/_frac__int_x__x_-N8dyxjkTk1eE-POkMTOVH-sJK9tW7GeBcT8pyEdvlc8.png
 "should handle tall symbols - \\frac{x}{\\int x}":
   tex: "\\frac{x}{\\int x}"
   description: "Fractions: should handle tall symbols"
@@ -7152,7 +7152,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 17.173334149022897
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{x}{ int x}-nK_KFiXAzdM.png"
+      img_render_path: tests/data/imgs/_frac_x___int_x_-T1HoP7laSwfq1J3ZitnpusfkDsxYTy1iz04jBpwQoxA.png
 "should interact with scripts properly (tests scaling) - 2^{2^{\\frac12}} 2^{2^{\\tfrac12}} 2^{2^{\\dfrac12}}":
   tex: "2^{2^{\\frac12}} 2^{2^{\\tfrac12}} 2^{2^{\\dfrac12}}"
   description: "Fractions: should interact with scripts properly (tests scaling)"
@@ -7252,7 +7252,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -10.533333833639823
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/2^{2^{ frac12}} 2^{2-1qpEZx96G8k.png"
+      img_render_path: tests/data/imgs/2__2___frac12___2__2-yixlIhtDt_bupGvX-sst1OL90cppvn75ekvl9DuXUNs.png
 "should interact with scripts properly (tests scaling) - 2^{\\frac12} 2^{\\tfrac12} 2^{\\dfrac12}":
   tex: "2^{\\frac12} 2^{\\tfrac12} 2^{\\dfrac12}"
   description: "Fractions: should interact with scripts properly (tests scaling)"
@@ -7334,7 +7334,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -2.666666793326545
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/2^{ frac12} 2^{ tfra-jMp1fH2Vfzg.png"
+      img_render_path: tests/data/imgs/2___frac12__2___tfra-evrr8jtec0Onvqar6vCABMOPi8oJItV59CUF5dVW8CQ.png
 "should look good - \\Vert f \\Vert_2 = \\sqrt{\\int f^2(x)\\,\\mathrm{d}x}":
   tex: "\\Vert f \\Vert_2 = \\sqrt{\\int f^2(x)\\,\\mathrm{d}x}"
   description: "Samples: should look good"
@@ -7434,7 +7434,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 3.552713678800501e-15
               glyph_id: 2520
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ Vert f  Vert_2 =  s-TOwJKfPq45Y.png
+      img_render_path: tests/data/imgs/_vert_f__vert_2____s-JYGafAM7sndb3Y3d6lKlvF-7JUW6a4BkCHcK7FR1ndI.png
 "should look good - \\frac{1}{\\left(\\sqrt{\\phi\\sqrt5} - \\phi\\right) e^{\\frac{2}{5}\\pi}} = 1 + \\frac{e^{-2\\pi}}{1 + \\frac{e^{-4\\pi}}{1 + \\frac{e^{-6\\pi}}{1 + \\frac{e^{-8\\pi}}{1 + \\unicodecdots}}}}\n":
   tex: "\\frac{1}{\\left(\\sqrt{\\phi\\sqrt5} - \\phi\\right) e^{\\frac{2}{5}\\pi}} = 1 + \\frac{e^{-2\\pi}}{1 + \\frac{e^{-4\\pi}}{1 + \\frac{e^{-6\\pi}}{1 + \\frac{e^{-8\\pi}}{1 + \\unicodecdots}}}}\n"
   description: "Samples: should look good"
@@ -7738,7 +7738,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 62.242136289676029
               glyph_id: 1372
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ frac{1}{ left( sqrt-CCdjn9_H7K8.png"
+      img_render_path: tests/data/imgs/_frac_1___left__sqrt-3r05l6U-XcpAAmcbF0uu7xbgUGNjfyMT9WnR2t0K6ug.png
 "should look good - \\hat A\\grave A\\bar A\\tilde A\\hat x \\grave x\\bar x\\tilde x\\hat y\\grave y\\bar y\\tilde y":
   tex: "\\hat A\\grave A\\bar A\\tilde A\\hat x \\grave x\\bar x\\tilde x\\hat y\\grave y\\bar y\\tilde y"
   description: "Samples: should look good"
@@ -7892,7 +7892,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2521
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ hat A grave A bar A-H_6dKMsEr1A.png
+      img_render_path: tests/data/imgs/_hat_a_grave_a_bar_a-MnXLTck24txhRp6ItE2NmR517v-J3eUAjjCJkCznmec.png
 "should look good - \\iint \\sqrt{1 + f^2(x,t,t)}\\,\\mathrm{d}x\\mathrm{d}y\\mathrm{d}t = \\sum \\xi(t)":
   tex: "\\iint \\sqrt{1 + f^2(x,t,t)}\\,\\mathrm{d}x\\mathrm{d}y\\mathrm{d}t = \\sum \\xi(t)"
   description: "Samples: should look good"
@@ -8058,7 +8058,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 42
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ iint  sqrt{1 + f^2(-uHwUQVZm0QA.png"
+      img_render_path: tests/data/imgs/_iint__sqrt_1___f_2_-yFC10msDSqNnyEumjaqXxsHnfJIh9-AtQA-EImmWlOM.png
 "should look good - \\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\\right\\} \\mathrm{wat?}":
   tex: "\\left.x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}\\right\\} \\mathrm{wat?}"
   description: "Samples: should look good"
@@ -8212,7 +8212,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 64
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left x^{x^{x^x_x}_{-3qilKfv9G9k.png"
+      img_render_path: tests/data/imgs/_left_x__x__x_x_x___-t6E8LCO9obahNq2qpU6Q3Bd2ZGRJrP9sv4pcVZkXbew.png
 "should look good - \\left\\vert\\sum_k a_k b_k\\right\\vert \\leq \\left(\\sum_k a_k^2\\right)^{\\frac12}\\left(\\sum_k b_k^2\\right)^{\\frac12}":
   tex: "\\left\\vert\\sum_k a_k b_k\\right\\vert \\leq \\left(\\sum_k a_k^2\\right)^{\\frac12}\\left(\\sum_k b_k^2\\right)^{\\frac12}"
   description: "Samples: should look good"
@@ -8396,7 +8396,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -22.453334399809437
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ left vert sum_k a_k-yej2Lcjc_hU.png
+      img_render_path: tests/data/imgs/_left_vert_sum_k_a_k-WbOI1ka6ZQjBZw7QNrf1ZtqItd9iPqfeiGk5pMXpJq0.png
 "should look good - \\mathop{\\mathrm{lim\\,sup}}\\limits_{x\\rightarrow\\infty}\\ \\mathop{\\mathrm{sin}}(x)\\mathrel{\\mathop{=}\\limits^?}1":
   tex: "\\mathop{\\mathrm{lim\\,sup}}\\limits_{x\\rightarrow\\infty}\\ \\mathop{\\mathrm{sin}}(x)\\mathrel{\\mathop{=}\\limits^?}1"
   description: "Samples: should look good"
@@ -8514,7 +8514,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ mathop{ mathrm{lim -uJSAeJFvHPE.png"
+      img_render_path: tests/data/imgs/_mathop__mathrm_lim_-bk5sj1BpJJhFy2wFXnGLce-ag4v6Z41cldFRXQFygg0.png
 "should look good - \\mathop{\\overbrace{1+2+3+\\unicodecdots+n}}\\limits^{\\mathrm{Arithmatic}} = \\frac{n(n+1)}{2}":
   tex: "\\mathop{\\overbrace{1+2+3+\\unicodecdots+n}}\\limits^{\\mathrm{Arithmatic}} = \\frac{n(n+1)}{2}"
   description: "Samples: should look good"
@@ -8794,7 +8794,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 14.933334042628602
               glyph_id: 51
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ mathop{ overbrace{1-OUWVfwPq5As.png"
+      img_render_path: tests/data/imgs/_mathop__overbrace_1-co6s0KM8w3ahgnUJ6bdyFq3siEUC_scqdR2cdf_NhW0.png
 "should look good - \\sigma = \\left(\\int f^2(x)\\,\\mathrm{d}x\\right)^{1/2}":
   tex: "\\sigma = \\left(\\int f^2(x)\\,\\mathrm{d}x\\right)^{1/2}"
   description: "Samples: should look good"
@@ -8894,7 +8894,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -23.57333445300658
               glyph_id: 51
               scale: 16.0
-      img_render_path: tests/data/imgs/ sigma =  left( int -SkeFDUAZQNw.png
+      img_render_path: tests/data/imgs/_sigma____left__int_-UxLMeBiPJqfVXYUAmNy1dAHP4Q5P3RoWH6fSAeivEWY.png
 "should look good - f^{(n)}(z) = \\frac{n!}{2\\pi i} \\oint \\frac{f(\\xi)}{(\\xi - z)^{n+1}}\\,\\mathrm{d}\\xi":
   tex: "f^{(n)}(z) = \\frac{n!}{2\\pi i} \\oint \\frac{f(\\xi)}{(\\xi - z)^{n+1}}\\,\\mathrm{d}\\xi"
   description: "Samples: should look good"
@@ -9084,7 +9084,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 3171
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/f^{(n)}(z) =  frac{n-wugmfJS9rNs.png"
+      img_render_path: tests/data/imgs/f___n___z_____frac_n-6szuWuX7im6U5JfpK5x_WEb4sALEpLgAZLlp_FlP4J8.png
 "should nest properly - x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}":
   tex: "x^{x^{x^x_x}_{x^x_x}}_{x^{x^x_x}_{x^x_x}}"
   description: "Scripts: should nest properly"
@@ -9184,7 +9184,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 31.123201478272678
               glyph_id: 2520
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/x^{x^{x^x_x}_{x^x_x}-Z2CqPH7o6gw.png"
+      img_render_path: tests/data/imgs/x__x__x_x_x___x_x_x_-lU_CXEjU1Iafxlp2-T7eUJc5fR27c0R-SanOtG8K5nU.png
 "should other types of radicals - \\cuberoot{1+1}":
   tex: "\\cuberoot{1+1}"
   description: "Radicals: should other types of radicals"
@@ -9224,7 +9224,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ cuberoot{1+1}-Vjntps3a2x4.png"
+      img_render_path: tests/data/imgs/_cuberoot_1_1_-0DaOFWlVCrkL9Od-IBF4KCV8J4Zucbz57DD-e60gKLc.png
 "should other types of radicals - \\fourthroot{1+1}":
   tex: "\\fourthroot{1+1}"
   description: "Radicals: should other types of radicals"
@@ -9264,7 +9264,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ fourthroot{1+1}-k5z6Vvda1hU.png"
+      img_render_path: tests/data/imgs/_fourthroot_1_1_-qUiMVRhLppC6KiysJQy0jEmvXaVjHNzGWxE9mF1ceR4.png
 "should properly scale - \\frac12\\textstyle\\frac12\\scriptstyle\\frac12\\scriptscriptstyle\\frac12":
   tex: "\\frac12\\textstyle\\frac12\\scriptstyle\\frac12\\scriptscriptstyle\\frac12"
   description: "Fractions: should properly scale"
@@ -9346,7 +9346,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 6.720000319182871
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ frac12 textstyle fr-04BGUGB8KP4.png
+      img_render_path: tests/data/imgs/_frac12_textstyle_fr-rcYO9RV55p-EM1EsI_8LwNktyjHeWQJtyecUCXaG7vk.png
 "should properly scale - \\frac{\\int x}{\\int x}\\textstyle\\frac{\\int x}{\\int x}\\scriptstyle\\frac{\\int x}{\\int x}\\scriptscriptstyle\\frac{\\int x}{\\int x}":
   tex: "\\frac{\\int x}{\\int x}\\textstyle\\frac{\\int x}{\\int x}\\scriptstyle\\frac{\\int x}{\\int x}\\scriptscriptstyle\\frac{\\int x}{\\int x}"
   description: "Fractions: should properly scale"
@@ -9476,7 +9476,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 8.614400409162048
               glyph_id: 2520
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ frac{ int x}{ int x-gxV7TF-fWmA.png"
+      img_render_path: tests/data/imgs/_frac__int_x___int_x-6BMXGNFoV2uzYvitEG7E7VGO1BH1zcMZ3o-462hHnO8.png
 "should properly scale - \\left(\\begin{array}{c}1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\end{array}\\right)":
   tex: "\\left(\\begin{array}{c}1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\\\1\\end{array}\\right)"
   description: "Delimiters: should properly scale"
@@ -9684,7 +9684,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 108.82133850206928
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left( begin{array}{-fT8ICDHiuYQ.png"
+      img_render_path: tests/data/imgs/_left__begin_array__-w4EJ_9zKq1xeXUk69TcBUfSWSkjsnZ6XjL_UFdaHkAk.png
 "should properly scale - \\left(\\begin{array}{c}1\\\\1\\\\1\\\\1\\\\1\\end{array}\\right)":
   tex: "\\left(\\begin{array}{c}1\\\\1\\\\1\\\\1\\\\1\\end{array}\\right)"
   description: "Delimiters: should properly scale"
@@ -9808,7 +9808,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 57.621336070199799
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left( begin{array}{-NMSNYZF0S0I.png"
+      img_render_path: tests/data/imgs/_left__begin_array__-R6dHzkFdt4nzV0iQVlJVV9V7mDc8l7tXvU360a36tyw.png
 "should properly scale - \\left(\\begin{array}{c}1\\\\1\\end{array}\\right)":
   tex: "\\left(\\begin{array}{c}1\\\\1\\end{array}\\right)"
   description: "Delimiters: should properly scale"
@@ -9842,7 +9842,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left( begin{array}{-rncGMj0n8Aw.png"
+      img_render_path: tests/data/imgs/_left__begin_array__-5sJSNpXxYKzVQzOARin1HBTHJGmhQ2NBAQUkUUxQ76g.png
 "should properly scale - \\left(\\begin{array}{c}1\\end{array}\\right)":
   tex: "\\left(\\begin{array}{c}1\\end{array}\\right)"
   description: "Delimiters: should properly scale"
@@ -9870,7 +9870,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 4.288000203669071
               glyph_id: 3614
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ left( begin{array}{-lFYfH0j50Js.png"
+      img_render_path: tests/data/imgs/_left__begin_array__-x9c6pgeQrgIVviRipAjidhclFfqiwHmrw7jbtBbXGNo.png
 "should properly scale - \\left(\\frac 12\\right)":
   tex: "\\left(\\frac 12\\right)"
   description: "Delimiters: should properly scale"
@@ -9910,7 +9910,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/ left( frac 12 right-Ugia_hsHzcA.png
+      img_render_path: tests/data/imgs/_left__frac_12_right-e9Md0W3l5cRqiGtIuUa1RUcpNhslP9jdCSXZJVZrrqo.png
 "should properly scale - \\sqrt2\\textstyle\\sqrt2\\scriptstyle\\sqrt2\\scriptscriptstyle\\sqrt2":
   tex: "\\sqrt2\\textstyle\\sqrt2\\scriptstyle\\sqrt2\\scriptscriptstyle\\sqrt2"
   description: "Radicals: should properly scale"
@@ -9992,7 +9992,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ sqrt2 textstyle sqr-58lXrljnGNM.png
+      img_render_path: tests/data/imgs/_sqrt2_textstyle_sqr-kwspsrr2KtLN1Ot8k-IoHUa7KruwVOCMqrOFKIS6TUU.png
 "should properly scale - \\sqrt{\\int x}\\textstyle\\sqrt{\\int x}\\scriptstyle\\sqrt{\\int x}\\scriptscriptstyle\\sqrt{\\int x}":
   tex: "\\sqrt{\\int x}\\textstyle\\sqrt{\\int x}\\scriptstyle\\sqrt{\\int x}\\scriptscriptstyle\\sqrt{\\int x}"
   description: "Radicals: should properly scale"
@@ -10098,7 +10098,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2520
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ sqrt{ int x} textst-3UfNwrH1SlA.png"
+      img_render_path: tests/data/imgs/_sqrt__int_x__textst-dZ0NMbxSXNjlDxDZzw9ADUDNYEnm7Qid7lwAXVTO3T4.png
 "should properly scale - \\widehat A\\textstyle\\widehat A\\scriptstyle\\widehat A\\scriptscriptstyle\\widehat A":
   tex: "\\widehat A\\textstyle\\widehat A\\scriptstyle\\widehat A\\scriptscriptstyle\\widehat A"
   description: "Accents: should properly scale"
@@ -10156,7 +10156,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2472
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ widehat A textstyle-heltAXybxFQ.png
+      img_render_path: tests/data/imgs/_widehat_a_textstyle-Z2iMd-klteS7uCpoS7oG9jgmX07Sxu20ZfBZ3lx7Osc.png
 "should properly scale - \\widehat{x+y}\\textstyle\\widehat{x+y}\\scriptstyle\\widehat{x+y}\\scriptscriptstyle\\widehat{x+y}":
   tex: "\\widehat{x+y}\\textstyle\\widehat{x+y}\\scriptstyle\\widehat{x+y}\\scriptscriptstyle\\widehat{x+y}"
   description: "Accents: should properly scale"
@@ -10262,7 +10262,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -8.881784197001253e-16
               glyph_id: 2521
               scale: 12.799999999999999
-      img_render_path: "tests/data/imgs/ widehat{x+y} textst-pQOx4uEfYDw.png"
+      img_render_path: tests/data/imgs/_widehat_x_y__textst-OdXfNbukpXWz3ah8bCUwUQHWbHw4190qHL7Z-j-hVK8.png
 "should properly scale - a^2\\textstyle a^2\\scriptstyle a^2 \\scriptscriptstyle a^2":
   tex: "a^2\\textstyle a^2\\scriptstyle a^2 \\scriptscriptstyle a^2"
   description: "Scripts: should properly scale"
@@ -10320,7 +10320,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -5.120000243186949
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/a^2 textstyle a^2 sc-OdaRK_xjR1I.png
+      img_render_path: tests/data/imgs/a_2_textstyle_a_2_sc-YzlRXhpKrBpqN3QAny0FnNWTJ2ZH7ilOllZiHrzy5xU.png
 "should properly scale - a_2\\textstyle a_2\\scriptstyle a_2 \\scriptscriptstyle a_2":
   tex: "a_2\\textstyle a_2\\scriptstyle a_2 \\scriptscriptstyle a_2"
   description: "Scripts: should properly scale"
@@ -10378,7 +10378,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 5.12000024318695
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/a_2 textstyle a_2 sc-OdaRLP5jSFI.png
+      img_render_path: tests/data/imgs/a_2_textstyle_a_2_sc-Ww5pgIDUeWDboxMUzMswOOKNTxn8G-ng8QwcE94WGb8.png
 "should properly scale - a_2^2\\textstyle a_2^2\\scriptstyle a_2^2 \\scriptscriptstyle a_2^2":
   tex: "a_2^2\\textstyle a_2^2\\scriptstyle a_2^2 \\scriptscriptstyle a_2^2"
   description: "Scripts: should properly scale"
@@ -10460,7 +10460,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 6.016000285744667
               glyph_id: 51
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/a_2^2 textstyle a_2^-nvhLg9UMniQ.png
+      img_render_path: tests/data/imgs/a_2_2_textstyle_a_2_-86y7RJNhKavQg07lnxlIZRb4P5capXW6Orj8SsiTVj8.png
 "should properly scale operators with limits - \\sum_0^k\\textstyle\\sum_0^k\\scriptstyle\\sum_0^k\\scriptscriptstyle\\sum_0^k":
   tex: "\\sum_0^k\\textstyle\\sum_0^k\\scriptstyle\\sum_0^k\\scriptscriptstyle\\sum_0^k"
   description: "Scripts: should properly scale operators with limits"
@@ -10542,7 +10542,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 13.8880006596446
               glyph_id: 49
               scale: 12.799999999999999
-      img_render_path: tests/data/imgs/ sum_0^k textstyle s-Cwg0tb6FqEk.png
+      img_render_path: tests/data/imgs/_sum_0_k_textstyle_s-ICrfxElCwXr7M4NugwZhBX7MymCs4DaHQFAq-hDGHyA.png
 "should recognize character escapes - \\`o\\'o\\^o\\\"o\\~o\\.o":
   tex: "\\`o\\'o\\^o\\\"o\\~o\\.o"
   description: "Accents: should recognize character escapes"
@@ -10624,7 +10624,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2511
               scale: 21.333333333333333
-      img_render_path: tests/data/imgs/  o  o ^o  o  o  o-jc1fzVBc4ag.png
+      img_render_path: tests/data/imgs/__o__o__o__o__o__o-8fRmeptBHzdHcMG0EG_yXwrdcH9o_Mvmnw8QG9x31Ew.png
 "should render - 2 \\begin{pmatrix}1\\\\ 2\\\\ 3\\end{pmatrix}\n\\cdot\\begin{pmatrix}1\\\\ 1\\\\ -1\\end{pmatrix}\n= \\begin{pmatrix}0\\\\ 0\\\\ 0\\end{pmatrix}\n":
   tex: "2 \\begin{pmatrix}1\\\\ 2\\\\ 3\\end{pmatrix}\n\\cdot\\begin{pmatrix}1\\\\ 1\\\\ -1\\end{pmatrix}\n= \\begin{pmatrix}0\\\\ 0\\\\ 0\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -10856,7 +10856,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 32.02133485426504
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/2  begin{pmatrix}1  -ixfC5GAoxys.png"
+      img_render_path: tests/data/imgs/2__begin_pmatrix_1__-ZY9seU7fKjfLys1p6oDlN-cTv8-ifwkcCNWbR5JvS3w.png
 "should render - \\begin{pmatrix}\n  0 & 1 \\\\\n  -1 & 0\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  0 & 1 \\\\\n  -1 & 0\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -10908,7 +10908,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   0 -XL7dC3TH-SI.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____0_-ik8KGLGNLUiQgqePsoYqLrO8bDbs4p8b0nYs6S7GXAs.png
 "should render - \\begin{pmatrix}\n  1 & 2 & 3\\\\\n  4 & 5 & 6\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  1 & 2 & 3\\\\\n  4 & 5 & 6\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -10966,7 +10966,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   1 -JDbfQjJKrqU.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____1_-p7v_paiQ-Whyqdhd7UUh0XxQeLPWs4tGbo_H8nruiI8.png
 "should render - \\begin{pmatrix}\n  1 \\\\\n  2 \\\\\n  3 \\\\\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  1 \\\\\n  2 \\\\\n  3 \\\\\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11042,7 +11042,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 32.02133485426504
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   1 -9svv0298TXI.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____1_-vkP_s7UkEEFFmSKcYNuc212W2XZ77JRxMRtM2NKqkP0.png
 "should render - \\begin{pmatrix}\n  a &\n\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix} \\\\\n  c & d\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a &\n\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix} \\\\\n  c & d\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11154,7 +11154,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 33.333334916581708
               glyph_id: 1439
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   a -CF535V4pYYs.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____a_-rYF7SwSc25LqopbJQmz72XkaESHikZcaM-1DMsRYBNU.png
 "should render - \\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a & b \\\\\n  c & d\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11200,7 +11200,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   a -wcUTMJZDMCE.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____a_-w75jYvxOVib-K0MKQvndWoaiIOZSuFndp2-0H9tyzVY.png
 "should render - \\begin{pmatrix}\n  a_1 & b_1 \\\\\n  c_1 & d_1\n\\end{pmatrix}\n\n\\begin{pmatrix}\n  a_2 & b_2 \\\\\n  c_2 & d_2\n\\end{pmatrix}\n\n=\n\n\\begin{pmatrix}\n  a_1 a_2 + b_1 c_2 & a_1 b_2 + b_1 d_2 \\\\\n  c_1 a_2 + d_1 c_2 & c_1 b_2 + d_1 d_2\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  a_1 & b_1 \\\\\n  c_1 & d_1\n\\end{pmatrix}\n\n\\begin{pmatrix}\n  a_2 & b_2 \\\\\n  c_2 & d_2\n\\end{pmatrix}\n\n=\n\n\\begin{pmatrix}\n  a_1 a_2 + b_1 c_2 & a_1 b_2 + b_1 d_2 \\\\\n  c_1 a_2 + d_1 c_2 & c_1 b_2 + d_1 d_2\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11564,7 +11564,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   a_-lc3YQFjIIPw.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____a_-Pu6y7rKgv2yE_vDr0M4EUQDMfwn3lwXhF1jv_5J2ebo.png
 "should render - \\begin{pmatrix}\n  x & abcdef \\\\\n  abcdef & x\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  x & abcdef \\\\\n  abcdef & x\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11670,7 +11670,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   x -frxpywHMpSM.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____x_-pUtIok9ApoOMBIcFws4APd2qpuGoOviU6JwyA9ZG9Mw.png
 "should render - \\begin{pmatrix}\n  x \\\\\n  abcdef\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n  x \\\\\n  abcdef\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11734,7 +11734,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 12.501333927114804
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ begin{pmatrix}   x -EGD0r-M9O_w.png"
+      img_render_path: tests/data/imgs/_begin_pmatrix____x_-7ZfnUZ9wX99mjgKYJmRx-y6IIpyxa-_lq86cHtoVfoM.png
 "should render - \\begin{pmatrix}\n\\end{pmatrix}\n":
   tex: "\\begin{pmatrix}\n\\end{pmatrix}\n"
   description: "Arrays: should render"
@@ -11832,7 +11832,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 43.66933540751536
               glyph_id: 3730
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ frac{    begin{pmat-Z299nAz2JqY.png"
+      img_render_path: tests/data/imgs/_frac_____begin_pmat-dRpAX3lo8nxuhvNpS0-0vWhBlkelxx_a5rJc4dE13oA.png
 "should support custom degrees, baselines positioned at ~ 60% height - 1\\sqrt[f+1]{1+1}1":
   tex: "1\\sqrt[f+1]{1+1}1"
   description: "Radicals: should support custom degrees, baselines positioned at ~ 60% height"
@@ -11902,7 +11902,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1 sqrt f+1 {1+1}1-2S93aZ6yAwk.png"
+      img_render_path: tests/data/imgs/1_sqrt_f_1__1_1_1-F9NjsknfRWm4y2IjA-Xo8LePp4i1mIvdDg0c__pIfQo.png
 "should support custom degrees, baselines positioned at ~ 60% height - 1\\sqrt[f]{1}1":
   tex: "1\\sqrt[f]{1}1"
   description: "Radicals: should support custom degrees, baselines positioned at ~ 60% height"
@@ -11948,7 +11948,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 50
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/1 sqrt f {1}1-rv76auiGBQk.png"
+      img_render_path: tests/data/imgs/1_sqrt_f__1_1-MMVW-k0G7Rx6YdAKSpA5isCkT30egjchWzale_8ABig.png
 "should typeset nucleus as cramped, and baseline unchanged. - \\hat{A^2} A^2":
   tex: "\\hat{A^2} A^2"
   description: "Accents: should typeset nucleus as cramped, and baseline unchanged."
@@ -11988,7 +11988,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -8.533333738644917
               glyph_id: 51
               scale: 16.0
-      img_render_path: "tests/data/imgs/ hat{A^2} A^2-0MhkfIHKadA.png"
+      img_render_path: tests/data/imgs/_hat_a_2__a_2-lfKtHGKrNBpC_qyG35hrens7krOvSg2CV0gwBUMJhnk.png
 "substack - X^{\\substack{a=1\\\\b=1}}X^{\\substack{a=1\\\\b=1\\\\}}":
   tex: "X^{\\substack{a=1\\\\b=1}}X^{\\substack{a=1\\\\b=1\\\\}}"
   description: "Arrays: substack"
@@ -12082,7 +12082,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - -5.83466694379846
               glyph_id: 50
               scale: 16.0
-      img_render_path: "tests/data/imgs/X^{ substack{a=1  b=-ttCmlsWvoLQ.png"
+      img_render_path: tests/data/imgs/x___substack_a_1__b_-VFbOpc41jXwSb_B5Z19YWmIyrBg4HW6m2Vuwt-oKUEs.png
 "substack - X_{\\substack{a=1\\\\b=1}}X_{\\substack{a=1\\\\b=1\\\\}}":
   tex: "X_{\\substack{a=1\\\\b=1}}X_{\\substack{a=1\\\\b=1\\\\}}"
   description: "Arrays: substack"
@@ -12176,7 +12176,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 16.266667439291877
               glyph_id: 50
               scale: 16.0
-      img_render_path: "tests/data/imgs/X_{ substack{a=1  b=-t9GmlsWvoLQ.png"
+      img_render_path: tests/data/imgs/x___substack_a_1__b_-azgElfcWjjhl1ybbiW-0MLDufpt6otXRYLHF6mDT0vw.png
 "substack - \\int_{\\substack{1\\leq x\\leq 3\\\\1\\leq y\\leq x}} f(x,y)\\,dxdy":
   tex: "\\int_{\\substack{1\\leq x\\leq 3\\\\1\\leq y\\leq x}} f(x,y)\\,dxdy"
   description: "Arrays: substack"
@@ -12312,7 +12312,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 0.0
               glyph_id: 2521
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ int_{ substack{1 le-QrpKQp4Nphw.png"
+      img_render_path: tests/data/imgs/_int___substack_1_le-MAbLXcs2ef_zXOUhu1UiCFO35rA4TJJUZxYekcRaOPE.png
 "substack - \\lim_{\\substack{1\\leq i\\leq n\\\\1\\leq j\\leq n\\\\1\\leq k\\leq n}}":
   tex: "\\lim_{\\substack{1\\leq i\\leq n\\\\1\\leq j\\leq n\\\\1\\leq k\\leq n}}"
   description: "Arrays: substack"
@@ -12430,7 +12430,7 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 44.448002111166719
               glyph_id: 2510
               scale: 16.0
-      img_render_path: "tests/data/imgs/ lim_{ substack{1 le-f2Z_VXfd6BM.png"
+      img_render_path: tests/data/imgs/_lim___substack_1_le-hm7xqwe7utb-w7T3tdcOt_VZmU8GRHEF9Fqi_OXnfGc.png
 "substack should center contents - \\substack{a\\\\xyz}":
   tex: "\\substack{a\\\\xyz}"
   description: "Arrays: substack should center contents"
@@ -12464,4 +12464,4 @@ sequence of letters should look properly spaced - azertyuiopqsdfghjklmwxcvbn:
                 - 4.170666864762705
               glyph_id: 2522
               scale: 21.333333333333333
-      img_render_path: "tests/data/imgs/ substack{a  xyz}-U5FqiqiNNzI.png"
+      img_render_path: tests/data/imgs/_substack_a__xyz_-IYsMekn7CseDwIwhFhWp0M0fK36y6D46PYU9ksgazcs.png
