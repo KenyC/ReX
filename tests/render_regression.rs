@@ -296,7 +296,7 @@ fn save_renders_to_history() {
             images_to_keep.insert(render_filename.clone());
             let new_render_path = img_dir.join(render_filename);
             
-            if modified_equations.contains(tex.as_str()) {
+            if !std::fs::exists(&new_render_path).unwrap() || modified_equations.contains(tex.as_str()) {
                 std::fs::copy(&old_render_path, &new_render_path)
                     .map_err(|e| format!("Could not copy equation {} from {:?} to {:?} has no render: {}", equation.as_str(), old_render_path, new_render_path, e)).unwrap();
             }
